@@ -1,0 +1,46 @@
+# ---------------------------------------------------------------------------
+# BHOOMI-DRISHTI backend configuration (Phase 1)
+#
+# Every value can be overridden with an environment variable. For local work the
+# repository root `.env` file (copy it from .env.example) is imported below, so the
+# same file configures Docker Compose, the backend and the frontend.
+# ---------------------------------------------------------------------------
+
+server:
+  port: ${BACKEND_PORT:8080}
+
+spring:
+  application:
+    name: bhoomi-drishti-backend
+
+  # Optional: load the root .env file when the backend is started from `backend/`.
+  # OS environment variables always take precedence over values from this file.
+  config:
+    import: optional:file:../.env[.properties]
+
+  datasource:
+    url: jdbc:postgresql://localhost:${DATABASE_PORT:5432}/${DATABASE_NAME:bhoomi_drishti}
+    username: ${DATABASE_USER:bhoomi}
+    password: ${DATABASE_PASSWORD:change_me}
+
+  jpa:
+    # Phase 1 has no entities yet; schema management arrives with the domain modules.
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  sql:
+    init:
+      mode: never
+
+# Origins allowed to call the API from a browser. Keep this list explicit - never use "*".
+app:
+  cors:
+    allowed-origins:
+      - http://localhost:${FRONTEND_PORT:5173}
+
+logging:
+  level:
+    root: INFO
+    com.bhoomidrishti: INFO
+    org.springframework.web: INFO

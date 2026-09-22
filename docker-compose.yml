@@ -1,0 +1,39 @@
+# Phase 1 infrastructure for BHOOMI-DRISHTI.
+# Only PostgreSQL + PostGIS is required for now; other services (message queues,
+# object storage, search engines, ...) will be added when a phase needs them.
+#
+# Usage:
+#   copy .env.example .env
+#   docker compose up -d
+#   docker compose ps
+#   docker compose down          (keeps the data volume)
+#   docker compose down -v       (deletes the data volume)
+
+name: bhoomi-drishti
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    container_name: bhoomi-drishti-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-bhoomi_drishti}
+      POSTGRES_USER: ${DATABASE_USER:-bhoomi}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+      # Deterministic timezone so date based land records behave the same for every developer.
+      TZ: Asia/Kolkata
+      PGTZ: Asia/Kolkata
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-bhoomi} -d ${DATABASE_NAME:-bhoomi_drishti}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  postgres_data:
+    name: bhoomi-drishti-postgres-data
