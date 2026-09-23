@@ -15,7 +15,7 @@
     <artifactId>bhoomi-drishti-backend</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>bhoomi-drishti-backend</name>
-    <description>BHOOMI-DRISHTI backend - AI-Powered Land Governance Platform (Phase 1 foundation)</description>
+    <description>BHOOMI-DRISHTI backend - AI-Powered Land Governance Platform</description>
 
     <properties>
         <!-- Spring Boot 4 needs Java 17 or newer; 21 is the LTS baseline for this project. -->
@@ -50,10 +50,48 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Phase 2: authentication and authorization (BCrypt, filter chain, method security). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Phase 2: Google OpenID Connect login. Also brings the Nimbus JOSE/JWT support
+             that the JWT service uses for signing and verifying tokens. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
+        <!-- Phase 2: versioned database migrations. Flyway runs before Hibernate so the
+             application always starts against a known schema (Flyway 10+ needs the
+             PostgreSQL module to talk to PostgreSQL).
+             Spring Boot 4 split auto-configuration into per-technology modules: without
+             spring-boot-flyway the Flyway libraries below are never invoked at startup. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
         <!-- Testing: JUnit 5, AssertJ, MockMvc + the Spring Boot test slices. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testing: request post processors and CSRF helpers for security aware slice tests. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
