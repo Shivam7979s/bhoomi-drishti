@@ -93,6 +93,11 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.CONFLICT, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(DuplicateEvidenceException.class)
+    public ResponseEntity<ApiError> handleDuplicateEvidence(DuplicateEvidenceException ex, HttpServletRequest request) {
+        return respond(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleDuplicateEmail(EmailAlreadyExistsException ex, HttpServletRequest request) {
         return respond(HttpStatus.CONFLICT, ex.getMessage(), request, null);

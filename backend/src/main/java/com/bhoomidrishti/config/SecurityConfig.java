@@ -117,6 +117,11 @@ public class SecurityConfig {
                                 "/api/projects/*/comments",
                                 "/api/datasets/*")
                                 .permitAll()
+                        // Phase 8: Policy Intelligence & Scenario Analysis.
+                        // Public GET access to scenario evidence is permitted if the scenario's project is public.
+                        // Writes, unlinking, and candidate searches require authentication.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/scenarios/*/evidence")
+                                .permitAll()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.
                         .anyRequest().authenticated())

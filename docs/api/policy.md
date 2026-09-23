@@ -188,9 +188,53 @@ If an error or domain validation exception occurs, the transaction rolls back cl
 
 ---
 
-## 7. Next Sub-Phases Roadmap
+## 7. Evidence & Provenance Linking (Phase 8C)
 
-- **Phase 8C**: Evidence & provenance linking service (linking Phase 5 vector chunks and citations).
+> [!NOTE]
+> **Provenance & Non-Generative Principle:**
+> Evidence linking explicitly attaches statutory documents, circulars, and research chunks to scenarios with transparent attribution. The system does not generate policy advice or synthesize unsupported claims.
+
+### Architecture & Provenance Chain
+
+```
+PolicyScenario
+      ↓
+ScenarioEvidence (type, rationale, similarity_score, linked_by, linked_at)
+      ↓
+ResearchDocument (title, type, authors, organization)
+      ↓ (optional chunk provenance)
+DocumentChunk (chunk_index, text snippet, page_number, section_title)
+```
+
+### REST API Endpoints
+
+| Method | Endpoint | Access Control | Description |
+|---|---|---|---|
+| `GET` | `/api/scenarios/{scenarioId}/evidence` | Public (if project is public) or Project Member | Retrieves all evidence linked to a scenario with enriched chunk snippets. |
+| `POST` | `/api/scenarios/{scenarioId}/evidence` | Project Contributor / Lead | Links a research document or specific chunk as scenario evidence. |
+| `DELETE` | `/api/scenarios/{scenarioId}/evidence/{evidenceId}` | Project Contributor / Lead | Unlinks an evidence record from a scenario. |
+| `POST` | `/api/scenarios/{scenarioId}/evidence/search` | Project Member | Searches candidate evidence via Phase 5 knowledge base without persisting. |
+
+### Provenance & Business Invariants
+
+1. **Mandatory Research Document**:
+   Every link must reference a valid `ResearchDocument`. The document must be accessible to the caller according to Phase 4 visibility rules; unreadable drafts throw `404 Not Found` to prevent metadata leakage.
+2. **Chunk Provenance Validation**:
+   When `documentChunkId` is provided, the chunk must exist in `document_chunks` and its `research_document_id` must match `researchDocumentId`. Mismatches are rejected with `400 Bad Request`.
+3. **Similarity Score Bounds**:
+   Optional similarity score must fall strictly within `[-1.0000, 1.0000]` and is stored at 4 decimal places.
+4. **Duplicate Prevention**:
+   Links are uniquely keyed by `(scenario_id, research_document_id, document_chunk_id, evidence_type)`. Duplicate links throw `409 Conflict` (`DuplicateEvidenceException`).
+5. **Lifecycle Guard**:
+   Evidence cannot be linked to or unlinked from an `ARCHIVED` scenario (`IllegalStateException`).
+6. **Search vs. Persistence**:
+   Candidate discovery reuses `KnowledgeService.search(...)` and does **not** persist `ScenarioEvidence`. Only explicit `POST` operations create evidence records.
+
+---
+
+## 8. Next Sub-Phases Roadmap
+
+- **Phase 8C**: Evidence & provenance linking service — **COMPLETE**
 - **Phase 8D**: Scenario comparison engine and REST API endpoints.
 - **Phase 8E**: Frontend scenario workspace (builder form, KPI cards, Leaflet map overlays, comparison charts).
 - **Phase 8F**: Comprehensive live verification, tests, and documentation.
