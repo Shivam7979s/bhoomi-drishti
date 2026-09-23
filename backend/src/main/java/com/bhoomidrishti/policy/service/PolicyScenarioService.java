@@ -3,6 +3,7 @@ package com.bhoomidrishti.policy.service;
 import com.bhoomidrishti.auth.entity.User;
 import com.bhoomidrishti.collaboration.entity.Project;
 import com.bhoomidrishti.collaboration.repository.ProjectRepository;
+import com.bhoomidrishti.collaboration.service.CollaborationSecurityService;
 import com.bhoomidrishti.common.PageResponse;
 import com.bhoomidrishti.exception.ResourceNotFoundException;
 import com.bhoomidrishti.policy.dto.CreatePolicyScenarioRequest;
@@ -26,8 +27,10 @@ import java.util.UUID;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,24 +43,48 @@ public class PolicyScenarioService {
     private final ScenarioResultRepository resultRepository;
     private final ScenarioEvidenceRepository evidenceRepository;
     private final ProjectRepository projectRepository;
+    private final CollaborationSecurityService securityService;
 
+    @Autowired
+    public PolicyScenarioService(
+            PolicyScenarioRepository scenarioRepository,
+            ScenarioParameterRepository parameterRepository,
+            ScenarioResultRepository resultRepository,
+            ScenarioEvidenceRepository evidenceRepository,
+            ProjectRepository projectRepository,
+            CollaborationSecurityService securityService) {
+        this.scenarioRepository = scenarioRepository;
+        this.parameterRepository = parameterRepository;
+        this.resultRepository = resultRepository;
+        this.evidenceRepository = evidenceRepository;
+        this.projectRepository = projectRepository;
+        this.securityService = securityService;
+    }
+
+    // Retain 5-arg constructor for existing test setups
     public PolicyScenarioService(
             PolicyScenarioRepository scenarioRepository,
             ScenarioParameterRepository parameterRepository,
             ScenarioResultRepository resultRepository,
             ScenarioEvidenceRepository evidenceRepository,
             ProjectRepository projectRepository) {
-        this.scenarioRepository = scenarioRepository;
-        this.parameterRepository = parameterRepository;
-        this.resultRepository = resultRepository;
-        this.evidenceRepository = evidenceRepository;
-        this.projectRepository = projectRepository;
+        this(scenarioRepository, parameterRepository, resultRepository, evidenceRepository, projectRepository, null);
+    }
+
+    public PolicyScenarioResponse createScenario(
+            UUID projectId, CreatePolicyScenarioRequest request, Authentication auth) {
+        User creator = securityService != null ? securityService.requireAuthenticatedUser(auth) : null;
+        return createScenario(projectId, request, creator);
     }
 
     public PolicyScenarioResponse createScenario(
             UUID projectId, CreatePolicyScenarioRequest request, User creator) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
+
+        if (securityService != null && creator != null) {
+            securityService.checkCanContributeToProject(project, creator);
+        }
 
         String slug = generateUniqueSlug(projectId, request.slug(), request.name());
 
@@ -88,17 +115,41 @@ public class PolicyScenarioService {
     }
 
     @Transactional(readOnly = true)
-    public PolicyScenarioResponse getScenario(UUID scenarioId) {
+    public PolicyScenarioResponse getScenario(UUID scenarioId, Authentication auth) {
+        User user = securityService != null ? securityService.resolveCurrentUser(auth).orElse(null) : null;
+        return getScenario(scenarioId, user);
+    }
+
+    @Transactional(readOnly = true)
+    public PolicyScenarioResponse getScenario(UUID scenarioId, User user) {
         PolicyScenario scenario = scenarioRepository.findById(scenarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Scenario not found: " + scenarioId));
+
+        if (securityService != null) {
+            securityService.checkCanViewProject(scenario.getProject(), user);
+        }
 
         return toResponse(scenario);
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PolicyScenarioResponse> listScenarios(UUID projectId, Pageable pageable) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new ResourceNotFoundException("Project not found: " + projectId);
+    public PolicyScenarioResponse getScenario(UUID scenarioId) {
+        return getScenario(scenarioId, (User) null);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<PolicyScenarioResponse> listScenarios(UUID projectId, Pageable pageable, Authentication auth) {
+        User user = securityService != null ? securityService.resolveCurrentUser(auth).orElse(null) : null;
+        return listScenarios(projectId, pageable, user);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<PolicyScenarioResponse> listScenarios(UUID projectId, Pageable pageable, User user) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
+
+        if (securityService != null) {
+            securityService.checkCanViewProject(project, user);
         }
 
         Page<PolicyScenario> p = scenarioRepository.findByProjectIdOrderByCreatedAtDesc(projectId, pageable);
@@ -117,12 +168,31 @@ public class PolicyScenarioService {
         );
     }
 
-    public PolicyScenarioResponse updateScenario(UUID scenarioId, UpdatePolicyScenarioRequest request) {
+    @Transactional(readOnly = true)
+    public PageResponse<PolicyScenarioResponse> listScenarios(UUID projectId, Pageable pageable) {
+        return listScenarios(projectId, pageable, (User) null);
+    }
+
+    public PolicyScenarioResponse updateScenario(
+            UUID scenarioId, UpdatePolicyScenarioRequest request, Authentication auth) {
+        User user = securityService != null ? securityService.requireAuthenticatedUser(auth) : null;
+        return updateScenario(scenarioId, request, user);
+    }
+
+    public PolicyScenarioResponse updateScenario(
+            UUID scenarioId, UpdatePolicyScenarioRequest request, User user) {
         PolicyScenario scenario = scenarioRepository.findById(scenarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Scenario not found: " + scenarioId));
 
+        if (securityService != null && user != null) {
+            securityService.checkCanContributeToProject(scenario.getProject(), user);
+        }
+
         if (scenario.getStatus() == ScenarioStatus.ARCHIVED) {
             throw new IllegalStateException("Cannot modify an archived scenario");
+        }
+        if (scenario.getStatus() == ScenarioStatus.RUNNING) {
+            throw new IllegalStateException("Cannot modify a running scenario");
         }
 
         if (request.name() != null && !request.name().isBlank()) {
@@ -131,9 +201,6 @@ public class PolicyScenarioService {
         if (request.description() != null) {
             scenario.setDescription(request.description());
         }
-        if (request.status() != null) {
-            scenario.setStatus(request.status());
-        }
 
         if (request.parameters() != null) {
             ScenarioParameter params = parameterRepository.findByScenarioId(scenarioId)
@@ -141,10 +208,28 @@ public class PolicyScenarioService {
             params = applyParameters(params, request.parameters());
             params = parameterRepository.save(params);
             scenario.setParameters(params);
+
+            // Invariant: Completed scenario parameter changes transition the scenario back to DRAFT.
+            // Historical ScenarioResult snapshots remain preserved.
+            if (scenario.getStatus() == ScenarioStatus.COMPLETED) {
+                scenario.setStatus(ScenarioStatus.DRAFT);
+            }
+        }
+
+        if (request.status() != null) {
+            if (request.status() == ScenarioStatus.ARCHIVED) {
+                scenario.setStatus(ScenarioStatus.ARCHIVED);
+            } else if (request.status() == ScenarioStatus.DRAFT) {
+                scenario.setStatus(ScenarioStatus.DRAFT);
+            }
         }
 
         PolicyScenario saved = scenarioRepository.save(scenario);
         return toResponse(saved);
+    }
+
+    public PolicyScenarioResponse updateScenario(UUID scenarioId, UpdatePolicyScenarioRequest request) {
+        return updateScenario(scenarioId, request, (User) null);
     }
 
     public void archiveScenario(UUID scenarioId) {
@@ -155,11 +240,56 @@ public class PolicyScenarioService {
         scenarioRepository.save(scenario);
     }
 
-    public void deleteScenario(UUID scenarioId) {
+    public void deleteScenario(UUID scenarioId, Authentication auth) {
+        User user = securityService != null ? securityService.requireAuthenticatedUser(auth) : null;
+        deleteScenario(scenarioId, user);
+    }
+
+    public void deleteScenario(UUID scenarioId, User user) {
         PolicyScenario scenario = scenarioRepository.findById(scenarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Scenario not found: " + scenarioId));
 
+        if (securityService != null && user != null) {
+            securityService.checkCanContributeToProject(scenario.getProject(), user);
+        }
+
+        if (scenario.getStatus() == ScenarioStatus.ARCHIVED) {
+            throw new IllegalStateException("Cannot delete an archived scenario");
+        }
+        if (scenario.getStatus() == ScenarioStatus.RUNNING) {
+            throw new IllegalStateException("Cannot delete a running scenario");
+        }
+        if (scenario.getStatus() == ScenarioStatus.COMPLETED || resultRepository.countByScenarioId(scenarioId) > 0) {
+            throw new IllegalStateException("Cannot delete a scenario with completed simulation results; archive it instead");
+        }
+        if (scenario.getStatus() != ScenarioStatus.DRAFT) {
+            throw new IllegalStateException("Only DRAFT scenarios may be deleted");
+        }
+
         scenarioRepository.delete(scenario);
+    }
+
+    public void deleteScenario(UUID scenarioId) {
+        deleteScenario(scenarioId, (User) null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ScenarioResultResponse> getScenarioResults(UUID scenarioId, Authentication auth) {
+        User user = securityService != null ? securityService.resolveCurrentUser(auth).orElse(null) : null;
+        return getScenarioResults(scenarioId, user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ScenarioResultResponse> getScenarioResults(UUID scenarioId, User user) {
+        PolicyScenario scenario = scenarioRepository.findById(scenarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Scenario not found: " + scenarioId));
+
+        if (securityService != null) {
+            securityService.checkCanViewProject(scenario.getProject(), user);
+        }
+
+        List<ScenarioResult> results = resultRepository.findByScenarioIdOrderByExecutedAtDesc(scenarioId);
+        return results.stream().map(ScenarioResultResponse::from).toList();
     }
 
     private ScenarioParameter applyParameters(ScenarioParameter target, ScenarioParameterRequest req) {

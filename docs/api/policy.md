@@ -232,9 +232,114 @@ DocumentChunk (chunk_index, text snippet, page_number, section_title)
 
 ---
 
-## 8. Next Sub-Phases Roadmap
+## 8. Scenario Comparison Engine & REST API (Phase 8D)
 
-- **Phase 8C**: Evidence & provenance linking service — **COMPLETE**
-- **Phase 8D**: Scenario comparison engine and REST API endpoints.
-- **Phase 8E**: Frontend scenario workspace (builder form, KPI cards, Leaflet map overlays, comparison charts).
-- **Phase 8F**: Comprehensive live verification, tests, and documentation.
+> [!IMPORTANT]
+> **Descriptive Comparison Notice:**
+> The comparison engine provides descriptive differences between persisted scenario results. It does not rank scenarios, select a preferred scenario, recommend policy, or predict future outcomes.
+
+### Architecture & Service Design
+
+Phase 8D exposes the complete scenario lifecycle, execution pipeline, and scenario comparison capabilities via REST controllers:
+- `PolicyScenarioController`: CRUD operations, execution runs, and historical result snapshot retrieval.
+- `PolicyComparisonController`: Deterministic multi-scenario comparison engine (`POST /api/policy/compare`).
+
+### REST API Endpoints
+
+| Method | Endpoint | Access Control | Description |
+|---|---|---|---|
+| `GET` | `/api/projects/{projectId}/scenarios` | Public (if project is public) or Project Member | Lists all scenarios within a project. |
+| `POST` | `/api/projects/{projectId}/scenarios` | Project Contributor / Lead | Creates a new policy scenario with parameters. |
+| `GET` | `/api/scenarios/{scenarioId}` | Public (if project is public) or Project Member | Retrieves scenario details and current parameters. |
+| `PUT` | `/api/scenarios/{scenarioId}` | Project Contributor / Lead | Updates scenario parameters. Modifying a `COMPLETED` scenario resets it to `DRAFT`. |
+| `DELETE` | `/api/scenarios/{scenarioId}` | Project Contributor / Lead | Deletes a scenario. Allowed ONLY if in `DRAFT` status and has no persisted execution results. |
+| `POST` | `/api/scenarios/{scenarioId}/run` | Project Contributor / Lead | Executes deterministic PostGIS simulation and generates a new `ScenarioResult` snapshot. |
+| `GET` | `/api/scenarios/{scenarioId}/results` | Public (if project is public) or Project Member | Retrieves all persisted historical `ScenarioResult` snapshots for a scenario. |
+| `POST` | `/api/policy/compare` | Public (for public scenarios) or Project Member | Compares 2 to 10 scenario results side-by-side with pairwise delta analysis. |
+
+---
+
+### Scenario Lifecycle & Invariants
+
+```
+               [ Create ]
+                   │
+                   ▼
+               ┌───────┐
+       ┌──────▶│ DRAFT │◀────────────────┐ (Parameter Edit on COMPLETED
+       │       └───┬───┘                 │  resets to DRAFT; preserves
+       │           │                     │  historical ScenarioResults)
+       │       [ Run ]                   │
+       │           │                     │
+       │           ▼                     │
+       │      ┌─────────┐                │
+       │      │ RUNNING │                │
+       │      └────┬────┘                │
+       │           │                     │
+       │       [ Success ]               │
+       │           │                     │
+       │           ▼                     │
+[ Delete ]    ┌───────────┐              │
+(Only if DRAFT│ COMPLETED ├──────────────┘
+ and 0 results)└───┬──────┘
+                   │
+               [ Archive ]
+                   │
+                   ▼
+              ┌──────────┐
+              │ ARCHIVED │ (Read-only immutable)
+              └──────────┘
+```
+
+1. **Parameter Modification Lifecycle Transition**:
+   - Updating parameters on a `COMPLETED` scenario automatically transitions its status back to `DRAFT`.
+   - **Snapshot Preservation**: All previously executed `ScenarioResult` and `ScenarioAffectedParcel` records are preserved intact for historical auditing and comparison.
+2. **Deletion Restrictions**:
+   - Only `DRAFT` scenarios can be deleted.
+   - If a scenario has any persisted `ScenarioResult` records, deletion is strictly rejected (`409 Conflict`) to prevent data loss.
+3. **Immutability of Running & Archived Scenarios**:
+   - Scenarios in `RUNNING` or `ARCHIVED` status reject any modification or parameter updates (`409 Conflict`).
+   - `ARCHIVED` scenarios cannot be deleted or re-executed.
+
+---
+
+### Comparison Semantics & Invariants
+
+1. **Target Bounds**:
+   - Accepts between 2 and 10 scenario targets per comparison request.
+   - Each target specifies `scenarioId` and optional `scenarioResultId`. If omitted, the latest completed `ScenarioResult` is automatically resolved.
+2. **Cross-Scenario Validation**:
+   - If an explicit `scenarioResultId` is provided, it must belong to the specified `scenarioId`. Cross-scenario result IDs are rejected with `400 Bad Request`.
+   - If a scenario has never been executed, comparison returns `400 Bad Request`.
+3. **Independent Authorization**:
+   - Every scenario and result in the comparison payload is independently authorized.
+   - If any scenario belongs to a private project not accessible to the caller, the request fails with `404 Not Found` (ensuring zero metadata leakage).
+4. **Pairwise Symmetric Matrix**:
+   - For $N$ scenarios, computes $\frac{N(N-1)}{2}$ unique pairwise comparisons for each $(i, j)$ with $i < j$.
+   - Directional deltas are defined as:
+     $$\Delta = \text{right} - \text{left}$$
+5. **Distribution Deltas & Zero-Filling**:
+   - Both `landUseDistribution` and `ownershipDistribution` compare shared categories across scenarios.
+   - Any category present in one scenario but absent in another is treated as `0` count and `0.00` area ($0.00\%$).
+   - Computes parcel count delta, area delta in square meters, and percentage-point difference:
+     $$\Delta_{\text{pp}} = \text{rightPercentage} - \text{leftPercentage}$$
+6. **Strict Non-Prescriptive Contract**:
+   - Comparison responses contain only factual, descriptive differences:
+     - `metrics` (baseline area, affected area, disputed area, evaluated parcels, affected parcels, disputed parcels).
+     - `landUseDistribution` & `ownershipDistribution`.
+     - `pairwiseComparisons` (metric deltas, distribution deltas).
+   - Responses contain **ZERO** ranking, score, weight, winner, preference, or policy recommendation fields.
+7. **Read-Only / No Re-Execution Guarantee**:
+   - The comparison service is purely read-only (`COMPARE != RE-RUN`).
+   - It reads persisted `ScenarioResult` snapshots and **never** calls `PolicySimulationService`.
+
+---
+
+## 9. Next Sub-Phases Roadmap
+
+- **Phase 8A**: Policy Scenario Foundation — **COMPLETE**
+- **Phase 8B**: PostGIS Policy Simulation Engine — **COMPLETE**
+- **Phase 8C**: Evidence & Provenance Linking — **COMPLETE**
+- **Phase 8D**: Scenario Comparison Engine & REST API — **COMPLETE**
+- **Phase 8E**: Frontend Scenario Workspace (Builder form, KPI cards, Leaflet GIS overlays, comparison side-by-side view).
+- **Phase 8F**: Final System Hardening & End-to-End Verification.

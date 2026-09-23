@@ -3,6 +3,7 @@ package com.bhoomidrishti.policy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,9 +17,11 @@ import com.bhoomidrishti.landrecord.entity.LandUseType;
 import com.bhoomidrishti.policy.dto.CreatePolicyScenarioRequest;
 import com.bhoomidrishti.policy.dto.PolicyScenarioResponse;
 import com.bhoomidrishti.policy.dto.ScenarioParameterRequest;
+import com.bhoomidrishti.policy.dto.ScenarioResultResponse;
 import com.bhoomidrishti.policy.dto.UpdatePolicyScenarioRequest;
 import com.bhoomidrishti.policy.entity.PolicyScenario;
 import com.bhoomidrishti.policy.entity.ScenarioParameter;
+import com.bhoomidrishti.policy.entity.ScenarioResult;
 import com.bhoomidrishti.policy.entity.ScenarioStatus;
 import com.bhoomidrishti.policy.entity.ScenarioType;
 import com.bhoomidrishti.policy.repository.PolicyScenarioRepository;
@@ -27,9 +30,11 @@ import com.bhoomidrishti.policy.repository.ScenarioParameterRepository;
 import com.bhoomidrishti.policy.repository.ScenarioResultRepository;
 import com.bhoomidrishti.policy.service.PolicyScenarioService;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -280,5 +285,137 @@ class PolicyScenarioServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.slug()).isEqualTo("corridor-expansion");
         verify(scenarioRepository).existsByProjectIdAndSlug(projectId, "corridor-expansion");
+    }
+
+    @Test
+    @DisplayName("9. Modifying parameters on COMPLETED scenario transitions it back to DRAFT")
+    void updateScenario_completedScenarioParameterChange_transitionsToDraft() {
+        UUID scenarioId = UUID.randomUUID();
+        PolicyScenario scenario = new PolicyScenario(
+                project, researcher, "Completed Scenario", "completed-scenario", "Desc", ScenarioType.LAND_USE_CONVERSION
+        );
+        ReflectionTestUtils.setField(scenario, "id", scenarioId);
+        scenario.setStatus(ScenarioStatus.COMPLETED);
+
+        when(scenarioRepository.findById(scenarioId)).thenReturn(Optional.of(scenario));
+        when(parameterRepository.findByScenarioId(scenarioId)).thenReturn(Optional.empty());
+        when(parameterRepository.save(any(ScenarioParameter.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scenarioRepository.save(any(PolicyScenario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ScenarioParameterRequest paramReq = new ScenarioParameterRequest(
+                "MP", "Indore", null, null, null,
+                null, null, new BigDecimal("50.00"),
+                null, null, null, null
+        );
+        UpdatePolicyScenarioRequest updateReq = new UpdatePolicyScenarioRequest(null, null, null, paramReq);
+
+        PolicyScenarioResponse response = scenarioService.updateScenario(scenarioId, updateReq, researcher);
+
+        assertThat(response.status()).isEqualTo(ScenarioStatus.DRAFT);
+        assertThat(scenario.getStatus()).isEqualTo(ScenarioStatus.DRAFT);
+    }
+
+    @Test
+    @DisplayName("Modifying only name/description on COMPLETED scenario preserves COMPLETED status")
+    void updateScenario_completedScenarioMetadataOnly_preservesStatus() {
+        UUID scenarioId = UUID.randomUUID();
+        PolicyScenario scenario = new PolicyScenario(
+                project, researcher, "Completed Scenario", "completed-scenario", "Desc", ScenarioType.LAND_USE_CONVERSION
+        );
+        ReflectionTestUtils.setField(scenario, "id", scenarioId);
+        scenario.setStatus(ScenarioStatus.COMPLETED);
+
+        when(scenarioRepository.findById(scenarioId)).thenReturn(Optional.of(scenario));
+        when(scenarioRepository.save(any(PolicyScenario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdatePolicyScenarioRequest updateReq = new UpdatePolicyScenarioRequest("Updated Name", "Updated Desc", null, null);
+
+        PolicyScenarioResponse response = scenarioService.updateScenario(scenarioId, updateReq, researcher);
+
+        assertThat(response.status()).isEqualTo(ScenarioStatus.COMPLETED);
+        assertThat(scenario.getName()).isEqualTo("Updated Name");
+    }
+
+    @Test
+    @DisplayName("11. Deleting DRAFT scenario without results succeeds")
+    void deleteScenario_draftScenario_succeeds() {
+        UUID scenarioId = UUID.randomUUID();
+        PolicyScenario scenario = new PolicyScenario(
+                project, researcher, "Draft Scenario", "draft-scenario", "Desc", ScenarioType.LAND_USE_CONVERSION
+        );
+        ReflectionTestUtils.setField(scenario, "id", scenarioId);
+        scenario.setStatus(ScenarioStatus.DRAFT);
+
+        when(scenarioRepository.findById(scenarioId)).thenReturn(Optional.of(scenario));
+        when(resultRepository.countByScenarioId(scenarioId)).thenReturn(0L);
+
+        scenarioService.deleteScenario(scenarioId, researcher);
+
+        verify(scenarioRepository).delete(scenario);
+    }
+
+    @Test
+    @DisplayName("12. Reject deleting COMPLETED scenario or scenario with results")
+    void deleteScenario_completedScenario_throwsIllegalState() {
+        UUID scenarioId = UUID.randomUUID();
+        PolicyScenario scenario = new PolicyScenario(
+                project, researcher, "Completed Scenario", "completed-scenario", "Desc", ScenarioType.LAND_USE_CONVERSION
+        );
+        ReflectionTestUtils.setField(scenario, "id", scenarioId);
+        scenario.setStatus(ScenarioStatus.COMPLETED);
+
+        when(scenarioRepository.findById(scenarioId)).thenReturn(Optional.of(scenario));
+
+        assertThatThrownBy(() -> scenarioService.deleteScenario(scenarioId, researcher))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot delete a scenario with completed simulation results");
+
+        verify(scenarioRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("12. Reject deleting ARCHIVED scenario")
+    void deleteScenario_archivedScenario_throwsIllegalState() {
+        UUID scenarioId = UUID.randomUUID();
+        PolicyScenario scenario = new PolicyScenario(
+                project, researcher, "Archived Scenario", "archived-scenario", "Desc", ScenarioType.LAND_USE_CONVERSION
+        );
+        ReflectionTestUtils.setField(scenario, "id", scenarioId);
+        scenario.setStatus(ScenarioStatus.ARCHIVED);
+
+        when(scenarioRepository.findById(scenarioId)).thenReturn(Optional.of(scenario));
+
+        assertThatThrownBy(() -> scenarioService.deleteScenario(scenarioId, researcher))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot delete an archived scenario");
+
+        verify(scenarioRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("15. Retrieve historical simulation results for a scenario")
+    void getScenarioResults_returnsHistoricalSnapshots() {
+        UUID scenarioId = UUID.randomUUID();
+        PolicyScenario scenario = new PolicyScenario(
+                project, researcher, "Test Scenario", "test-scenario", "Desc", ScenarioType.LAND_USE_CONVERSION
+        );
+        ReflectionTestUtils.setField(scenario, "id", scenarioId);
+
+        ScenarioResult result1 = new ScenarioResult(scenario, researcher);
+        ReflectionTestUtils.setField(result1, "id", UUID.randomUUID());
+        result1.setTotalParcelsEvaluated(50L);
+
+        ScenarioResult result2 = new ScenarioResult(scenario, researcher);
+        ReflectionTestUtils.setField(result2, "id", UUID.randomUUID());
+        result2.setTotalParcelsEvaluated(100L);
+
+        when(scenarioRepository.findById(scenarioId)).thenReturn(Optional.of(scenario));
+        when(resultRepository.findByScenarioIdOrderByExecutedAtDesc(scenarioId)).thenReturn(List.of(result2, result1));
+
+        List<ScenarioResultResponse> results = scenarioService.getScenarioResults(scenarioId, researcher);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).totalParcelsEvaluated()).isEqualTo(100L);
+        assertThat(results.get(1).totalParcelsEvaluated()).isEqualTo(50L);
     }
 }
