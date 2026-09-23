@@ -8,6 +8,7 @@ import { RegisterPage } from './features/auth/pages/RegisterPage';
 import { LandRecordsPage } from './features/land-records/pages/LandRecordsPage';
 import { ResearchHubPage } from './features/research/pages/ResearchHubPage';
 import { KnowledgeSearchPage } from './features/knowledge/pages/KnowledgeSearchPage';
+import { GisDashboardPage } from './features/gis/pages/GisDashboardPage';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -19,6 +20,7 @@ export default function App() {
         <Routes>
           <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="/gis" element={<GisDashboardPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />

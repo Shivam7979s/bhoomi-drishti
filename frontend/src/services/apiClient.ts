@@ -35,6 +35,7 @@ interface RequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: unknown;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 /**
@@ -42,9 +43,17 @@ interface RequestOptions {
  * session cookie travels with every request, and backend error bodies mapped to {@link ApiError}.
  */
 async function apiRequest<T>(path: string, options: RequestOptions): Promise<T> {
-  const { method, body, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
+  const { method, body, timeoutMs = DEFAULT_TIMEOUT_MS, signal } = options;
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
 
   try {
     const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -114,6 +123,7 @@ export function getJsonWithParams<T>(
   path: string,
   params: Record<string, string | number | undefined>,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  signal?: AbortSignal,
 ): Promise<T> {
   const qp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -121,5 +131,5 @@ export function getJsonWithParams<T>(
   }
   const qs = qp.toString();
   const full = qs ? `${path}?${qs}` : path;
-  return getJson<T>(full, timeoutMs);
+  return apiRequest<T>(full, { method: 'GET', timeoutMs, signal });
 }

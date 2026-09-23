@@ -96,6 +96,10 @@ public class SecurityConfig {
                                 .permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/research-documents/*/ingest")
                                 .authenticated()
+                        // Phase 6: GIS & Geospatial Intelligence Layer.
+                        // Open to all callers; GisService strictly enforces ACTIVE-only and redacts owner PII for public.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/gis/**")
+                                .permitAll()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.
                         .anyRequest().authenticated())

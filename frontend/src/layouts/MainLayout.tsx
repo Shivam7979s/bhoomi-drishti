@@ -1,4 +1,4 @@
-import { BookOpen, LogIn, LogOut, MapPinned, Sparkles, UserRound } from 'lucide-react';
+import { BookOpen, LogIn, LogOut, Map, MapPinned, Sparkles, UserRound } from 'lucide-react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
@@ -15,7 +15,7 @@ export function MainLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-6 py-4">
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-4">
           <Link to="/" className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white">
               <MapPinned className="h-5 w-5" aria-hidden="true" />
@@ -31,6 +31,13 @@ export function MainLayout() {
           <nav className="ml-auto flex items-center gap-2" aria-label="Account">
             {loading ? null : isAuthenticated && user ? (
               <>
+                <Link
+                  to="/gis"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Map className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                  GIS Map
+                </Link>
                 <Link
                   to="/land-records"
                   className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
@@ -70,6 +77,13 @@ export function MainLayout() {
               </>
             ) : (
               <>
+                <Link
+                  to="/gis"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Map className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                  GIS Map
+                </Link>
                 <Link
                   to="/research"
                   className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"

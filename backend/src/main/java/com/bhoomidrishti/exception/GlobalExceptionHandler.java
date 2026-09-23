@@ -63,6 +63,11 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        return respond(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(LandRecordNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(LandRecordNotFoundException ex, HttpServletRequest request) {
         return respond(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);

@@ -23,4 +23,12 @@ public interface ResearchDocumentRepository
             @Param("landRecordId") UUID landRecordId,
             @Param("status") ResearchDocumentStatus status,
             Pageable pageable);
+
+    @Query("SELECT COUNT(d) FROM ResearchDocument d JOIN d.linkedLandRecords lr WHERE lr.id = :landRecordId")
+    long countByLinkedLandRecordId(@Param("landRecordId") UUID landRecordId);
+
+    @Query("SELECT COUNT(d) FROM ResearchDocument d JOIN d.linkedLandRecords lr WHERE lr.id = :landRecordId AND d.status = :status")
+    long countByLinkedLandRecordIdAndStatus(
+            @Param("landRecordId") UUID landRecordId,
+            @Param("status") ResearchDocumentStatus status);
 }
