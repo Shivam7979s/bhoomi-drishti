@@ -74,9 +74,122 @@ A `PolicyScenario` belongs to a `Project` (which in turn belongs to a `Workspace
 
 ---
 
-## 4. Next Sub-Phases Roadmap
+---
 
-- **Phase 8B**: PostGIS policy simulation engine (SQL aggregation service for baseline and scenario impact calculations).
+## 4. PostGIS Policy Simulation Engine (Phase 8B)
+
+> [!IMPORTANT]
+> **Deterministic Analysis Notice:**
+> This engine performs deterministic analysis over available land-record data. It does not predict future outcomes or recommend policy decisions.
+
+### Architecture & Service API
+
+The simulation engine is implemented by `PolicySimulationService` and backed by `PolicySimulationQueryRepository`:
+
+```java
+ScenarioResultResponse executeScenario(UUID scenarioId, Authentication auth);
+ScenarioResultResponse executeScenario(UUID scenarioId, UUID executedById);
+ScenarioResultResponse executeScenario(UUID scenarioId, User executedBy);
+```
+
+### Execution Lifecycle Pipeline
+
+The simulation follows a strict deterministic pipeline:
+
+```
+PolicyScenario (DRAFT / COMPLETED)
+       ↓
+1. Validate scenario exists and is not ARCHIVED
+       ↓
+2. Verify project authorization (contribute / lead access)
+       ↓
+3. Validate ScenarioParameter completeness and domain invariants
+       ↓
+4. Transition scenario status to RUNNING
+       ↓
+5. Resolve eligible candidate parcels via PostGIS queries
+       ↓
+6. Compute baseline metrics (area, count, dispute exposure)
+       ↓
+7. Apply deterministic transformation (stable parcel order)
+       ↓
+8. Compute simulated distributions (land use, ownership)
+       ↓
+9. Persist ScenarioResult (flushed to satisfy foreign keys)
+       ↓
+10. Persist ScenarioAffectedParcel snapshots
+       ↓
+11. Mark scenario status COMPLETED
+```
+
+If an error or domain validation exception occurs, the transaction rolls back cleanly, ensuring no orphaned `scenario_results` or `scenario_affected_parcels` rows exist and the scenario status is not permanently left in `RUNNING`.
+
+---
+
+## 5. Deterministic Rules by Scenario Type
+
+1. **`LAND_USE_CONVERSION`**:
+   - Eligible parcels are filtered by administrative boundaries (`state`, `district`, `tehsil`, `village`), `source_land_use`, and optional geometry.
+   - Stable deterministic selection: parcels ordered by `lr.parcel_number ASC, lr.id ASC`.
+   - Affected count rule: $\lfloor \text{candidateCount} \times \frac{\text{conversionPercentage}}{100} \rfloor$.
+   - Selected parcels receive `simulated_land_use = targetLandUse`.
+   - Unaffected parcels remain unchanged.
+   - **Crucial Rule:** The simulation never mutates actual `land_records.land_use_type`.
+
+2. **`LAND_CEILING_REDISTRIBUTION`**:
+   - Evaluates parcels against `max_ownership_area`.
+   - Current system is parcel-centric: parcel-level ceiling analysis is conducted.
+   - Identifies all parcels where $\text{landAreaSqMeters} > \text{maxOwnershipArea}$.
+   - Measures surplus and affected records without inventing artificial beneficiaries or distribution targets.
+
+3. **`DISPUTE_RISK_ASSESSMENT`**:
+   - Evaluates existing recorded dispute vulnerability using `status = 'DISPUTED'`.
+   - Computes deterministic dispute rate and disputed area exposure.
+   - Non-predictive: reports existing recorded vulnerability without claiming to predict future litigation.
+
+4. **`CORRIDOR_BUFFER_INTERVENTION`**:
+   - Requires valid `intervention_geometry` and non-negative `buffer_distance_meters`.
+   - PostGIS geography-aware spatial query:
+     ```sql
+     ST_DWithin(
+         lr.boundary::geography,
+         ST_SetSRID(ST_GeomFromText(?, 4326), 4326)::geography,
+         buffer_distance_meters
+     )
+     ```
+   - Accurately interprets buffer distance in meters across ellipsoidal coordinates.
+
+5. **`PROJECT_PARCEL_EVALUATION`**:
+   - Evaluates parcels strictly linked to the scenario's project via `project_land_records`.
+   - Multi-tenant security ensures a project scenario cannot inspect parcels outside its authorized project boundary.
+
+---
+
+## 6. Persisted Metrics & Privacy
+
+### Persisted Metric Definitions
+
+- `totalParcelsEvaluated`: Count of candidate parcels matching scenario scope.
+- `totalParcelsAffected`: Count of parcels transformed or exceeding criteria.
+- `totalAreaAffectedSqm`: Sum of `land_area_sq_meters` of affected parcels (scale 2).
+- `baselineAreaSqm`: Total evaluated baseline area (scale 2).
+- `simulatedAreaSqm`: Simulated total land area (scale 2).
+- `disputedParcelsCount`: Count of parcels with `status = 'DISPUTED'` in evaluation scope.
+- `disputedAreaSqm`: Disputed area in square meters.
+- `landUseDistributionJson`: Categorical breakdown `{"AGRICULTURAL": {"parcelCount": N, "areaSqMeters": X}, ...}`.
+- `ownershipDistributionJson`: Categorical breakdown by `OwnershipType`.
+- `spatialSummaryJson`: Spatial bounding box (`minLon`, `minLat`, `maxLon`, `maxLat`) and execution metadata.
+
+### Privacy Guarantees
+
+- `ScenarioResult` and `ScenarioAffectedParcel` tables store **ZERO owner personal data**.
+- Fields `owner_name` and `owner_identifier` are never included in JSON summaries or snapshot tables.
+- Reruns create new versioned `ScenarioResult` snapshots without corrupting prior execution runs.
+
+---
+
+## 7. Next Sub-Phases Roadmap
+
 - **Phase 8C**: Evidence & provenance linking service (linking Phase 5 vector chunks and citations).
 - **Phase 8D**: Scenario comparison engine and REST API endpoints.
 - **Phase 8E**: Frontend scenario workspace (builder form, KPI cards, Leaflet map overlays, comparison charts).
