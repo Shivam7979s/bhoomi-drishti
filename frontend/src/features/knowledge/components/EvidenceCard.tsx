@@ -1,13 +1,17 @@
 import {
   BookOpen,
   Calendar,
+  Check,
+  Bookmark,
   ExternalLink,
   FileText,
   MapPin,
   Sparkles,
   User,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { EvidenceItem } from '../types/knowledge';
+import { saveResearch } from '../../collaboration/services/collaborationService';
 
 interface EvidenceCardProps {
   evidence: EvidenceItem;
@@ -16,6 +20,28 @@ interface EvidenceCardProps {
 
 export function EvidenceCard({ evidence, onSelect }: EvidenceCardProps) {
   const similarityPercent = Math.round(evidence.similarity * 100);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSaveEvidence = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSaving || saved) return;
+    setIsSaving(true);
+    try {
+      await saveResearch({
+        title: `${evidence.documentTitle} (Evidence)`,
+        documentChunkId: evidence.chunkId,
+        researchDocumentId: evidence.documentId,
+        notes: evidence.sectionTitle ? `Section: ${evidence.sectionTitle}` : undefined,
+        tags: evidence.documentType,
+      });
+      setSaved(true);
+    } catch (err) {
+      console.error('Failed to save evidence:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   function getSimilarityBadgeClass(score: number) {
     if (score >= 0.8) {
@@ -136,13 +162,39 @@ export function EvidenceCard({ evidence, onSelect }: EvidenceCardProps) {
           )}
         </div>
 
-        <button
-          onClick={() => onSelect(evidence)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-teal-600 hover:text-teal-800 transition"
-        >
-          <BookOpen className="h-3.5 w-3.5" />
-          <span>Inspect Provenance</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSaveEvidence}
+            disabled={isSaving}
+            className={`inline-flex items-center gap-1 text-xs font-medium transition ${
+              saved
+                ? 'text-emerald-600 font-semibold'
+                : 'text-slate-500 hover:text-emerald-700'
+            }`}
+            title="Save this evidence chunk to your research workspace"
+          >
+            {saved ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Saved</span>
+              </>
+            ) : (
+              <>
+                <Bookmark className="h-3.5 w-3.5" />
+                <span>Save</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => onSelect(evidence)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-teal-600 hover:text-teal-800 transition"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            <span>Inspect Provenance</span>
+          </button>
+        </div>
       </div>
     </div>
   );

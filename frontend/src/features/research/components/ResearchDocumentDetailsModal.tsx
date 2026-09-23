@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import {
   AlertCircle,
+  Bookmark,
   CheckCircle2,
   Edit2,
   ExternalLink,
   FileDown,
+  FolderPlus,
   Link as LinkIcon,
   Loader2,
   MapPin,
@@ -18,6 +20,10 @@ import {
   linkLandRecord,
   unlinkLandRecord,
 } from '../services/researchService';
+import {
+  saveResearch,
+  linkResearchDocument,
+} from '../../collaboration/services/collaborationService';
 import {
   getProcessingStatus,
   triggerIngest,
@@ -60,6 +66,67 @@ export function ResearchDocumentDetailsModal({
     useState<DocumentProcessingStatus | null>(null);
   const [isIngesting, setIsIngesting] = useState<boolean>(false);
   const [ingestSuccess, setIngestSuccess] = useState<string | null>(null);
+
+  // Phase 7 Collaboration integration
+  const [isSavingResearch, setIsSavingResearch] = useState(false);
+  const [researchSaved, setResearchSaved] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveNotes, setSaveNotes] = useState('');
+  const [saveTags, setSaveTags] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [showLinkProjectModal, setShowLinkProjectModal] = useState(false);
+  const [targetProjectId, setTargetProjectId] = useState('');
+  const [targetProjectNotes, setTargetProjectNotes] = useState('');
+  const [isLinkingProject, setIsLinkingProject] = useState(false);
+  const [linkProjectMsg, setLinkProjectMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  async function handleSaveResearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!doc) return;
+    setIsSavingResearch(true);
+    setSaveError(null);
+    try {
+      await saveResearch({
+        title: doc.title,
+        researchDocumentId: doc.id,
+        notes: saveNotes.trim() || undefined,
+        tags: saveTags.trim() || undefined,
+      });
+      setResearchSaved(true);
+      setShowSaveModal(false);
+      setSaveNotes('');
+      setSaveTags('');
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to bookmark research');
+    } finally {
+      setIsSavingResearch(false);
+    }
+  }
+
+  async function handleLinkProjectSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!doc || !targetProjectId.trim()) return;
+    setIsLinkingProject(true);
+    setLinkProjectMsg(null);
+    try {
+      await linkResearchDocument(targetProjectId.trim(), {
+        researchDocumentId: doc.id,
+        relevanceNotes: targetProjectNotes.trim() || undefined,
+      });
+      setLinkProjectMsg({ type: 'success', text: 'Document successfully linked to project!' });
+      setTimeout(() => {
+        setShowLinkProjectModal(false);
+        setLinkProjectMsg(null);
+        setTargetProjectId('');
+        setTargetProjectNotes('');
+      }, 1500);
+    } catch (err: any) {
+      setLinkProjectMsg({ type: 'error', text: err?.message || 'Failed to link document to project' });
+    } finally {
+      setIsLinkingProject(false);
+    }
+  }
 
   useEffect(() => {
     if (!isOpen || !doc) {
@@ -504,6 +571,30 @@ export function ResearchDocumentDetailsModal({
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSaveModal(true)}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold shadow-xs transition ${
+                  researchSaved
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-emerald-700'
+                }`}
+                title="Save this document to your personal research bookmarks"
+              >
+                <Bookmark className="h-3.5 w-3.5" />
+                {researchSaved ? 'Saved' : 'Save Research'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowLinkProjectModal(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-emerald-700 transition"
+                title="Link this research document to a collaboration project"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+                Link to Project
+              </button>
+
               {canEdit && onEdit && (
                 <button
                   type="button"
@@ -528,6 +619,137 @@ export function ResearchDocumentDetailsModal({
           </div>
         </div>
       </div>
+
+      {/* Save Research Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-left border border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Bookmark className="h-4 w-4 text-emerald-600" />
+              Save to Research Bookmarks
+            </h3>
+            <p className="mt-1 text-xs text-slate-500 line-clamp-1">
+              {doc.title}
+            </p>
+
+            {saveError && (
+              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
+                {saveError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveResearchSubmit} className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Personal Notes</label>
+                <textarea
+                  rows={3}
+                  value={saveNotes}
+                  onChange={(e) => setSaveNotes(e.target.value)}
+                  placeholder="Key insights, citations, relevance to study..."
+                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Tags (comma-separated)</label>
+                <input
+                  type="text"
+                  value={saveTags}
+                  onChange={(e) => setSaveTags(e.target.value)}
+                  placeholder="e.g. land-reform, spatial-planning, tenure"
+                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSaveModal(false)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingResearch}
+                  className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {isSavingResearch ? 'Saving...' : 'Save Bookmark'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Link to Project Modal */}
+      {showLinkProjectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-left border border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <FolderPlus className="h-4 w-4 text-emerald-600" />
+              Link Research Document to Project
+            </h3>
+            <p className="mt-1 text-xs text-slate-500 line-clamp-1">
+              {doc.title}
+            </p>
+
+            {linkProjectMsg && (
+              <div
+                className={`mt-3 rounded-lg p-2.5 text-xs font-medium ${
+                  linkProjectMsg.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {linkProjectMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleLinkProjectSubmit} className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Project ID (UUID) *</label>
+                <input
+                  type="text"
+                  required
+                  value={targetProjectId}
+                  onChange={(e) => setTargetProjectId(e.target.value)}
+                  placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
+                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Relevance Notes</label>
+                <textarea
+                  rows={2}
+                  value={targetProjectNotes}
+                  onChange={(e) => setTargetProjectNotes(e.target.value)}
+                  placeholder="Why this document is relevant to the project..."
+                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkProjectModal(false)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLinkingProject || !targetProjectId.trim()}
+                  className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {isLinkingProject ? 'Linking...' : 'Confirm Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <LinkLandRecordModal
         isOpen={isLinkModalOpen}

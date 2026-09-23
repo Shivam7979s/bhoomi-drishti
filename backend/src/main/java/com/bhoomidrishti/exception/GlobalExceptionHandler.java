@@ -78,6 +78,11 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+        return respond(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(AiServiceUnavailableException.class)
     public ResponseEntity<ApiError> handleAiServiceUnavailable(AiServiceUnavailableException ex, HttpServletRequest request) {
         return respond(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request, null);

@@ -1,4 +1,4 @@
-import { BookOpen, LogIn, LogOut, Map, MapPinned, Sparkles, UserRound } from 'lucide-react';
+import { BookOpen, Bookmark, FolderKanban, LogIn, LogOut, Map, MapPinned, Sparkles, UserRound } from 'lucide-react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
@@ -57,7 +57,21 @@ export function MainLayout() {
                   className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                 >
                   <Sparkles className="h-4 w-4 text-teal-600" aria-hidden="true" />
-                  Knowledge Search
+                  Knowledge
+                </Link>
+                <Link
+                  to="/workspaces"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <FolderKanban className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+                  Workspaces
+                </Link>
+                <Link
+                  to="/saved-research"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Bookmark className="h-4 w-4 text-amber-600" aria-hidden="true" />
+                  Saved
                 </Link>
                 <Link
                   to="/profile"
@@ -96,7 +110,14 @@ export function MainLayout() {
                   className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                 >
                   <Sparkles className="h-4 w-4 text-teal-600" aria-hidden="true" />
-                  Knowledge Search
+                  Knowledge
+                </Link>
+                <Link
+                  to="/workspaces"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <FolderKanban className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+                  Workspaces
                 </Link>
                 <Link
                   to="/login"

@@ -9,6 +9,10 @@ import { LandRecordsPage } from './features/land-records/pages/LandRecordsPage';
 import { ResearchHubPage } from './features/research/pages/ResearchHubPage';
 import { KnowledgeSearchPage } from './features/knowledge/pages/KnowledgeSearchPage';
 import { GisDashboardPage } from './features/gis/pages/GisDashboardPage';
+import { WorkspacesPage } from './features/collaboration/pages/WorkspacesPage';
+import { WorkspaceDashboardPage } from './features/collaboration/pages/WorkspaceDashboardPage';
+import { ProjectDetailsPage } from './features/collaboration/pages/ProjectDetailsPage';
+import { SavedResearchPage } from './features/collaboration/pages/SavedResearchPage';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -21,6 +25,17 @@ export default function App() {
           <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="/gis" element={<GisDashboardPage />} />
+            <Route path="/workspaces" element={<WorkspacesPage />} />
+            <Route path="/workspaces/:idOrSlug" element={<WorkspaceDashboardPage />} />
+            <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+            <Route
+              path="/saved-research"
+              element={
+                <ProtectedRoute>
+                  <SavedResearchPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />

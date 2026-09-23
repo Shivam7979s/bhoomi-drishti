@@ -13,12 +13,14 @@ import {
   Layers,
   Search,
   BookOpen,
+  FolderKanban,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { GeoJsonFeature } from '../types/gis';
 import { LAND_USE_CONFIG } from '../utils/landUseStyles';
 import { getLinkedResearchDocuments } from '../../research/services/researchService';
 import { searchKnowledge } from '../../knowledge/services/knowledgeService';
+import { linkLandRecord } from '../../collaboration/services/collaborationService';
 import type { ResearchDocument } from '../../research/types/research';
 import type { EvidenceItem } from '../../knowledge/types/knowledge';
 
@@ -44,6 +46,37 @@ export function ParcelDetailsDrawer({
   const [evidenceList, setEvidenceList] = useState<EvidenceItem[]>([]);
   const [loadingEvidence, setLoadingEvidence] = useState(false);
   const [evidenceQuery, setEvidenceQuery] = useState('');
+
+  // Link to Project state
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [projectIdInput, setProjectIdInput] = useState('');
+  const [projectNotesInput, setProjectNotesInput] = useState('');
+  const [linkingProject, setLinkingProject] = useState(false);
+  const [linkProjectMsg, setLinkProjectMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  async function handleLinkToProject(e: React.FormEvent) {
+    e.preventDefault();
+    if (!feature || !projectIdInput.trim()) return;
+    setLinkingProject(true);
+    setLinkProjectMsg(null);
+    try {
+      await linkLandRecord(projectIdInput.trim(), {
+        landRecordId: feature.id,
+        contextNotes: projectNotesInput.trim() || undefined,
+      });
+      setLinkProjectMsg({ type: 'success', text: 'Parcel linked to project successfully!' });
+      setTimeout(() => {
+        setShowLinkModal(false);
+        setLinkProjectMsg(null);
+        setProjectIdInput('');
+        setProjectNotesInput('');
+      }, 1500);
+    } catch (err: any) {
+      setLinkProjectMsg({ type: 'error', text: err?.message || 'Failed to link parcel' });
+    } finally {
+      setLinkingProject(false);
+    }
+  }
 
   useEffect(() => {
     if (!feature) return;
@@ -258,6 +291,28 @@ export function ParcelDetailsDrawer({
                   <span className="text-slate-400">Village:</span>
                   <p className="font-medium text-slate-800">{props.village}</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Collaborative Research Action */}
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                    Collaborative Research
+                  </h4>
+                  <p className="mt-0.5 text-xs text-slate-600">
+                    Attach this cadastral parcel to a research workspace project.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                >
+                  <FolderKanban className="h-3.5 w-3.5" />
+                  Link to Project
+                </button>
               </div>
             </div>
 
@@ -487,6 +542,72 @@ export function ParcelDetailsDrawer({
           </div>
         )}
       </div>
+
+      {/* Link to Project Modal */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-left">
+            <h3 className="text-base font-bold text-slate-900">Link Parcel to Project</h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Attach parcel <span className="font-semibold text-slate-800">{props.parcelNumber}</span> to a collaboration project.
+            </p>
+
+            {linkProjectMsg && (
+              <div
+                className={`mt-3 rounded-lg p-2.5 text-xs font-medium ${
+                  linkProjectMsg.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {linkProjectMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleLinkToProject} className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Project ID (UUID) *</label>
+                <input
+                  type="text"
+                  required
+                  value={projectIdInput}
+                  onChange={(e) => setProjectIdInput(e.target.value)}
+                  placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
+                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700">Context Notes</label>
+                <textarea
+                  rows={2}
+                  value={projectNotesInput}
+                  onChange={(e) => setProjectNotesInput(e.target.value)}
+                  placeholder="Observations, legal dispute risk, boundary audit..."
+                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(false)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={linkingProject || !projectIdInput.trim()}
+                  className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {linkingProject ? 'Linking...' : 'Confirm Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

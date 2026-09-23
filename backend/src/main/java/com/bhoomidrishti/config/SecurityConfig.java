@@ -100,6 +100,23 @@ public class SecurityConfig {
                         // Open to all callers; GisService strictly enforces ACTIVE-only and redacts owner PII for public.
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/gis/**")
                                 .permitAll()
+                        // Phase 7: Collaboration & Research Workspace Layer.
+                        // Anonymous GET is permitted for public workspaces/projects (services enforce PUBLIC visibility and redact emails/PII).
+                        // Writes, updates, deletes, ownership transfer, and saved research require authentication.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/workspaces",
+                                "/api/workspaces/*",
+                                "/api/workspaces/*/members",
+                                "/api/workspaces/*/projects",
+                                "/api/workspaces/*/datasets",
+                                "/api/projects/*",
+                                "/api/projects/*/members",
+                                "/api/projects/*/land-records",
+                                "/api/projects/*/research-documents",
+                                "/api/projects/*/datasets",
+                                "/api/projects/*/comments",
+                                "/api/datasets/*")
+                                .permitAll()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.
                         .anyRequest().authenticated())
