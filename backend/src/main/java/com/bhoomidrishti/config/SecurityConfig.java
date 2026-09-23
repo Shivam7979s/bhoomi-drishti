@@ -77,6 +77,8 @@ public class SecurityConfig {
                         // Phase 4: Research Hub.
                         // Public access is strictly limited to GET operations (service enforces PUBLISHED only for public).
                         // Writes, updates, deletes, and linking endpoints require authentication and RBAC.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/research-documents/*/processing-status")
+                                .authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/research-documents", "/api/research-documents/**")
                                 .permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/land-records/*/research-documents")
@@ -86,6 +88,13 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/research-documents/**")
                                 .authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/research-documents/**")
+                                .authenticated()
+                        // Phase 5: AI Knowledge & Evidence Layer.
+                        // Semantic search is open to all callers (service strictly enforces PUBLISHED-only for public).
+                        // Ingestion triggers require authenticated roles; status reading is authenticated.
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/knowledge/search")
+                                .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/research-documents/*/ingest")
                                 .authenticated()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.

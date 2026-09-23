@@ -91,6 +91,13 @@ app:
     # Where the Google callback sends the browser after sign-in.
     frontend-base-url: http://localhost:${FRONTEND_PORT:5173}
 
+  # Phase 5: Internal AI service connection settings
+  ai-service:
+    url: ${AI_SERVICE_URL:http://localhost:8000}
+    secret: ${AI_SERVICE_SECRET:dev_ai_internal_secret_bhoomi_drishti}
+    connect-timeout-ms: 3000
+    read-timeout-ms: 30000
+
 logging:
   level:
     root: INFO

@@ -289,7 +289,7 @@ The check has a 5 second timeout and never throws into the UI, so the page alway
 | **2** | Domain foundation: authentication, JWT, RBAC, user/role entities, Google OAuth2 integration | **Completed** |
 | **3** | Land record management with PostGIS geometry (SRID 4326), GiST index, and spatial queries (`ST_Intersects`, `ST_Contains`) | **Completed** |
 | **4** | Research hub: documents, datasets, policy circulars, multi-criteria filtering, full-text search, and land parcel linkage | **Completed** |
-| 5     | AI service: document understanding, embeddings, RAG assistant                                       | Not started |
+| **5** | AI Knowledge & Evidence Layer: FastEmbed (`BAAI/bge-small-en-v1.5`, 384d), pgvector HNSW cosine index, SSRF-safe ingestion, semantic search with academic citations | **Completed** |
 | 6     | GIS dashboard (Recharts + map layers) and policy simulation                                          | Not started |
 | 7     | Collaboration, innovation portal and external API integrations                                        | Not started |
 

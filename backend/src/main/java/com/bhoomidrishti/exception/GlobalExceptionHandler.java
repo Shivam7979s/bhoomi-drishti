@@ -73,6 +73,16 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(AiServiceUnavailableException.class)
+    public ResponseEntity<ApiError> handleAiServiceUnavailable(AiServiceUnavailableException ex, HttpServletRequest request) {
+        return respond(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(DuplicateIngestionException.class)
+    public ResponseEntity<ApiError> handleDuplicateIngestion(DuplicateIngestionException ex, HttpServletRequest request) {
+        return respond(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleDuplicateEmail(EmailAlreadyExistsException ex, HttpServletRequest request) {
         return respond(HttpStatus.CONFLICT, ex.getMessage(), request, null);
