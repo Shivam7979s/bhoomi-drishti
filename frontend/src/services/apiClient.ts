@@ -32,7 +32,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method: 'GET' | 'POST';
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: unknown;
   timeoutMs?: number;
 }
@@ -97,4 +97,29 @@ export function getJson<T>(path: string, timeoutMs: number = DEFAULT_TIMEOUT_MS)
 /** Sends a JSON POST body and parses the JSON response (aborted after `timeoutMs`). */
 export function postJson<T>(path: string, body?: unknown, timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<T> {
   return apiRequest<T>(path, { method: 'POST', body, timeoutMs });
+}
+
+/** Sends a JSON PUT body and parses the JSON response (aborted after `timeoutMs`). */
+export function putJson<T>(path: string, body?: unknown, timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<T> {
+  return apiRequest<T>(path, { method: 'PUT', body, timeoutMs });
+}
+
+/** Sends a DELETE request and parses the JSON response (aborted after `timeoutMs`). */
+export function deleteJson<T>(path: string, timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<T> {
+  return apiRequest<T>(path, { method: 'DELETE', timeoutMs });
+}
+
+/** GET with query-string construction from a record of params. */
+export function getJsonWithParams<T>(
+  path: string,
+  params: Record<string, string | number | undefined>,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+): Promise<T> {
+  const qp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== '') qp.append(k, String(v));
+  }
+  const qs = qp.toString();
+  const full = qs ? `${path}?${qs}` : path;
+  return getJson<T>(full, timeoutMs);
 }

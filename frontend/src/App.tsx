@@ -5,6 +5,7 @@ import { AuthCallbackPage } from './features/auth/pages/AuthCallbackPage';
 import { LoginPage } from './features/auth/pages/LoginPage';
 import { ProfilePage } from './features/auth/pages/ProfilePage';
 import { RegisterPage } from './features/auth/pages/RegisterPage';
+import { LandRecordsPage } from './features/land-records/pages/LandRecordsPage';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -19,6 +20,14 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route
+              path="/land-records"
+              element={
+                <ProtectedRoute>
+                  <LandRecordsPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile"
               element={

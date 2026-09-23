@@ -286,8 +286,8 @@ The check has a 5 second timeout and never throws into the UI, so the page alway
 | Phase | Focus                                                                                              | Status      |
 | ----- | -------------------------------------------------------------------------------------------------- | ----------- |
 | **1** | Project foundation: structure, frontend shell, `GET /api/health`, PostgreSQL + PostGIS, config, docs, tests | **Completed** |
-| 2     | Domain foundation: authentication, JWT, RBAC, user/role entities, first land-record persistence      | Not started |
-| 3     | Land record management with PostGIS geometry and spatial queries                                     | Not started |
+| **2** | Domain foundation: authentication, JWT, RBAC, user/role entities, Google OAuth2 integration | **Completed** |
+| **3** | Land record management with PostGIS geometry (SRID 4326), GiST index, and spatial queries (`ST_Intersects`, `ST_Contains`) | **Completed** |
 | 4     | Research hub: documents, datasets and policy documents                                               | Not started |
 | 5     | AI service: document understanding, embeddings, RAG assistant                                       | Not started |
 | 6     | GIS dashboard (Recharts + map layers) and policy simulation                                          | Not started |

@@ -25,17 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Central security policy for the whole API (Phase 2: authentication + RBAC).
- *
- * <p>Layers that cooperate: the URL rules below answer 401/403, the JWT filter populates the
- * {@code SecurityContext}, OAuth2 login handles the Google handshake, and the temporary test
- * endpoints additionally carry {@code @PreAuthorize} annotations.
- *
- * <p>CSRF is disabled because the API is stateless - each request authenticates through the signed
- * token itself, and the session cookie is {@code SameSite=Lax}, so cross-site writes never present
- * credentials. Full rationale: docs/architecture/authentication.md.
- */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -53,14 +42,10 @@ public class SecurityConfig {
             GoogleLoginFailureHandler failureHandler)
             throws Exception {
         http
-                // Stateless JWT session: no server-side session exists to protect.
                 .csrf(AbstractHttpConfigurer::disable)
-                // Applies the CorsConfigurationSource bean (explicit origins, credentials allowed).
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Open endpoints: health, email/password auth (logout is idempotent and
-                        // only clears a cookie), the Google handshake and the Phase 2 test page.
                         .requestMatchers(
                                 "/api/health",
                                 "/api/auth/register",
@@ -80,6 +65,15 @@ public class SecurityConfig {
                                 .hasAnyRole(Role.RESEARCHER.name(), Role.ACADEMIA.name(), Role.ADMIN.name())
                         .requestMatchers("/api/auth/me", "/api/test/authenticated")
                                 .authenticated()
+                        // Phase 3: land records. Anyone signed in can read/search/spatial-query;
+                        // only GOVERNMENT_OFFICIAL and ADMIN can create or modify; DELETE is ADMIN-only.
+                        // These URL rules are backed by @PreAuthorize annotations on the controller.
+                        .requestMatchers("/api/land-records/spatial/**")
+                                .authenticated()
+                        .requestMatchers("/api/land-records/{id}")
+                                .authenticated()
+                        .requestMatchers("/api/land-records")
+                                .authenticated()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.
                         .anyRequest().authenticated())
@@ -87,28 +81,23 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .oauth2Login(oauth -> oauth
-                        // Google is OpenID Connect: the OIDC user service is the hook that
-                        // finds/creates the local account while the callback is processed.
-                        .userInfoEndpoint(endpoint -> endpoint.oidcUserService(googleOidcUserService))
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(googleOidcUserService))
                         .successHandler(successHandler)
                         .failureHandler(failureHandler))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
-    /** Hashes local passwords (strength 10 by default) and verifies them at login. */
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Exposed for email/password login and tests. Spring Security 7 no longer auto-configures an
-     * {@code AuthenticationManager}, so it is assembled from the user details service explicitly.
-     */
     @Bean
     AuthenticationManager authenticationManager(
-            UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(provider);

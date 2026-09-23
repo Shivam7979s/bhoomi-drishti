@@ -42,9 +42,30 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.BAD_REQUEST, "Validation failed", request, fieldErrors);
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> handleUnreadableBody(HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            org.springframework.http.converter.HttpMessageConversionException.class
+    })
+    public ResponseEntity<ApiError> handleUnreadableBody(Exception ex, HttpServletRequest request) {
+        Throwable cause = ex.getCause();
+        while (cause != null) {
+            if (cause instanceof InvalidGeometryException ige) {
+                return respond(HttpStatus.BAD_REQUEST, ige.getMessage(), request, null);
+            }
+            cause = cause.getCause();
+        }
         return respond(HttpStatus.BAD_REQUEST, "Request body is missing or malformed", request, null);
+    }
+
+    @ExceptionHandler(InvalidGeometryException.class)
+    public ResponseEntity<ApiError> handleInvalidGeometry(InvalidGeometryException ex, HttpServletRequest request) {
+        return respond(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(LandRecordNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(LandRecordNotFoundException ex, HttpServletRequest request) {
+        return respond(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)

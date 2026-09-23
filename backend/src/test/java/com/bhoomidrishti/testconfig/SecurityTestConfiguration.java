@@ -40,6 +40,7 @@ import org.springframework.context.annotation.Import;
     GoogleLoginSuccessHandler.class,
     GoogleLoginFailureHandler.class,
     AuthService.class,
-    HealthService.class
+    HealthService.class,
+    com.bhoomidrishti.landrecord.config.GeoJsonGeometryConverter.class
 })
 public class SecurityTestConfiguration {}
