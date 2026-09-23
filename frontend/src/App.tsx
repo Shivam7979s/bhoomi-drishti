@@ -6,6 +6,7 @@ import { LoginPage } from './features/auth/pages/LoginPage';
 import { ProfilePage } from './features/auth/pages/ProfilePage';
 import { RegisterPage } from './features/auth/pages/RegisterPage';
 import { LandRecordsPage } from './features/land-records/pages/LandRecordsPage';
+import { ResearchHubPage } from './features/research/pages/ResearchHubPage';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -28,6 +29,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/research" element={<ResearchHubPage />} />
             <Route
               path="/profile"
               element={

@@ -74,6 +74,19 @@ public class SecurityConfig {
                                 .authenticated()
                         .requestMatchers("/api/land-records")
                                 .authenticated()
+                        // Phase 4: Research Hub.
+                        // Public access is strictly limited to GET operations (service enforces PUBLISHED only for public).
+                        // Writes, updates, deletes, and linking endpoints require authentication and RBAC.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/research-documents", "/api/research-documents/**")
+                                .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/land-records/*/research-documents")
+                                .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/research-documents/**")
+                                .authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/research-documents/**")
+                                .authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/research-documents/**")
+                                .authenticated()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.
                         .anyRequest().authenticated())
