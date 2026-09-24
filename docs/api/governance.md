@@ -68,6 +68,7 @@ Phase 9A and Phase 9B.1 establish the **Governance Indicator Foundation & Query 
 | `GET` | `/api/governance/snapshots/{snapshotId}/evidence` | Role / Member | List linked evidence items with provenance and chunk texts |
 | `POST` | `/api/governance/snapshots/{snapshotId}/evidence` | Authorized Official / Contributor | Link statutory / policy evidence or document chunk to a snapshot |
 | `DELETE` | `/api/governance/snapshots/{snapshotId}/evidence/{evidenceId}` | Authorized Official / Contributor | Remove an evidence linkage from a snapshot |
+| `POST` | `/api/governance/compare` | Public / Role / Member | Deterministic temporal comparison between two audit snapshots or between a snapshot and current LIVE state |
 
 ---
 
@@ -275,3 +276,148 @@ Phase 9B.4 bridges the live governance analytics dashboard with statutory legal 
    - `GovernanceEvidenceLinkModal`: Modal to link statutory circulars, policy frameworks, and audit precedents to snapshots with explicit rationale and citation references.
    - `GovernanceSnapshotAuditList`: Historical audit snapshot archive table embedded below the live dashboard, displaying frozen values, timestamps, visibility badges, and evidence count.
    - `ProjectGovernanceSnapshotsTab`: Dedicated Governance tab in project workspaces (`/workspaces/:workspaceId/projects/:projectId`), allowing project contributors to capture project-scoped baselines and link statutory legal dossiers.
+
+---
+
+## 8. Temporal Governance Audit Comparison API (Phase 9B.5.2)
+
+### 8.1 Purpose & Execution Modes
+
+The Temporal Governance Comparison API enables deterministic, purely descriptive comparative analysis between historical audit milestones or against real-time cadastral ground truth:
+
+1. **Mode A — Snapshot vs Snapshot**:
+   - Compares two persisted, immutable governance snapshots across time.
+   - Automatically orders milestones chronologically (`baseline` = earlier timestamp, `target` = later timestamp).
+   - Flags `chronologicalReversal = true` if the caller supplied them in reverse order.
+   - Flags `calculationVersionMismatch = true` if the underlying methodology version differs.
+   - Evaluates factual statutory evidence deltas (`COMMON`, `ADDED`, `REMOVED`).
+
+2. **Mode B — Snapshot vs LIVE**:
+   - Compares a historical audit baseline snapshot directly against real-time cadastral aggregations.
+   - Evaluates the current indicator query on-the-fly (`target.isLive = true`, `target.snapshotId = null`).
+   - Guarantees **zero database mutation**: no synthetic snapshots or evidence records are persisted.
+
+---
+
+### 8.2 Security & Authorization Architecture
+
+- **HTTP Filter Level (`SecurityConfig`)**:
+  - `POST /api/governance/compare` is configured with `.permitAll()` to allow public analytical evaluation of openly published governance metrics without mandatory credentials.
+- **Service-Level Security Authority (`GovernanceComparisonService`)**:
+  - **Published Regional Snapshots**: Publicly accessible to external researchers and anonymous users.
+  - **Internal Regional Snapshots**: Strictly restricted to users with `GOVERNMENT_OFFICIAL` or `ADMIN` roles. Unauthorized requests return `404 Not Found`.
+  - **Project Snapshots**: Access is governed strictly by `CollaborationSecurityService`. Unauthorized requests to private/member-only projects return `404 Not Found`.
+  - **Anti-IDOR Protection**: Unauthorized target or baseline snapshots return `404 Not Found`, completely concealing the existence of private projects and internal administrative records.
+  - **Security Precedence**: Authorization checks precede semantic compatibility evaluation. If a caller lacks access to Project B, the request fails with `404 Not Found` (never disclosing Project B existence via a 400 Bad Request).
+  - **Read-Only Invariant**: The service is `@Transactional(readOnly = true)`. Zero `INSERT`, `UPDATE`, or `DELETE` operations are executed during comparison.
+
+---
+
+### 8.3 Request Payloads
+
+#### Mode A: Snapshot vs Snapshot
+```json
+{
+  "baselineSnapshotId": "b6110000-0000-0000-0000-000000000001",
+  "targetSnapshotId": "b6110000-0000-0000-0000-000000000002",
+  "compareToLive": false
+}
+```
+
+#### Mode B: Snapshot vs LIVE
+```json
+{
+  "baselineSnapshotId": "b6110000-0000-0000-0000-000000000001",
+  "targetSnapshotId": null,
+  "compareToLive": true
+}
+```
+
+---
+
+### 8.4 Response Payload (`GovernanceComparisonResponse`)
+
+```json
+{
+  "indicatorCode": "ACTIVE_PARCEL_COUNT",
+  "indicatorName": "Active Cadastral Parcel Count",
+  "category": "STATUS_DISTRIBUTION",
+  "unit": "COUNT",
+  "scopeType": "DISTRICT",
+  "state": "Madhya Pradesh",
+  "district": "Bhopal",
+  "tehsil": null,
+  "village": null,
+  "projectId": null,
+  "baseline": {
+    "snapshotId": "b6110000-0000-0000-0000-000000000001",
+    "asOf": "2026-01-01T00:00:00Z",
+    "numericValue": 100.0000,
+    "denominator": 1000.0000,
+    "calculationVersion": "1.0",
+    "isLive": false,
+    "evidenceCount": 2
+  },
+  "target": {
+    "snapshotId": "b6110000-0000-0000-0000-000000000002",
+    "asOf": "2026-07-01T00:00:00Z",
+    "numericValue": 150.0000,
+    "denominator": 1200.0000,
+    "calculationVersion": "1.0",
+    "isLive": false,
+    "evidenceCount": 2
+  },
+  "quantitativeVariance": {
+    "absoluteDelta": 50.0000,
+    "percentageChange": 50.0000,
+    "percentageChangeDefined": true,
+    "trendDirection": "NOT_DEFINED",
+    "denominatorDelta": 200.0000
+  },
+  "breakdownVariances": [
+    {
+      "key": "residential",
+      "baseValue": 60.0000,
+      "targetValue": 80.0000,
+      "delta": 20.0000,
+      "percentageChange": 33.3333,
+      "percentageChangeDefined": true,
+      "baseRaw": "60",
+      "targetRaw": "80"
+    }
+  ],
+  "evidenceDelta": {
+    "commonEvidenceCount": 1,
+    "addedEvidenceCount": 1,
+    "removedEvidenceCount": 1,
+    "commonEvidence": [ ... ],
+    "addedEvidence": [ ... ],
+    "removedEvidence": [ ... ]
+  },
+  "calculationVersionMismatch": false,
+  "elapsedDays": 181,
+  "chronologicalReversal": false
+}
+```
+
+*Key Contract Notes*:
+- `trendDirection`: Strictly fixed to `"NOT_DEFINED"` to maintain descriptive mathematical objectivity without subjective governance judgments.
+- Privacy Preservation: Milestone DTOs intentionally exclude internal user IDs, generator metadata, and landowner PII.
+
+---
+
+### 8.5 Errors & Validation Rules
+
+| HTTP Status | Condition | Example |
+|---|---|---|
+| `400 Bad Request` | Bean validation failure | Missing `baselineSnapshotId` |
+| `400 Bad Request` | Missing target parameter | `targetSnapshotId` null when `compareToLive` is false |
+| `400 Bad Request` | Self-comparison | `baselineSnapshotId.equals(targetSnapshotId)` |
+| `400 Bad Request` | Indicator mismatch | Comparing `ACTIVE_PARCEL_COUNT` with `DISPUTED_PARCEL_COUNT` |
+| `400 Bad Request` | Scope type mismatch | Comparing `DISTRICT` with `STATE` |
+| `400 Bad Request` | Geographic mismatch | Comparing `Bhopal` with `Indore` |
+| `400 Bad Request` | Project mismatch (Authorized) | Caller authorized for both Project A and Project B, but projects differ |
+| `404 Not Found` | Resource not found | Baseline or target snapshot UUID does not exist |
+| `404 Not Found` | Internal snapshot (Unauthorized) | Anonymous or non-official caller accessing `INTERNAL` snapshot |
+| `404 Not Found` | Private project (Unauthorized) | Caller is not an authorized member of the project (IDOR protection) |
+| `404 Not Found` | Cross-project (Unauthorized) | Caller cannot access Project B (Project B existence is concealed) |

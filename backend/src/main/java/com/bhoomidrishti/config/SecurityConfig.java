@@ -142,6 +142,9 @@ public class SecurityConfig {
                                 "/api/projects/*/governance-snapshots",
                                 "/api/governance/summary")
                                 .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST,
+                                "/api/governance/compare")
+                                .permitAll()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.
                         .anyRequest().authenticated())

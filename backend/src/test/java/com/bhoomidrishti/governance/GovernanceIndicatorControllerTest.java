@@ -45,7 +45,17 @@ import com.bhoomidrishti.governance.dto.GovernanceAdministrativeSummaryResponse;
 import com.bhoomidrishti.governance.dto.GovernanceScopeSummaryResponse;
 import com.bhoomidrishti.governance.dto.GovernanceSummaryIndicatorItemResponse;
 import com.bhoomidrishti.governance.entity.AggregationMethod;
+import com.bhoomidrishti.governance.dto.GovernanceComparisonRequest;
+import com.bhoomidrishti.governance.dto.GovernanceComparisonResponse;
+import com.bhoomidrishti.governance.dto.GovernanceEvidenceDeltaDTO;
+import com.bhoomidrishti.governance.dto.GovernanceMetricDeltaDTO;
+import com.bhoomidrishti.governance.dto.GovernanceMilestoneDTO;
+import com.bhoomidrishti.governance.service.GovernanceComparisonService;
 import com.bhoomidrishti.governance.service.GovernanceQueryService;
+import java.util.Collections;
+import org.mockito.ArgumentCaptor;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -67,6 +77,9 @@ class GovernanceIndicatorControllerTest {
 
     @MockitoBean
     private GovernanceQueryService governanceQueryService;
+
+    @MockitoBean
+    private GovernanceComparisonService governanceComparisonService;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -535,5 +548,174 @@ class GovernanceIndicatorControllerTest {
                         .param("scopeType", "PROJECT")
                         .param("projectId", projectId.toString()))
                 .andExpect(status().isNotFound());
+    }
+
+    // =========================================================================
+    // Comparison Endpoint WebMvc Tests (Phase 9B.5.2)
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST /api/governance/compare - Valid request returns 200 OK with GovernanceComparisonResponse")
+    void testCompareSnapshots_Valid_Returns200() throws Exception {
+        UUID snapshotA = UUID.randomUUID();
+        UUID snapshotB = UUID.randomUUID();
+
+        GovernanceMilestoneDTO milestoneA = new GovernanceMilestoneDTO(
+                snapshotA, Instant.parse("2026-01-01T00:00:00Z"),
+                new BigDecimal("100.0000"), new BigDecimal("1000.0000"),
+                "1.0", false, 2);
+
+        GovernanceMilestoneDTO milestoneB = new GovernanceMilestoneDTO(
+                snapshotB, Instant.parse("2026-06-01T00:00:00Z"),
+                new BigDecimal("150.0000"), new BigDecimal("1000.0000"),
+                "1.0", false, 3);
+
+        GovernanceMetricDeltaDTO metricDelta = new GovernanceMetricDeltaDTO(
+                new BigDecimal("50.0000"), new BigDecimal("50.0000"), true,
+                "NOT_DEFINED", BigDecimal.ZERO);
+
+        GovernanceEvidenceDeltaDTO evidenceDelta = new GovernanceEvidenceDeltaDTO(
+                1, 2, 1,
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        GovernanceComparisonResponse mockResponse = new GovernanceComparisonResponse(
+                "ACTIVE_PARCEL_COUNT",
+                "Active Parcel Count",
+                IndicatorCategory.STATUS_DISTRIBUTION,
+                IndicatorUnit.COUNT,
+                GovernanceScopeType.DISTRICT,
+                "Madhya Pradesh",
+                "Bhopal",
+                null,
+                null,
+                null,
+                milestoneA,
+                milestoneB,
+                metricDelta,
+                Collections.emptyList(),
+                evidenceDelta,
+                false,
+                151L,
+                false
+        );
+
+        when(governanceComparisonService.compareGovernanceSnapshots(any(GovernanceComparisonRequest.class), any()))
+                .thenReturn(mockResponse);
+
+        String json = """
+                {
+                    "baselineSnapshotId": "%s",
+                    "targetSnapshotId": "%s",
+                    "compareToLive": false
+                }
+                """.formatted(snapshotA, snapshotB);
+
+        mockMvc.perform(post("/api/governance/compare")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.indicatorCode").value("ACTIVE_PARCEL_COUNT"))
+                .andExpect(jsonPath("$.indicatorName").value("Active Parcel Count"))
+                .andExpect(jsonPath("$.baseline.snapshotId").value(snapshotA.toString()))
+                .andExpect(jsonPath("$.target.snapshotId").value(snapshotB.toString()))
+                .andExpect(jsonPath("$.quantitativeVariance.absoluteDelta").value(50.0))
+                .andExpect(jsonPath("$.quantitativeVariance.percentageChange").value(50.0))
+                .andExpect(jsonPath("$.quantitativeVariance.trendDirection").value("NOT_DEFINED"))
+                .andExpect(jsonPath("$.elapsedDays").value(151));
+    }
+
+    @Test
+    @DisplayName("POST /api/governance/compare - Missing baselineSnapshotId returns 400 Bad Request")
+    void testCompareSnapshots_MissingBaselineSnapshotId_Returns400() throws Exception {
+        String json = """
+                {
+                    "targetSnapshotId": "%s",
+                    "compareToLive": false
+                }
+                """.formatted(UUID.randomUUID());
+
+        mockMvc.perform(post("/api/governance/compare")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.baselineSnapshotId").value("baselineSnapshotId is required"));
+    }
+
+    @Test
+    @DisplayName("POST /api/governance/compare - Service IllegalArgumentException returns 400 Bad Request")
+    void testCompareSnapshots_SemanticError_Returns400() throws Exception {
+        when(governanceComparisonService.compareGovernanceSnapshots(any(GovernanceComparisonRequest.class), any()))
+                .thenThrow(new IllegalArgumentException("Cannot compare snapshots of different indicators: ACTIVE_PARCEL_COUNT vs DISPUTED_PARCEL_COUNT"));
+
+        String json = """
+                {
+                    "baselineSnapshotId": "%s",
+                    "targetSnapshotId": "%s",
+                    "compareToLive": false
+                }
+                """.formatted(UUID.randomUUID(), UUID.randomUUID());
+
+        mockMvc.perform(post("/api/governance/compare")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Cannot compare snapshots of different indicators: ACTIVE_PARCEL_COUNT vs DISPUTED_PARCEL_COUNT"));
+    }
+
+    @Test
+    @DisplayName("POST /api/governance/compare - Service ResourceNotFoundException returns 404 Not Found")
+    void testCompareSnapshots_NotFound_Returns404() throws Exception {
+        UUID missingId = UUID.randomUUID();
+        when(governanceComparisonService.compareGovernanceSnapshots(any(GovernanceComparisonRequest.class), any()))
+                .thenThrow(new com.bhoomidrishti.exception.ResourceNotFoundException("Governance snapshot not found: " + missingId));
+
+        String json = """
+                {
+                    "baselineSnapshotId": "%s",
+                    "targetSnapshotId": "%s",
+                    "compareToLive": false
+                }
+                """.formatted(missingId, UUID.randomUUID());
+
+        mockMvc.perform(post("/api/governance/compare")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Governance snapshot not found: " + missingId));
+    }
+
+    @Test
+    @DisplayName("POST /api/governance/compare - Authentication context forwarded to service")
+    void testCompareSnapshots_AuthenticationForwarded() throws Exception {
+        UUID snapshotA = UUID.randomUUID();
+        UUID snapshotB = UUID.randomUUID();
+
+        when(governanceComparisonService.compareGovernanceSnapshots(any(GovernanceComparisonRequest.class), any()))
+                .thenReturn(new GovernanceComparisonResponse(
+                        "ACTIVE_PARCEL_COUNT", "Active Parcel Count",
+                        IndicatorCategory.STATUS_DISTRIBUTION, IndicatorUnit.COUNT,
+                        GovernanceScopeType.DISTRICT, "Madhya Pradesh", "Bhopal", null, null, null,
+                        null, null, null, Collections.emptyList(), null, false, null, false
+                ));
+
+        String json = """
+                {
+                    "baselineSnapshotId": "%s",
+                    "targetSnapshotId": "%s",
+                    "compareToLive": false
+                }
+                """.formatted(snapshotA, snapshotB);
+
+        mockMvc.perform(post("/api/governance/compare")
+                        .cookie(mockAuthCookie(Role.GOVERNMENT_OFFICIAL, "officer@bhoomi.gov.in"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Authentication> authCaptor = ArgumentCaptor.forClass(Authentication.class);
+        verify(governanceComparisonService).compareGovernanceSnapshots(any(GovernanceComparisonRequest.class), authCaptor.capture());
+        assertThat(authCaptor.getValue()).isNotNull();
+        assertThat(authCaptor.getValue().getPrincipal()).isInstanceOf(User.class);
+        assertThat(((User) authCaptor.getValue().getPrincipal()).getEmail()).isEqualTo("officer@bhoomi.gov.in");
     }
 }

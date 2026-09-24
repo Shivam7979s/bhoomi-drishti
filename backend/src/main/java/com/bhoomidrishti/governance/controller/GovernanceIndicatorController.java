@@ -9,6 +9,9 @@ import com.bhoomidrishti.governance.dto.GovernanceScopeQuery;
 import com.bhoomidrishti.governance.dto.LinkGovernanceEvidenceRequest;
 import com.bhoomidrishti.governance.entity.GovernanceScopeType;
 import com.bhoomidrishti.governance.entity.IndicatorCategory;
+import com.bhoomidrishti.governance.dto.GovernanceComparisonRequest;
+import com.bhoomidrishti.governance.dto.GovernanceComparisonResponse;
+import com.bhoomidrishti.governance.service.GovernanceComparisonService;
 import com.bhoomidrishti.governance.service.GovernanceIndicatorService;
 import com.bhoomidrishti.governance.service.GovernanceQueryService;
 import jakarta.validation.Valid;
@@ -33,17 +36,26 @@ public class GovernanceIndicatorController {
 
     private final GovernanceIndicatorService governanceIndicatorService;
     private final GovernanceQueryService governanceQueryService;
+    private final GovernanceComparisonService governanceComparisonService;
 
     public GovernanceIndicatorController(GovernanceIndicatorService governanceIndicatorService) {
-        this(governanceIndicatorService, null);
+        this(governanceIndicatorService, null, null);
+    }
+
+    public GovernanceIndicatorController(
+            GovernanceIndicatorService governanceIndicatorService,
+            GovernanceQueryService governanceQueryService) {
+        this(governanceIndicatorService, governanceQueryService, null);
     }
 
     @Autowired
     public GovernanceIndicatorController(
             GovernanceIndicatorService governanceIndicatorService,
-            GovernanceQueryService governanceQueryService) {
+            GovernanceQueryService governanceQueryService,
+            GovernanceComparisonService governanceComparisonService) {
         this.governanceIndicatorService = governanceIndicatorService;
         this.governanceQueryService = governanceQueryService;
+        this.governanceComparisonService = governanceComparisonService;
     }
 
     // -------------------------------------------------------------------------
@@ -150,5 +162,18 @@ public class GovernanceIndicatorController {
             Authentication auth) {
         governanceIndicatorService.unlinkEvidence(snapshotId, evidenceId, auth);
         return ResponseEntity.noContent().build();
+    }
+
+    // -------------------------------------------------------------------------
+    // Temporal Governance Comparison
+    // -------------------------------------------------------------------------
+
+    @PostMapping("/api/governance/compare")
+    public ResponseEntity<GovernanceComparisonResponse> compareSnapshots(
+            @Valid @RequestBody GovernanceComparisonRequest request,
+            Authentication auth) {
+        GovernanceComparisonResponse response =
+                governanceComparisonService.compareGovernanceSnapshots(request, auth);
+        return ResponseEntity.ok(response);
     }
 }
