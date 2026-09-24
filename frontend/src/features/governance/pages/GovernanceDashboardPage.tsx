@@ -1,15 +1,34 @@
-import { useEffect } from 'react';
-import { AlertCircle, AlertTriangle, ArrowRight, Database, Loader2, RefreshCw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  Camera,
+  Database,
+  Loader2,
+  RefreshCw,
+  Shield,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ApiError } from '../../../services/apiClient';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { GovernanceBreakdownSection } from '../components/GovernanceBreakdownSection';
+import { GovernanceEvidenceLinkModal } from '../components/GovernanceEvidenceLinkModal';
+import { GovernanceIndicatorDetailDrawer } from '../components/GovernanceIndicatorDetailDrawer';
 import { GovernanceIndicatorsTable } from '../components/GovernanceIndicatorsTable';
 import { GovernanceKpiCards } from '../components/GovernanceKpiCards';
 import { GovernanceMetadataHeader } from '../components/GovernanceMetadataHeader';
 import { GovernanceScopeSelector } from '../components/GovernanceScopeSelector';
+import { GovernanceSnapshotAuditList } from '../components/GovernanceSnapshotAuditList';
+import { GovernanceSnapshotModal } from '../components/GovernanceSnapshotModal';
 import { useGovernanceSummary } from '../hooks/useGovernanceSummary';
+import type {
+  GovernanceIndicatorSnapshotResponse,
+  GovernanceSummaryIndicatorItemResponse,
+} from '../types/governance';
 
 export function GovernanceDashboardPage() {
+  const { user } = useAuth();
   const {
     scopeType,
     state,
@@ -35,6 +54,14 @@ export function GovernanceDashboardPage() {
     refetch,
   } = useGovernanceSummary();
 
+  // Phase 9B.4 Evidence & Snapshot State
+  const [selectedIndicatorForDetail, setSelectedIndicatorForDetail] =
+    useState<GovernanceSummaryIndicatorItemResponse | null>(null);
+  const [showSnapshotModal, setShowSnapshotModal] = useState<boolean>(false);
+  const [snapshotForEvidenceLink, setSnapshotForEvidenceLink] =
+    useState<GovernanceIndicatorSnapshotResponse | null>(null);
+  const [auditRefreshKey, setAuditRefreshKey] = useState<number>(0);
+
   useEffect(() => {
     document.title = 'Governance Analytics Dashboard | BHOOMI-DRISHTI';
   }, []);
@@ -48,6 +75,12 @@ export function GovernanceDashboardPage() {
     summary &&
     summary.indicators.every((i) => i.numericValue === 0) &&
     (summary.indicators[0]?.denominator === 0 || summary.indicators[0]?.denominator == null);
+
+  // Authority check for snapshot capture
+  const canCaptureSnapshot =
+    user?.role === 'GOVERNMENT_OFFICIAL' ||
+    user?.role === 'ADMIN' ||
+    scopeType === 'PROJECT';
 
   return (
     <div className="space-y-6">
@@ -155,15 +188,53 @@ export function GovernanceDashboardPage() {
       {/* Populated Dashboard Content */}
       {!loading && !error && summary && (
         <div className="space-y-6">
-          {/* Metadata Header */}
-          <GovernanceMetadataHeader
-            scope={summary.scope}
-            summaryMode={summary.summaryMode}
-            calculationVersion={summary.calculationVersion}
-            generatedAt={summary.generatedAt}
-            sourceDataTimestamp={summary.sourceDataTimestamp}
-            totalIndicatorsEvaluated={summary.totalIndicatorsEvaluated}
-          />
+          {/* Metadata Header with Actions */}
+          <div className="space-y-3">
+            <GovernanceMetadataHeader
+              scope={summary.scope}
+              summaryMode={summary.summaryMode}
+              calculationVersion={summary.calculationVersion}
+              generatedAt={summary.generatedAt}
+              sourceDataTimestamp={summary.sourceDataTimestamp}
+              totalIndicatorsEvaluated={summary.totalIndicatorsEvaluated}
+            />
+
+            {/* Explicit Semantics & Audit Snapshot Action Banner */}
+            <div className="rounded-xl border border-slate-200 bg-linear-to-r from-slate-50 via-white to-blue-50/40 p-4 shadow-2xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-emerald-100/70 text-emerald-800 border border-emerald-200 shrink-0">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                      LIVE
+                    </span>
+                    <span className="text-xs font-bold text-slate-900">
+                      Active Cadastral Computation
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+                    Dashboard indicators represent dynamic, point-in-time aggregations calculated over current cadastral records.
+                    Freezing an audit snapshot captures an immutable baseline for statutory compliance without altering live data.
+                  </p>
+                </div>
+              </div>
+
+              {canCaptureSnapshot && (
+                <div className="shrink-0 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowSnapshotModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-slate-800 transition"
+                  >
+                    <Camera className="h-4 w-4 text-emerald-400" />
+                    <span>Capture Audit Snapshot</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Executive KPI Cards */}
           <GovernanceKpiCards indicators={summary.indicators} />
@@ -171,10 +242,83 @@ export function GovernanceDashboardPage() {
           {/* Categorized Breakdowns (Recharts) */}
           <GovernanceBreakdownSection indicators={summary.indicators} />
 
-          {/* Full Indicators Table */}
-          <GovernanceIndicatorsTable indicators={summary.indicators} />
+          {/* Full Indicators Table with Evidence Drawer Hook */}
+          <GovernanceIndicatorsTable
+            indicators={summary.indicators}
+            onSelectIndicator={setSelectedIndicatorForDetail}
+          />
+
+          {/* Immutable Audit Snapshots Archive for this scope */}
+          <GovernanceSnapshotAuditList
+            key={auditRefreshKey}
+            scopeType={scopeType}
+            state={state}
+            district={district}
+            tehsil={tehsil}
+            village={village}
+            projectId={projectId}
+            canContribute={canCaptureSnapshot}
+            onSelectSnapshotForEvidence={(snap) => {
+              // Open evidence drawer for that indicator
+              const match: GovernanceSummaryIndicatorItemResponse = summary.indicators.find(
+                (i) => i.indicatorCode === snap.indicatorCode,
+              ) || {
+                indicatorCode: snap.indicatorCode,
+                indicatorName: snap.indicatorName,
+                category: snap.category,
+                unit: snap.unit,
+                aggregationMethod: 'COUNT',
+                numericValue: snap.numericValue,
+                denominator: snap.denominator,
+                breakdownJson: snap.breakdownJson || '{}',
+                sourceDataTimestamp: snap.sourceDataTimestamp,
+              };
+              setSelectedIndicatorForDetail(match);
+            }}
+            onOpenLinkEvidenceModal={(snap) => setSnapshotForEvidenceLink(snap)}
+          />
         </div>
       )}
+
+      {/* METHODOLOGY & STATUTORY EVIDENCE DRAWER */}
+      <GovernanceIndicatorDetailDrawer
+        indicator={selectedIndicatorForDetail}
+        scopeType={scopeType}
+        state={state}
+        district={district}
+        tehsil={tehsil}
+        village={village}
+        onClose={() => setSelectedIndicatorForDetail(null)}
+      />
+
+      {/* CAPTURE AUDIT SNAPSHOT MODAL */}
+      {summary && (
+        <GovernanceSnapshotModal
+          isOpen={showSnapshotModal}
+          onClose={() => setShowSnapshotModal(false)}
+          onSuccess={() => {
+            setAuditRefreshKey((k) => k + 1);
+          }}
+          scopeType={scopeType}
+          state={state}
+          district={district}
+          tehsil={tehsil}
+          village={village}
+          projectId={projectId}
+          indicators={summary.indicators}
+        />
+      )}
+
+      {/* LINK STATUTORY EVIDENCE MODAL */}
+      <GovernanceEvidenceLinkModal
+        isOpen={!!snapshotForEvidenceLink}
+        onClose={() => setSnapshotForEvidenceLink(null)}
+        onSuccess={() => {
+          setAuditRefreshKey((k) => k + 1);
+          setSnapshotForEvidenceLink(null);
+        }}
+        snapshot={snapshotForEvidenceLink}
+      />
     </div>
   );
 }

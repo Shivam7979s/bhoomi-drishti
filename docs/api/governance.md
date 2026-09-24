@@ -249,3 +249,29 @@ The Governance Analytics Dashboard (`/governance`) provides an executive visuali
 6. **Data Integrity & Non-Truncation**:
    - Chart breakdowns and indicators table display all backend-provided categories without silent data drops or arbitrary slicing (`slice(0, 8)` is strictly forbidden).
    - Zero-data scopes (valid geographical scopes with no cadastral parcels) display valid zero metrics rather than triggering API error alerts.
+
+---
+
+## 7. Statutory Evidence & Audit Snapshot Integration (Phase 9B.4)
+
+Phase 9B.4 bridges the live governance analytics dashboard with statutory legal evidence and immutable audit snapshots, introducing the **Evidence-First Provenance Explorer**:
+
+1. **Explicit Semantics: LIVE vs. IMMUTABLE SNAPSHOT**:
+   - The user interface strictly distinguishes between:
+     - **LIVE**: Dynamic calculation evaluated over current cadastral records. Indicates current platform data state.
+     - **IMMUTABLE SNAPSHOT**: Persisted calculation baseline frozen at a specific timestamp (`asOf`).
+   - Editing, linking, or unlinking evidence attaches provenance citations but **never alters** the underlying persisted numerical calculation (`numericValue`, `denominator`).
+2. **Evidence-First Candidate vs. Linked Workflow**:
+   - Research documents, circulars, and precedents discovered via search or research hubs are explicitly treated as **Candidate Evidence**.
+   - A document becomes **Linked Statutory Evidence** only when an authorized official or project contributor explicitly confirms the linkage with a legal rationale.
+   - AI search assists in candidate discovery but never implies automated legal authority or statutory validity.
+3. **Frontend-Heavy Architecture (Zero Backend / Zero DB Migration)**:
+   - Leverages existing Flyway `V7__create_governance_indicator_foundation.sql` tables: `governance_indicator_definitions`, `governance_indicator_snapshots`, and `governance_indicator_evidence`.
+   - Reuses existing backend controllers (`GovernanceIndicatorController`, `ScenarioEvidenceController`) and security verifications (`CollaborationSecurityService`).
+   - Zero database migrations (`V7` remains current; no `V8`).
+4. **Delivered UI Capabilities**:
+   - `GovernanceIndicatorDetailDrawer`: Side drawer displaying statutory indicator definitions, methodology benchmarks, and legally linked circulars/statutes.
+   - `GovernanceSnapshotModal`: Modal to capture point-in-time calculation baselines with visibility control (`INTERNAL` vs `PUBLISHED`) and source version annotations.
+   - `GovernanceEvidenceLinkModal`: Modal to link statutory circulars, policy frameworks, and audit precedents to snapshots with explicit rationale and citation references.
+   - `GovernanceSnapshotAuditList`: Historical audit snapshot archive table embedded below the live dashboard, displaying frozen values, timestamps, visibility badges, and evidence count.
+   - `ProjectGovernanceSnapshotsTab`: Dedicated Governance tab in project workspaces (`/workspaces/:workspaceId/projects/:projectId`), allowing project contributors to capture project-scoped baselines and link statutory legal dossiers.

@@ -1,9 +1,16 @@
-import { getJsonWithParams } from '../../../services/apiClient';
+import { deleteJson, getJson, getJsonWithParams, postJson } from '../../../services/apiClient';
 import type {
   BreakdownChartDatum,
+  CreateGovernanceSnapshotRequest,
   GovernanceAdministrativeSummaryResponse,
+  GovernanceIndicatorDefinitionResponse,
+  GovernanceIndicatorEvidenceResponse,
+  GovernanceIndicatorSnapshotResponse,
+  GovernanceSnapshotQueryParams,
   GovernanceSummaryIndicatorItemResponse,
   GovernanceSummaryQueryParams,
+  IndicatorCategory,
+  LinkGovernanceEvidenceRequest,
   StatusDistributionSummary,
 } from '../types/governance';
 
@@ -58,6 +65,108 @@ export async function fetchAdministrativeSummary(
     signal,
   );
 }
+
+/**
+ * Fetches all active governance indicator definitions, optionally filtered by category.
+ */
+export async function fetchIndicatorDefinitions(
+  category?: IndicatorCategory,
+): Promise<GovernanceIndicatorDefinitionResponse[]> {
+  const params: Record<string, string | undefined> = {};
+  if (category) {
+    params.category = category;
+  }
+  return getJsonWithParams<GovernanceIndicatorDefinitionResponse[]>('/api/governance/indicators', params);
+}
+
+/**
+ * Fetches detailed metadata definition for a specific indicator code.
+ */
+export async function fetchIndicatorDefinition(
+  code: string,
+): Promise<GovernanceIndicatorDefinitionResponse> {
+  return getJson<GovernanceIndicatorDefinitionResponse>(`/api/governance/indicators/${encodeURIComponent(code)}`);
+}
+
+/**
+ * Creates and persists an immutable point-in-time calculation snapshot.
+ */
+export async function createSnapshot(
+  data: CreateGovernanceSnapshotRequest,
+): Promise<GovernanceIndicatorSnapshotResponse> {
+  return postJson<GovernanceIndicatorSnapshotResponse>('/api/governance/snapshots', data);
+}
+
+/**
+ * Retrieves a single persisted snapshot by its ID.
+ */
+export async function fetchSnapshotById(
+  id: string,
+): Promise<GovernanceIndicatorSnapshotResponse> {
+  return getJson<GovernanceIndicatorSnapshotResponse>(`/api/governance/snapshots/${encodeURIComponent(id)}`);
+}
+
+/**
+ * Queries persisted snapshots matching the given scope hierarchy.
+ */
+export async function fetchScopeSnapshots(
+  params: GovernanceSnapshotQueryParams,
+): Promise<GovernanceIndicatorSnapshotResponse[]> {
+  const queryParams: Record<string, string | undefined> = {
+    scopeType: params.scopeType,
+  };
+  if (params.state) queryParams.state = params.state;
+  if (params.district) queryParams.district = params.district;
+  if (params.tehsil) queryParams.tehsil = params.tehsil;
+  if (params.village) queryParams.village = params.village;
+  if (params.indicatorCode) queryParams.indicatorCode = params.indicatorCode;
+
+  return getJsonWithParams<GovernanceIndicatorSnapshotResponse[]>('/api/governance/snapshots', queryParams);
+}
+
+/**
+ * Queries all persisted snapshots calculated for a specific collaborative project.
+ */
+export async function fetchProjectSnapshots(
+  projectId: string,
+): Promise<GovernanceIndicatorSnapshotResponse[]> {
+  return getJson<GovernanceIndicatorSnapshotResponse[]>(`/api/projects/${encodeURIComponent(projectId)}/governance-snapshots`);
+}
+
+/**
+ * Retrieves all statutory and circular evidence linkages for a snapshot.
+ */
+export async function fetchSnapshotEvidence(
+  snapshotId: string,
+): Promise<GovernanceIndicatorEvidenceResponse[]> {
+  return getJson<GovernanceIndicatorEvidenceResponse[]>(`/api/governance/snapshots/${encodeURIComponent(snapshotId)}/evidence`);
+}
+
+/**
+ * Links a research document or specific chunk as statutory evidence to a snapshot.
+ */
+export async function linkSnapshotEvidence(
+  snapshotId: string,
+  data: LinkGovernanceEvidenceRequest,
+): Promise<GovernanceIndicatorEvidenceResponse> {
+  return postJson<GovernanceIndicatorEvidenceResponse>(
+    `/api/governance/snapshots/${encodeURIComponent(snapshotId)}/evidence`,
+    data,
+  );
+}
+
+/**
+ * Removes a statutory evidence linkage from a snapshot.
+ */
+export async function unlinkSnapshotEvidence(
+  snapshotId: string,
+  evidenceId: string,
+): Promise<void> {
+  return deleteJson<void>(
+    `/api/governance/snapshots/${encodeURIComponent(snapshotId)}/evidence/${encodeURIComponent(evidenceId)}`,
+  );
+}
+
 
 /**
  * Safely parses a raw JSON string into a key-number map.

@@ -15,8 +15,10 @@ import {
   ExternalLink,
   Send,
   Layers,
+  Landmark,
 } from 'lucide-react';
 import { ProjectScenariosTab } from '../../policy/components/ProjectScenariosTab';
+import { ProjectGovernanceSnapshotsTab } from '../components/ProjectGovernanceSnapshotsTab';
 import { useAuth } from '../../auth/hooks/useAuth';
 import {
   getProject,
@@ -58,7 +60,7 @@ export function ProjectDetailsPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'parcels' | 'research' | 'datasets' | 'comments' | 'members' | 'scenarios'>('parcels');
+  const [activeTab, setActiveTab] = useState<'parcels' | 'research' | 'datasets' | 'comments' | 'members' | 'scenarios' | 'governance'>('parcels');
 
   // Parcels
   const [parcels, setParcels] = useState<ProjectLandRecord[]>([]);
@@ -538,6 +540,19 @@ export function ProjectDetailsPage() {
         >
           <Layers className="h-4 w-4" />
           Policy Scenarios
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('governance')}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+            activeTab === 'governance'
+              ? 'border-emerald-600 text-emerald-700 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Landmark className="h-4 w-4" />
+          Governance Audits
         </button>
       </div>
 
@@ -1023,6 +1038,14 @@ export function ProjectDetailsPage() {
       {/* TAB 6: POLICY SCENARIOS */}
       {activeTab === 'scenarios' && (
         <ProjectScenariosTab
+          projectId={projectId!}
+          canContribute={canContribute}
+        />
+      )}
+
+      {/* TAB 7: GOVERNANCE AUDITS & SNAPSHOTS */}
+      {activeTab === 'governance' && (
+        <ProjectGovernanceSnapshotsTab
           projectId={projectId!}
           canContribute={canContribute}
         />

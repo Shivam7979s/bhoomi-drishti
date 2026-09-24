@@ -1,8 +1,9 @@
-import { Calendar } from 'lucide-react';
+import { BookOpen, Calendar, ChevronRight } from 'lucide-react';
 import type { GovernanceSummaryIndicatorItemResponse } from '../types/governance';
 
 interface GovernanceIndicatorsTableProps {
   indicators: GovernanceSummaryIndicatorItemResponse[];
+  onSelectIndicator?: (indicator: GovernanceSummaryIndicatorItemResponse) => void;
 }
 
 function formatValue(value: number, unit: string): string {
@@ -48,7 +49,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   STATUS_DISTRIBUTION: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
-export function GovernanceIndicatorsTable({ indicators }: GovernanceIndicatorsTableProps) {
+export function GovernanceIndicatorsTable({ indicators, onSelectIndicator }: GovernanceIndicatorsTableProps) {
   if (indicators.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500 text-xs">
@@ -59,11 +60,16 @@ export function GovernanceIndicatorsTable({ indicators }: GovernanceIndicatorsTa
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-      <div className="border-b border-slate-100 p-4">
-        <h3 className="text-sm font-bold text-slate-900">Evaluated Governance Indicators</h3>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Deterministic indicator calculations evaluated against authoritative cadastral land records
-        </p>
+      <div className="border-b border-slate-100 p-4 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900">Evaluated Governance Indicators</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Deterministic indicator calculations evaluated against authoritative cadastral land records
+          </p>
+        </div>
+        <span className="text-[11px] text-slate-400 font-medium">
+          Select an indicator to inspect legal definitions & linked statutory evidence
+        </span>
       </div>
 
       <div className="overflow-x-auto">
@@ -91,13 +97,22 @@ export function GovernanceIndicatorsTable({ indicators }: GovernanceIndicatorsTa
               <th scope="col" className="px-4 py-3">
                 Record Timestamp
               </th>
+              <th scope="col" className="px-4 py-3 text-right">
+                Statutory Provenance
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {indicators.map((ind) => (
-              <tr key={ind.indicatorCode} className="hover:bg-slate-50/80 transition">
+              <tr
+                key={ind.indicatorCode}
+                onClick={() => onSelectIndicator?.(ind)}
+                className="hover:bg-emerald-50/40 transition cursor-pointer group"
+              >
                 <td className="px-4 py-3.5">
-                  <div className="font-semibold text-slate-900">{ind.indicatorName}</div>
+                  <div className="font-semibold text-slate-900 group-hover:text-emerald-900 transition">
+                    {ind.indicatorName}
+                  </div>
                   <div className="text-[10px] font-mono text-slate-400">{ind.indicatorCode}</div>
                 </td>
                 <td className="px-4 py-3.5">
@@ -128,6 +143,20 @@ export function GovernanceIndicatorsTable({ indicators }: GovernanceIndicatorsTa
                     <Calendar className="h-3 w-3 text-slate-400" />
                     <span>{formatTimestamp(ind.sourceDataTimestamp)}</span>
                   </div>
+                </td>
+                <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectIndicator?.(ind);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 shadow-2xs hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-200 transition"
+                  >
+                    <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Methodology & Evidence</span>
+                    <ChevronRight className="h-3 w-3 text-slate-400 group-hover:translate-x-0.5 transition" />
+                  </button>
                 </td>
               </tr>
             ))}

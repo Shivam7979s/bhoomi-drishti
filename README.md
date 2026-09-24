@@ -297,6 +297,7 @@ The check has a 5 second timeout and never throws into the UI, so the page alway
 | **9B.1** | Governance Query Foundation: real-time live queries across regional and project scopes | **Completed** |
 | **9B.2** | Administrative Summary API: multi-indicator live administrative aggregations (`GET /api/governance/summary`) | **Completed** |
 | **9B.3** | Governance Analytics Dashboard: executive presentation layer, scope exploration, live KPI & distribution analytics | **Completed** |
+| **9B.4** | Statutory Evidence & Audit Snapshot Integration: Evidence-First Provenance Explorer, point-in-time calculation freezing, statutory circular binding, project governance audits | **Completed** |
 
 Phase 1 deliverables (done): repository structure, React shell with backend status indicator,
 Spring Boot API with a tested health endpoint, PostgreSQL + PostGIS via Docker Compose, environment
