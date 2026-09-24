@@ -259,6 +259,175 @@ Phase 8D exposes the complete scenario lifecycle, execution pipeline, and scenar
 
 ---
 
+### REST API Request & Response Schemas
+
+#### 1. Create Scenario Request (`POST /api/projects/{projectId}/scenarios`)
+```json
+{
+  "name": "Kolar Rezoning Simulation",
+  "description": "Simulates 25% conversion of agricultural parcels to residential land in Kolar village.",
+  "scenarioType": "LAND_USE_CONVERSION",
+  "parameters": {
+    "targetState": "Madhya Pradesh",
+    "targetDistrict": "Bhopal",
+    "targetTehsil": "Huzur",
+    "targetVillage": "Kolar",
+    "sourceLandUse": "AGRICULTURAL",
+    "targetLandUse": "RESIDENTIAL",
+    "conversionPercentage": 25.0
+  }
+}
+```
+
+#### 2. Policy Scenario Response (`GET /api/scenarios/{scenarioId}`)
+```json
+{
+  "id": "e8a243a7-58b9-4a49-a292-1246b9c9f001",
+  "projectId": "1c742c30-f2bd-4a0f-bdc7-bb9a90fb33cc",
+  "name": "Kolar Rezoning Simulation",
+  "slug": "kolar-rezoning-simulation",
+  "description": "Simulates 25% conversion of agricultural parcels to residential land in Kolar village.",
+  "scenarioType": "LAND_USE_CONVERSION",
+  "status": "COMPLETED",
+  "createdById": "a0000000-0000-0000-0000-000000000001",
+  "createdByName": "Admin Officer",
+  "createdAt": "2026-09-23T10:00:00Z",
+  "updatedAt": "2026-09-23T10:05:00Z",
+  "parameters": {
+    "id": "d1a1b2c3-0000-0000-0000-000000000001",
+    "scenarioId": "e8a243a7-58b9-4a49-a292-1246b9c9f001",
+    "targetState": "Madhya Pradesh",
+    "targetDistrict": "Bhopal",
+    "targetTehsil": "Huzur",
+    "targetVillage": "Kolar",
+    "sourceLandUse": "AGRICULTURAL",
+    "targetLandUse": "RESIDENTIAL",
+    "conversionPercentage": 25.0,
+    "maxOwnershipArea": null,
+    "targetOwnershipType": null,
+    "bufferDistanceMeters": null,
+    "customParameters": null,
+    "hasInterventionGeometry": false
+  },
+  "latestResult": {
+    "id": "f2b2c3d4-0000-0000-0000-000000000001",
+    "scenarioId": "e8a243a7-58b9-4a49-a292-1246b9c9f001",
+    "totalParcelsEvaluated": 40,
+    "totalParcelsAffected": 10,
+    "totalAreaAffectedSqm": 65000.00,
+    "baselineAreaSqm": 260000.00,
+    "simulatedAreaSqm": 260000.00,
+    "disputedParcelsCount": 2,
+    "disputedAreaSqm": 13000.00,
+    "landUseDistributionJson": "{\"AGRICULTURAL\":{\"parcelCount\":30,\"areaSqMeters\":195000.00},\"RESIDENTIAL\":{\"parcelCount\":10,\"areaSqMeters\":65000.00}}",
+    "ownershipDistributionJson": "{\"INDIVIDUAL\":{\"parcelCount\":38,\"areaSqMeters\":247000.00},\"COMMUNITY\":{\"parcelCount\":2,\"areaSqMeters\":13000.00}}",
+    "spatialSummaryJson": "{\"minLon\":77.412,\"minLat\":23.251,\"maxLon\":77.445,\"maxLat\":23.285,\"executionTimeMs\":45}",
+    "executedById": "a0000000-0000-0000-0000-000000000001",
+    "executedByName": "Admin Officer",
+    "executedAt": "2026-09-23T10:05:00Z"
+  }
+}
+```
+
+#### 3. Compare Scenarios Request (`POST /api/policy/compare`)
+```json
+{
+  "targets": [
+    {
+      "scenarioId": "e8a243a7-58b9-4a49-a292-1246b9c9f001"
+    },
+    {
+      "scenarioId": "b9c354b8-69ca-4b5a-b303-2357c0d0e002"
+    }
+  ]
+}
+```
+
+#### 4. Compare Scenarios Response (`POST /api/policy/compare`)
+```json
+{
+  "comparedAt": "2026-09-23T12:00:00Z",
+  "scenarios": [
+    {
+      "scenarioId": "e8a243a7-58b9-4a49-a292-1246b9c9f001",
+      "scenarioName": "Kolar Rezoning Simulation (25%)",
+      "scenarioType": "LAND_USE_CONVERSION",
+      "scenarioResultId": "f2b2c3d4-0000-0000-0000-000000000001",
+      "executedAt": "2026-09-23T10:05:00Z",
+      "metrics": {
+        "totalParcelsEvaluated": 40,
+        "totalParcelsAffected": 10,
+        "totalAreaAffectedSqm": 65000.00,
+        "baselineAreaSqm": 260000.00,
+        "simulatedAreaSqm": 260000.00,
+        "disputedParcelsCount": 2,
+        "disputedAreaSqm": 13000.00
+      },
+      "landUseDistribution": {
+        "AGRICULTURAL": { "parcelCount": 30, "areaSqMeters": 195000.00, "percentage": 75.0 },
+        "RESIDENTIAL": { "parcelCount": 10, "areaSqMeters": 65000.00, "percentage": 25.0 }
+      },
+      "ownershipDistribution": {
+        "INDIVIDUAL": { "parcelCount": 38, "areaSqMeters": 247000.00, "percentage": 95.0 },
+        "COMMUNITY": { "parcelCount": 2, "areaSqMeters": 13000.00, "percentage": 5.0 }
+      }
+    },
+    {
+      "scenarioId": "b9c354b8-69ca-4b5a-b303-2357c0d0e002",
+      "scenarioName": "Kolar Rezoning Simulation (50%)",
+      "scenarioType": "LAND_USE_CONVERSION",
+      "scenarioResultId": "a3c3d4e5-0000-0000-0000-000000000002",
+      "executedAt": "2026-09-23T11:00:00Z",
+      "metrics": {
+        "totalParcelsEvaluated": 40,
+        "totalParcelsAffected": 20,
+        "totalAreaAffectedSqm": 130000.00,
+        "baselineAreaSqm": 260000.00,
+        "simulatedAreaSqm": 260000.00,
+        "disputedParcelsCount": 2,
+        "disputedAreaSqm": 13000.00
+      },
+      "landUseDistribution": {
+        "AGRICULTURAL": { "parcelCount": 20, "areaSqMeters": 130000.00, "percentage": 50.0 },
+        "RESIDENTIAL": { "parcelCount": 20, "areaSqMeters": 130000.00, "percentage": 50.0 }
+      },
+      "ownershipDistribution": {
+        "INDIVIDUAL": { "parcelCount": 38, "areaSqMeters": 247000.00, "percentage": 95.0 },
+        "COMMUNITY": { "parcelCount": 2, "areaSqMeters": 13000.00, "percentage": 5.0 }
+      }
+    }
+  ],
+  "pairwiseComparisons": [
+    {
+      "leftScenarioId": "e8a243a7-58b9-4a49-a292-1246b9c9f001",
+      "leftScenarioName": "Kolar Rezoning Simulation (25%)",
+      "rightScenarioId": "b9c354b8-69ca-4b5a-b303-2357c0d0e002",
+      "rightScenarioName": "Kolar Rezoning Simulation (50%)",
+      "metricDeltas": {
+        "deltaTotalParcelsEvaluated": 0,
+        "deltaTotalParcelsAffected": 10,
+        "deltaTotalAreaAffectedSqm": 65000.00,
+        "deltaBaselineAreaSqm": 0.00,
+        "deltaSimulatedAreaSqm": 0.00,
+        "deltaDisputedParcelsCount": 0,
+        "deltaDisputedAreaSqm": 0.00
+      },
+      "landUseDistributionDeltas": {
+        "AGRICULTURAL": { "deltaCount": -10, "deltaAreaSqm": -65000.00, "deltaPercentagePoints": -25.0 },
+        "RESIDENTIAL": { "deltaCount": 10, "deltaAreaSqm": 65000.00, "deltaPercentagePoints": 25.0 }
+      },
+      "ownershipDistributionDeltas": {
+        "INDIVIDUAL": { "deltaCount": 0, "deltaAreaSqm": 0.00, "deltaPercentagePoints": 0.0 },
+        "COMMUNITY": { "deltaCount": 0, "deltaAreaSqm": 0.00, "deltaPercentagePoints": 0.0 }
+      }
+    }
+  ],
+  "disclaimer": "The comparison engine provides descriptive differences between persisted scenario results. It does not rank scenarios, select a preferred scenario, recommend policy, or predict future outcomes."
+}
+```
+
+---
+
 ### Scenario Lifecycle & Invariants
 
 ```
@@ -335,11 +504,53 @@ Phase 8D exposes the complete scenario lifecycle, execution pipeline, and scenar
 
 ---
 
-## 9. Next Sub-Phases Roadmap
+## 9. Frontend Scenario Workspace & Visualizations (Phase 8E)
 
-- **Phase 8A**: Policy Scenario Foundation — **COMPLETE**
-- **Phase 8B**: PostGIS Policy Simulation Engine — **COMPLETE**
-- **Phase 8C**: Evidence & Provenance Linking — **COMPLETE**
-- **Phase 8D**: Scenario Comparison Engine & REST API — **COMPLETE**
-- **Phase 8E**: Frontend Scenario Workspace (Builder form, KPI cards, Leaflet GIS overlays, comparison side-by-side view).
-- **Phase 8F**: Final System Hardening & End-to-End Verification.
+Phase 8E integrates the policy simulation and comparison engine into the responsive BHOOMI-DRISHTI React client interface.
+
+### Client Routes
+
+| Route | Component | Purpose |
+|---|---|---|
+| `/projects/:projectId/scenarios/:scenarioId` | `ScenarioWorkspacePage` | Comprehensive workspace for scenario configuration, simulation execution, result KPIs, GIS map, and evidence linking. |
+| `/projects/:projectId/scenarios/compare` | `ScenarioComparisonPage` | Side-by-side comparison pre-scoped to scenarios within the active project. |
+| `/scenarios/compare` | `ScenarioComparisonPage` | Cross-project scenario comparison across all accessible completed scenarios. |
+
+### Component Architecture
+
+1. **Scenario Overview & Parameters (`ScenarioBuilderModal`)**:
+   - Dynamic form adjusting to the 5 scenario types (`LAND_USE_CONVERSION`, `LAND_CEILING_REDISTRIBUTION`, `DISPUTE_RISK_ASSESSMENT`, `CORRIDOR_BUFFER_INTERVENTION`, `PROJECT_PARCEL_EVALUATION`).
+   - Enforces parameter bounds (e.g. conversion percentage $0-100\%$, positive buffer distances).
+   - Supports creating new scenarios and editing existing `DRAFT` or `COMPLETED` configurations.
+
+2. **Results Dashboard (`ScenarioKpiCards`, `DistributionChart`)**:
+   - Visualizes simulation metrics: Evaluated Parcels, Affected Parcels, Total Area Affected, Baseline Area, Simulated Area, Disputed Parcels, and Disputed Area.
+   - Categorical distribution horizontal bar visualizations for land-use breakdown and ownership patterns with percentage share.
+
+3. **Cadastral GIS Tab (`ScenarioGisTab`)**:
+   - Interactive Leaflet map automatically zooming to the spatial bounding box parsed from `spatialSummaryJson`.
+   - Fetches official cadastral boundaries dynamically via `/api/gis/land-records?bbox=...`.
+   - Clearly distinguishes the **Scenario Analysis Area** from individual cadastral parcels.
+   - Clicking a parcel opens the parcel inspection drawer with full privacy masking (public/researchers receive null owner PII).
+
+4. **Evidence & Provenance Tab (`ScenarioEvidenceTab`, `EvidenceSearchModal`)**:
+   - Lists linked statutory guidelines, circulars, and research references with document metadata, chunk text snippets, and cosine similarity scores.
+   - Interactive modal enables semantic candidate discovery against the Phase 5 research repository without persisting until explicitly linked.
+
+5. **Multi-Scenario Comparison View (`ScenarioComparisonPage`)**:
+   - Multi-select drawer for picking 2 to 10 completed scenarios.
+   - Summary metrics comparison table.
+   - Pairwise delta matrix showing exact directional changes ($\Delta = \text{right} - \text{left}$) and percentage point shifts ($\Delta_{\text{pp}}$).
+   - Category distribution tables zero-filling absent categories.
+   - Prominently displays the mandatory descriptive disclaimer alert on all comparison views.
+
+---
+
+## 10. Implementation Status
+
+- **Phase 8A**: Policy Scenario Foundation — **COMPLETE & VERIFIED**
+- **Phase 8B**: PostGIS Policy Simulation Engine — **COMPLETE & VERIFIED**
+- **Phase 8C**: Evidence & Provenance Linking — **COMPLETE & VERIFIED**
+- **Phase 8D**: Scenario Comparison Engine & REST API — **COMPLETE & VERIFIED**
+- **Phase 8E**: Scenario Workspace & Visualizations — **COMPLETE & VERIFIED**
+- **Phase 8F**: End-to-End Verification & API Documentation — **COMPLETE & VERIFIED**
