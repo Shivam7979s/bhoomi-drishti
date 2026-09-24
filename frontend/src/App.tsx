@@ -13,6 +13,8 @@ import { WorkspacesPage } from './features/collaboration/pages/WorkspacesPage';
 import { WorkspaceDashboardPage } from './features/collaboration/pages/WorkspaceDashboardPage';
 import { ProjectDetailsPage } from './features/collaboration/pages/ProjectDetailsPage';
 import { SavedResearchPage } from './features/collaboration/pages/SavedResearchPage';
+import { ScenarioWorkspacePage } from './features/policy/pages/ScenarioWorkspacePage';
+import { ScenarioComparisonPage } from './features/policy/pages/ScenarioComparisonPage';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -28,6 +30,9 @@ export default function App() {
             <Route path="/workspaces" element={<WorkspacesPage />} />
             <Route path="/workspaces/:idOrSlug" element={<WorkspaceDashboardPage />} />
             <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+            <Route path="/projects/:projectId/scenarios/:scenarioId" element={<ScenarioWorkspacePage />} />
+            <Route path="/projects/:projectId/scenarios/compare" element={<ScenarioComparisonPage />} />
+            <Route path="/scenarios/compare" element={<ScenarioComparisonPage />} />
             <Route
               path="/saved-research"
               element={

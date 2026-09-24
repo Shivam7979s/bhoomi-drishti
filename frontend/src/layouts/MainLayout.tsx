@@ -1,4 +1,4 @@
-import { BookOpen, Bookmark, FolderKanban, LogIn, LogOut, Map, MapPinned, Sparkles, UserRound } from 'lucide-react';
+import { BookOpen, Bookmark, FolderKanban, LogIn, LogOut, Map, MapPinned, Scale, Sparkles, UserRound } from 'lucide-react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
@@ -74,6 +74,13 @@ export function MainLayout() {
                   Saved
                 </Link>
                 <Link
+                  to="/scenarios/compare"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Scale className="h-4 w-4 text-purple-600" aria-hidden="true" />
+                  Compare
+                </Link>
+                <Link
                   to="/profile"
                   className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                 >
@@ -118,6 +125,13 @@ export function MainLayout() {
                 >
                   <FolderKanban className="h-4 w-4 text-indigo-600" aria-hidden="true" />
                   Workspaces
+                </Link>
+                <Link
+                  to="/scenarios/compare"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Scale className="h-4 w-4 text-purple-600" aria-hidden="true" />
+                  Compare
                 </Link>
                 <Link
                   to="/login"
