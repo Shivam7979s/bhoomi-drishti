@@ -15,6 +15,7 @@ import { ProjectDetailsPage } from './features/collaboration/pages/ProjectDetail
 import { SavedResearchPage } from './features/collaboration/pages/SavedResearchPage';
 import { ScenarioWorkspacePage } from './features/policy/pages/ScenarioWorkspacePage';
 import { ScenarioComparisonPage } from './features/policy/pages/ScenarioComparisonPage';
+import { GovernanceDashboardPage } from './features/governance/pages/GovernanceDashboardPage';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -26,6 +27,7 @@ export default function App() {
         <Routes>
           <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="/governance" element={<GovernanceDashboardPage />} />
             <Route path="/gis" element={<GisDashboardPage />} />
             <Route path="/workspaces" element={<WorkspacesPage />} />
             <Route path="/workspaces/:idOrSlug" element={<WorkspaceDashboardPage />} />

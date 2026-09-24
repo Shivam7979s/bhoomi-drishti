@@ -223,3 +223,29 @@ Phase 9A and Phase 9B.1 establish the **Governance Indicator Foundation & Query 
 - `CurrentIndicatorQueryResult`: Immutable DTO for real-time live queries over current land records without snapshot persistence.
 - `GovernanceAdministrativeSummaryResponse`: Structured multi-indicator live governance summary for a jurisdiction or project.
 - `GovernanceCalculationRepository`: The deterministic calculation authority performing pure PostgreSQL aggregations over `land_records` and `project_land_records`.
+
+---
+
+## 6. Frontend Governance Analytics Dashboard (Phase 9B.3)
+
+The Governance Analytics Dashboard (`/governance`) provides an executive visualization layer over deterministic backend calculations:
+
+1. **Dashboard Route**:
+   - `/governance` is publicly accessible for regional aggregate summaries, with project-level analytics requiring authenticated workspace membership.
+2. **Deterministic Architecture**:
+   - The frontend acts strictly as a **presentation authority**. All calculations, aggregations, counts, and percentages remain authoritative within PostgreSQL via `GovernanceCalculationRepository`.
+   - Client-side logic is limited strictly to number formatting, unit display conversions (e.g., m² to hectares), chart formatting, and presentation sorting.
+3. **Supported Administrative Hierarchy**:
+   - Full hierarchy exploration across `STATE`, `DISTRICT`, `TEHSIL`, `VILLAGE`, and `PROJECT` tiers.
+   - Cascading dropdowns dynamically populate valid options using GIS boundary services and reset child tiers on parent changes.
+   - Valid query detection prevents partial or invalid requests from hitting the backend.
+4. **LIVE Semantics**:
+   - Connects exclusively to real-time `GET /api/governance/summary` calculations.
+   - Explicitly displays metadata badges for `LIVE` status, calculation version `v1.0`, generation timestamp, and underlying PostgreSQL record freshness (`sourceDataTimestamp`).
+   - Does not implement historical snapshot browsing, date-range pickers, or time-travel modes.
+5. **Security, Privacy & IDOR Protection**:
+   - Regional metrics are strictly aggregate. Individual parcel owners, identifiers, Aadhaar, PAN, phone numbers, and geometries are never exposed.
+   - Access to `PROJECT` summaries is protected by `CollaborationSecurityService`. Unauthorized requests return a generic `404 Not Found` / "Project Not Found or Inaccessible" message to avoid leaking project existence.
+6. **Data Integrity & Non-Truncation**:
+   - Chart breakdowns and indicators table display all backend-provided categories without silent data drops or arbitrary slicing (`slice(0, 8)` is strictly forbidden).
+   - Zero-data scopes (valid geographical scopes with no cadastral parcels) display valid zero metrics rather than triggering API error alerts.

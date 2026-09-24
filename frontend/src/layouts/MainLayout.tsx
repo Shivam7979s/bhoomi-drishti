@@ -1,4 +1,4 @@
-import { BookOpen, Bookmark, FolderKanban, LogIn, LogOut, Map, MapPinned, Scale, Sparkles, UserRound } from 'lucide-react';
+import { BookOpen, Bookmark, FolderKanban, Landmark, LogIn, LogOut, Map, MapPinned, Scale, Sparkles, UserRound } from 'lucide-react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
@@ -31,6 +31,13 @@ export function MainLayout() {
           <nav className="ml-auto flex items-center gap-2" aria-label="Account">
             {loading ? null : isAuthenticated && user ? (
               <>
+                <Link
+                  to="/governance"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Landmark className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                  Governance
+                </Link>
                 <Link
                   to="/gis"
                   className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
@@ -98,6 +105,13 @@ export function MainLayout() {
               </>
             ) : (
               <>
+                <Link
+                  to="/governance"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  <Landmark className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                  Governance
+                </Link>
                 <Link
                   to="/gis"
                   className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"

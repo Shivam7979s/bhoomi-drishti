@@ -290,8 +290,13 @@ The check has a 5 second timeout and never throws into the UI, so the page alway
 | **3** | Land record management with PostGIS geometry (SRID 4326), GiST index, and spatial queries (`ST_Intersects`, `ST_Contains`) | **Completed** |
 | **4** | Research hub: documents, datasets, policy circulars, multi-criteria filtering, full-text search, and land parcel linkage | **Completed** |
 | **5** | AI Knowledge & Evidence Layer: FastEmbed (`BAAI/bge-small-en-v1.5`, 384d), pgvector HNSW cosine index, SSRF-safe ingestion, semantic search with academic citations | **Completed** |
-| 6     | GIS dashboard (Recharts + map layers) and policy simulation                                          | Not started |
-| 7     | Collaboration, innovation portal and external API integrations                                        | Not started |
+| **6** | Spatial Decision Support & GIS Analytics Dashboard: dynamic layer toggles, parcel inspection, GIS filtering | **Completed** |
+| **7** | Collaborative Land Research Workspaces: workspace isolation, RBAC membership, project land records | **Completed** |
+| **8** | Multi-Scenario Policy Simulation & Impact Comparison: rule-based interventions, delta analytics | **Completed** |
+| **9A**| Governance Indicator Foundation: deterministic snapshot generation, statutory & circular evidence linkage | **Completed** |
+| **9B.1** | Governance Query Foundation: real-time live queries across regional and project scopes | **Completed** |
+| **9B.2** | Administrative Summary API: multi-indicator live administrative aggregations (`GET /api/governance/summary`) | **Completed** |
+| **9B.3** | Governance Analytics Dashboard: executive presentation layer, scope exploration, live KPI & distribution analytics | **Completed** |
 
 Phase 1 deliverables (done): repository structure, React shell with backend status indicator,
 Spring Boot API with a tested health endpoint, PostgreSQL + PostGIS via Docker Compose, environment
