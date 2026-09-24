@@ -41,6 +41,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
+import com.bhoomidrishti.governance.dto.GovernanceAdministrativeSummaryResponse;
+import com.bhoomidrishti.governance.dto.GovernanceScopeSummaryResponse;
+import com.bhoomidrishti.governance.dto.GovernanceSummaryIndicatorItemResponse;
+import com.bhoomidrishti.governance.entity.AggregationMethod;
+import com.bhoomidrishti.governance.service.GovernanceQueryService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -59,6 +64,9 @@ class GovernanceIndicatorControllerTest {
 
     @MockitoBean
     private GovernanceIndicatorService governanceIndicatorService;
+
+    @MockitoBean
+    private GovernanceQueryService governanceQueryService;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -378,5 +386,154 @@ class GovernanceIndicatorControllerTest {
                 .andExpect(jsonPath("$[0].id").value(snapshotId.toString()))
                 .andExpect(jsonPath("$[0].projectId").value(projectId.toString()))
                 .andExpect(jsonPath("$[0].scopeType").value("PROJECT"));
+    }
+
+    // =========================================================================
+    // Administrative Summary Tests
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /api/governance/summary - Retrieve live administrative summary for district")
+    void testGetAdministrativeSummarySuccess() throws Exception {
+        GovernanceScopeSummaryResponse scopeRes = new GovernanceScopeSummaryResponse(
+                GovernanceScopeType.DISTRICT, "Madhya Pradesh", "Bhopal", null, null, null, null);
+        GovernanceSummaryIndicatorItemResponse item = new GovernanceSummaryIndicatorItemResponse(
+                "ACTIVE_PARCEL_COUNT",
+                "Active Cadastral Parcel Count",
+                IndicatorCategory.STATUS_DISTRIBUTION,
+                IndicatorUnit.COUNT,
+                AggregationMethod.COUNT,
+                BigDecimal.valueOf(450),
+                BigDecimal.valueOf(500),
+                "{\"activeParcels\":450,\"totalParcels\":500}",
+                Instant.parse("2026-09-24T00:00:00Z"));
+
+        GovernanceAdministrativeSummaryResponse summaryRes = new GovernanceAdministrativeSummaryResponse(
+                scopeRes,
+                "LIVE",
+                Instant.parse("2026-09-24T01:00:00Z"),
+                Instant.parse("2026-09-24T00:00:00Z"),
+                "1.0",
+                1,
+                List.of(item));
+
+        when(governanceQueryService.generateAdministrativeSummary(any(), any(), any(), any()))
+                .thenReturn(summaryRes);
+
+        mockMvc.perform(get("/api/governance/summary")
+                        .param("scopeType", "DISTRICT")
+                        .param("state", "Madhya Pradesh")
+                        .param("district", "Bhopal"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summaryMode").value("LIVE"))
+                .andExpect(jsonPath("$.scope.scopeType").value("DISTRICT"))
+                .andExpect(jsonPath("$.scope.state").value("Madhya Pradesh"))
+                .andExpect(jsonPath("$.scope.district").value("Bhopal"))
+                .andExpect(jsonPath("$.totalIndicatorsEvaluated").value(1))
+                .andExpect(jsonPath("$.indicators[0].indicatorCode").value("ACTIVE_PARCEL_COUNT"))
+                .andExpect(jsonPath("$.indicators[0].numericValue").value(450));
+    }
+
+    @Test
+    @DisplayName("GET /api/governance/summary - Retrieve summary with category filter")
+    void testGetAdministrativeSummaryCategoryFilter() throws Exception {
+        GovernanceScopeSummaryResponse scopeRes = new GovernanceScopeSummaryResponse(
+                GovernanceScopeType.STATE, "Madhya Pradesh", null, null, null, null, null);
+        GovernanceAdministrativeSummaryResponse summaryRes = new GovernanceAdministrativeSummaryResponse(
+                scopeRes, "LIVE", Instant.now(), Instant.now(), "1.0", 0, List.of());
+
+        when(governanceQueryService.generateAdministrativeSummary(
+                any(), eq(IndicatorCategory.LAND_USE), any(), any()))
+                .thenReturn(summaryRes);
+
+        mockMvc.perform(get("/api/governance/summary")
+                        .param("scopeType", "STATE")
+                        .param("state", "Madhya Pradesh")
+                        .param("category", "LAND_USE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summaryMode").value("LIVE"))
+                .andExpect(jsonPath("$.scope.scopeType").value("STATE"));
+    }
+
+    @Test
+    @DisplayName("GET /api/governance/summary - Retrieve summary with explicit indicators list")
+    void testGetAdministrativeSummaryExplicitIndicators() throws Exception {
+        GovernanceScopeSummaryResponse scopeRes = new GovernanceScopeSummaryResponse(
+                GovernanceScopeType.DISTRICT, "Madhya Pradesh", "Bhopal", null, null, null, null);
+        GovernanceAdministrativeSummaryResponse summaryRes = new GovernanceAdministrativeSummaryResponse(
+                scopeRes, "LIVE", Instant.now(), Instant.now(), "1.0", 2, List.of());
+
+        when(governanceQueryService.generateAdministrativeSummary(
+                any(), any(), eq(List.of("ACTIVE_PARCEL_COUNT", "DISPUTED_PARCEL_COUNT")), any()))
+                .thenReturn(summaryRes);
+
+        mockMvc.perform(get("/api/governance/summary")
+                        .param("scopeType", "DISTRICT")
+                        .param("state", "Madhya Pradesh")
+                        .param("district", "Bhopal")
+                        .param("indicators", "ACTIVE_PARCEL_COUNT", "DISPUTED_PARCEL_COUNT"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summaryMode").value("LIVE"))
+                .andExpect(jsonPath("$.totalIndicatorsEvaluated").value(2));
+    }
+
+    @Test
+    @DisplayName("GET /api/governance/summary - Project scope summary includes projectName")
+    void testGetAdministrativeSummaryProjectScope() throws Exception {
+        UUID projectId = UUID.randomUUID();
+        GovernanceScopeSummaryResponse scopeRes = new GovernanceScopeSummaryResponse(
+                GovernanceScopeType.PROJECT, null, null, null, null, projectId, "Smart Land Registry");
+        GovernanceAdministrativeSummaryResponse summaryRes = new GovernanceAdministrativeSummaryResponse(
+                scopeRes, "LIVE", Instant.now(), Instant.now(), "1.0", 1, List.of());
+
+        when(governanceQueryService.generateAdministrativeSummary(any(), any(), any(), any()))
+                .thenReturn(summaryRes);
+
+        mockMvc.perform(get("/api/governance/summary")
+                        .param("scopeType", "PROJECT")
+                        .param("projectId", projectId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.scope.scopeType").value("PROJECT"))
+                .andExpect(jsonPath("$.scope.projectId").value(projectId.toString()))
+                .andExpect(jsonPath("$.scope.projectName").value("Smart Land Registry"));
+    }
+
+    @Test
+    @DisplayName("GET /api/governance/summary - Invalid scope hierarchy returns 400 Bad Request")
+    void testGetAdministrativeSummaryValidationError() throws Exception {
+        when(governanceQueryService.generateAdministrativeSummary(any(), any(), any(), any()))
+                .thenThrow(new IllegalArgumentException("state and district are required for DISTRICT scope type"));
+
+        mockMvc.perform(get("/api/governance/summary")
+                        .param("scopeType", "DISTRICT")
+                        .param("state", "Madhya Pradesh"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /api/governance/summary - Unauthorized or nonexistent project returns 404 Not Found")
+    void testGetAdministrativeSummaryProjectNotFound() throws Exception {
+        UUID projectId = UUID.randomUUID();
+        when(governanceQueryService.generateAdministrativeSummary(any(), any(), any(), any()))
+                .thenThrow(new com.bhoomidrishti.exception.ResourceNotFoundException("Project not found"));
+
+        mockMvc.perform(get("/api/governance/summary")
+                        .param("scopeType", "PROJECT")
+                        .param("projectId", projectId.toString()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /api/governance/summary - Unauthorized authenticated user for private project returns 404")
+    void testGetAdministrativeSummaryProjectUnauthorizedAuthenticated() throws Exception {
+        UUID projectId = UUID.randomUUID();
+        when(governanceQueryService.generateAdministrativeSummary(any(), any(), any(), any()))
+                .thenThrow(new com.bhoomidrishti.exception.ResourceNotFoundException("Project not found"));
+
+        mockMvc.perform(get("/api/governance/summary")
+                        .cookie(mockAuthCookie(Role.RESEARCHER, "outsider@bhoomi.gov.in"))
+                        .param("scopeType", "PROJECT")
+                        .param("projectId", projectId.toString()))
+                .andExpect(status().isNotFound());
     }
 }

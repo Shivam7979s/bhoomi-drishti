@@ -139,7 +139,8 @@ public class SecurityConfig {
                                 "/api/governance/snapshots",
                                 "/api/governance/snapshots/*",
                                 "/api/governance/snapshots/*/evidence",
-                                "/api/projects/*/governance-snapshots")
+                                "/api/projects/*/governance-snapshots",
+                                "/api/governance/summary")
                                 .permitAll()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.

@@ -15,7 +15,10 @@ import com.bhoomidrishti.collaboration.repository.ProjectRepository;
 import com.bhoomidrishti.collaboration.service.CollaborationSecurityService;
 import com.bhoomidrishti.exception.ResourceNotFoundException;
 import com.bhoomidrishti.governance.dto.CurrentIndicatorQueryResult;
+import com.bhoomidrishti.governance.dto.GovernanceAdministrativeSummaryResponse;
 import com.bhoomidrishti.governance.dto.GovernanceScopeQuery;
+import com.bhoomidrishti.governance.dto.GovernanceScopeSummaryResponse;
+import com.bhoomidrishti.governance.dto.GovernanceSummaryIndicatorItemResponse;
 import com.bhoomidrishti.governance.entity.AggregationMethod;
 import com.bhoomidrishti.governance.entity.GovernanceIndicatorDefinition;
 import com.bhoomidrishti.governance.entity.GovernanceIndicatorSnapshot;
@@ -537,5 +540,276 @@ class GovernanceQueryServiceTest {
         when(collaborationSecurityService.resolveCurrentUser(adminAuth)).thenReturn(Optional.of(adminUser));
         List<GovernanceIndicatorSnapshot> adminResults = queryService.queryPersistedSnapshots(scope, null, adminAuth);
         assertThat(adminResults).hasSize(2);
+    }
+
+    // =========================================================================
+    // 6. ADMINISTRATIVE SUMMARY (LIVE) TESTS
+    // =========================================================================
+
+    @Test
+    @DisplayName("Should generate live administrative summary with all 10 default indicators")
+    void testGenerateAdministrativeSummaryDefaultAllIndicators() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofDistrict("Madhya Pradesh", "Bhopal");
+        Instant t1 = Instant.parse("2026-09-24T00:00:00Z");
+        Instant tMax = Instant.parse("2026-09-24T02:00:00Z");
+
+        for (String code : GovernanceQueryService.DEFAULT_SUMMARY_INDICATORS) {
+            GovernanceIndicatorDefinition def = new GovernanceIndicatorDefinition(
+                    code, code, "Desc", IndicatorCategory.STATUS_DISTRIBUTION,
+                    IndicatorUnit.COUNT, AggregationMethod.COUNT, "LAND_RECORD", "1.0");
+            when(definitionRepository.findByCode(code)).thenReturn(Optional.of(def));
+
+            Instant ts = code.equals("DISPUTED_PARCEL_COUNT") ? tMax : t1;
+            CalculationResult calc = new CalculationResult(BigDecimal.valueOf(10), BigDecimal.valueOf(100), "{}", ts);
+            when(calculationRepository.calculateIndicator(
+                    eq(code), eq(GovernanceScopeType.DISTRICT), eq("Madhya Pradesh"), eq("Bhopal"), eq(null), eq(null), eq(null)))
+                    .thenReturn(calc);
+        }
+
+        GovernanceAdministrativeSummaryResponse summary = queryService.generateAdministrativeSummary(
+                scope, null, null, null);
+
+        assertThat(summary).isNotNull();
+        assertThat(summary.summaryMode()).isEqualTo("LIVE");
+        assertThat(summary.calculationVersion()).isEqualTo("1.0");
+        assertThat(summary.totalIndicatorsEvaluated()).isEqualTo(10);
+        assertThat(summary.indicators()).hasSize(10);
+        assertThat(summary.sourceDataTimestamp()).isEqualTo(tMax);
+        assertThat(summary.scope().scopeType()).isEqualTo(GovernanceScopeType.DISTRICT);
+        assertThat(summary.scope().state()).isEqualTo("Madhya Pradesh");
+        assertThat(summary.scope().district()).isEqualTo("Bhopal");
+        assertThat(summary.scope().projectId()).isNull();
+        assertThat(summary.scope().projectName()).isNull();
+    }
+
+    @Test
+    @DisplayName("Should generate live summary filtered by category")
+    void testGenerateAdministrativeSummaryCategoryFilter() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofState("Madhya Pradesh");
+
+        // Mock land use indicators with LAND_USE category, others with STATUS_DISTRIBUTION
+        for (String code : GovernanceQueryService.DEFAULT_SUMMARY_INDICATORS) {
+            IndicatorCategory cat = code.contains("LAND_USE") ? IndicatorCategory.LAND_USE : IndicatorCategory.STATUS_DISTRIBUTION;
+            GovernanceIndicatorDefinition def = new GovernanceIndicatorDefinition(
+                    code, code, "Desc", cat, IndicatorUnit.COUNT, AggregationMethod.COUNT, "LAND_RECORD", "1.0");
+            when(definitionRepository.findByCode(code)).thenReturn(Optional.of(def));
+
+            if (cat == IndicatorCategory.LAND_USE) {
+                CalculationResult calc = new CalculationResult(BigDecimal.valueOf(5), null, "{}", Instant.now());
+                when(calculationRepository.calculateIndicator(
+                        eq(code), eq(GovernanceScopeType.STATE), eq("Madhya Pradesh"), eq(null), eq(null), eq(null), eq(null)))
+                        .thenReturn(calc);
+            }
+        }
+
+        GovernanceAdministrativeSummaryResponse summary = queryService.generateAdministrativeSummary(
+                scope, IndicatorCategory.LAND_USE, null, null);
+
+        assertThat(summary.totalIndicatorsEvaluated()).isEqualTo(3);
+        assertThat(summary.indicators()).allMatch(i -> i.category() == IndicatorCategory.LAND_USE);
+    }
+
+    @Test
+    @DisplayName("Should generate live summary for explicit list of indicators")
+    void testGenerateAdministrativeSummaryExplicitIndicators() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofTehsil("Madhya Pradesh", "Bhopal", "Huzur");
+        List<String> explicitCodes = List.of("ACTIVE_PARCEL_COUNT", "DISPUTED_PARCEL_COUNT");
+
+        for (String code : explicitCodes) {
+            GovernanceIndicatorDefinition def = new GovernanceIndicatorDefinition(
+                    code, code, "Desc", IndicatorCategory.STATUS_DISTRIBUTION,
+                    IndicatorUnit.COUNT, AggregationMethod.COUNT, "LAND_RECORD", "1.0");
+            when(definitionRepository.findByCode(code)).thenReturn(Optional.of(def));
+
+            CalculationResult calc = new CalculationResult(BigDecimal.valueOf(42), BigDecimal.valueOf(100), "{}", Instant.now());
+            when(calculationRepository.calculateIndicator(
+                    eq(code), eq(GovernanceScopeType.TEHSIL), eq("Madhya Pradesh"), eq("Bhopal"), eq("Huzur"), eq(null), eq(null)))
+                    .thenReturn(calc);
+        }
+
+        GovernanceAdministrativeSummaryResponse summary = queryService.generateAdministrativeSummary(
+                scope, null, explicitCodes, null);
+
+        assertThat(summary.totalIndicatorsEvaluated()).isEqualTo(2);
+        assertThat(summary.indicators().get(0).indicatorCode()).isEqualTo("ACTIVE_PARCEL_COUNT");
+        assertThat(summary.indicators().get(1).indicatorCode()).isEqualTo("DISPUTED_PARCEL_COUNT");
+    }
+
+    @Test
+    @DisplayName("Should filter explicit indicators with category constraint")
+    void testGenerateAdministrativeSummaryCategoryAndExplicitIntersection() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofDistrict("Madhya Pradesh", "Bhopal");
+        List<String> explicitCodes = List.of("ACTIVE_PARCEL_COUNT", "AREA_BY_LAND_USE");
+
+        GovernanceIndicatorDefinition def1 = new GovernanceIndicatorDefinition(
+                "ACTIVE_PARCEL_COUNT", "Active Count", "Desc", IndicatorCategory.STATUS_DISTRIBUTION,
+                IndicatorUnit.COUNT, AggregationMethod.COUNT, "LAND_RECORD", "1.0");
+        GovernanceIndicatorDefinition def2 = new GovernanceIndicatorDefinition(
+                "AREA_BY_LAND_USE", "Area by Land Use", "Desc", IndicatorCategory.LAND_USE,
+                IndicatorUnit.SQ_METERS, AggregationMethod.SUM, "LAND_RECORD", "1.0");
+
+        when(definitionRepository.findByCode("ACTIVE_PARCEL_COUNT")).thenReturn(Optional.of(def1));
+        when(definitionRepository.findByCode("AREA_BY_LAND_USE")).thenReturn(Optional.of(def2));
+
+        CalculationResult calc = new CalculationResult(BigDecimal.valueOf(100), null, "{}", Instant.now());
+        when(calculationRepository.calculateIndicator(
+                eq("ACTIVE_PARCEL_COUNT"), eq(GovernanceScopeType.DISTRICT), eq("Madhya Pradesh"), eq("Bhopal"), eq(null), eq(null), eq(null)))
+                .thenReturn(calc);
+
+        GovernanceAdministrativeSummaryResponse summary = queryService.generateAdministrativeSummary(
+                scope, IndicatorCategory.STATUS_DISTRIBUTION, explicitCodes, null);
+
+        assertThat(summary.totalIndicatorsEvaluated()).isEqualTo(1);
+        assertThat(summary.indicators().get(0).indicatorCode()).isEqualTo("ACTIVE_PARCEL_COUNT");
+    }
+
+    @Test
+    @DisplayName("Should fail when explicit indicators and category have empty intersection")
+    void testGenerateAdministrativeSummaryCategoryAndExplicitEmptyIntersection() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofDistrict("Madhya Pradesh", "Bhopal");
+        List<String> explicitCodes = List.of("AREA_BY_LAND_USE");
+
+        GovernanceIndicatorDefinition def = new GovernanceIndicatorDefinition(
+                "AREA_BY_LAND_USE", "Area", "Desc", IndicatorCategory.LAND_USE,
+                IndicatorUnit.SQ_METERS, AggregationMethod.SUM, "LAND_RECORD", "1.0");
+        when(definitionRepository.findByCode("AREA_BY_LAND_USE")).thenReturn(Optional.of(def));
+
+        assertThatThrownBy(() -> queryService.generateAdministrativeSummary(
+                scope, IndicatorCategory.STATUS_DISTRIBUTION, explicitCodes, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("No requested indicators match the specified category filter");
+    }
+
+    @Test
+    @DisplayName("Should generate live summary for PROJECT scope with project name")
+    void testGenerateAdministrativeSummaryProjectScope() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofProject(projectId);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(collaborationSecurityService.resolveCurrentUser(adminAuth)).thenReturn(Optional.of(adminUser));
+
+        List<String> explicitCodes = List.of("ACTIVE_PARCEL_COUNT");
+        GovernanceIndicatorDefinition def = new GovernanceIndicatorDefinition(
+                "ACTIVE_PARCEL_COUNT", "Active Count", "Desc", IndicatorCategory.STATUS_DISTRIBUTION,
+                IndicatorUnit.COUNT, AggregationMethod.COUNT, "LAND_RECORD", "1.0");
+        when(definitionRepository.findByCode("ACTIVE_PARCEL_COUNT")).thenReturn(Optional.of(def));
+
+        CalculationResult calc = new CalculationResult(BigDecimal.valueOf(15), BigDecimal.valueOf(20), "{}", Instant.now());
+        when(calculationRepository.calculateIndicator(
+                eq("ACTIVE_PARCEL_COUNT"), eq(GovernanceScopeType.PROJECT), eq(null), eq(null), eq(null), eq(null), eq(projectId)))
+                .thenReturn(calc);
+
+        GovernanceAdministrativeSummaryResponse summary = queryService.generateAdministrativeSummary(
+                scope, null, explicitCodes, adminAuth);
+
+        assertThat(summary.scope().scopeType()).isEqualTo(GovernanceScopeType.PROJECT);
+        assertThat(summary.scope().projectId()).isEqualTo(projectId);
+        assertThat(summary.scope().projectName()).isEqualTo(testProject.getName());
+        assertThat(summary.totalIndicatorsEvaluated()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should fail project summary with 404 IDOR protection when user unauthorized")
+    void testGenerateAdministrativeSummaryProjectUnauthorized() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofProject(projectId);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(collaborationSecurityService.resolveCurrentUser(researcherAuth)).thenReturn(Optional.of(researcherUser));
+        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Project not found"))
+                .when(collaborationSecurityService).checkCanViewProject(testProject, researcherUser);
+
+        assertThatThrownBy(() -> queryService.generateAdministrativeSummary(scope, null, null, researcherAuth))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Project not found");
+    }
+
+    @Test
+    @DisplayName("Should fail project summary with 404 IDOR protection when user is anonymous")
+    void testGenerateAdministrativeSummaryProjectAnonymous() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofProject(projectId);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(collaborationSecurityService.resolveCurrentUser(null)).thenReturn(Optional.empty());
+        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Project not found"))
+                .when(collaborationSecurityService).checkCanViewProject(testProject, null);
+
+        assertThatThrownBy(() -> queryService.generateAdministrativeSummary(scope, null, null, null))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Project not found");
+    }
+
+    @Test
+    @DisplayName("Should succeed project summary for authorized regular project member")
+    void testGenerateAdministrativeSummaryProjectMember() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofProject(projectId);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(collaborationSecurityService.resolveCurrentUser(researcherAuth)).thenReturn(Optional.of(researcherUser));
+        org.mockito.Mockito.doNothing().when(collaborationSecurityService).checkCanViewProject(testProject, researcherUser);
+
+        List<String> explicitCodes = List.of("ACTIVE_PARCEL_COUNT");
+        GovernanceIndicatorDefinition def = new GovernanceIndicatorDefinition(
+                "ACTIVE_PARCEL_COUNT", "Active Count", "Desc", IndicatorCategory.STATUS_DISTRIBUTION,
+                IndicatorUnit.COUNT, AggregationMethod.COUNT, "LAND_RECORD", "1.0");
+        when(definitionRepository.findByCode("ACTIVE_PARCEL_COUNT")).thenReturn(Optional.of(def));
+
+        CalculationResult calc = new CalculationResult(BigDecimal.valueOf(15), BigDecimal.valueOf(20), "{}", Instant.now());
+        when(calculationRepository.calculateIndicator(
+                eq("ACTIVE_PARCEL_COUNT"), eq(GovernanceScopeType.PROJECT), eq(null), eq(null), eq(null), eq(null), eq(projectId)))
+                .thenReturn(calc);
+
+        GovernanceAdministrativeSummaryResponse summary = queryService.generateAdministrativeSummary(
+                scope, null, explicitCodes, researcherAuth);
+
+        assertThat(summary.scope().scopeType()).isEqualTo(GovernanceScopeType.PROJECT);
+        assertThat(summary.scope().projectId()).isEqualTo(projectId);
+        assertThat(summary.scope().projectName()).isEqualTo(testProject.getName());
+        assertThat(summary.totalIndicatorsEvaluated()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should fail summary with invalid geographic scope hierarchy")
+    void testGenerateAdministrativeSummaryInvalidScope() {
+        GovernanceScopeQuery malformed = new GovernanceScopeQuery(
+                GovernanceScopeType.DISTRICT, "Madhya Pradesh", null, null, null, null);
+
+        assertThatThrownBy(() -> queryService.generateAdministrativeSummary(malformed, null, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("state and district are required for DISTRICT scope type");
+    }
+
+    @Test
+    @DisplayName("Should fail summary when explicit indicator is unknown")
+    void testGenerateAdministrativeSummaryUnknownIndicator() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofDistrict("Madhya Pradesh", "Bhopal");
+        when(definitionRepository.findByCode("NON_EXISTENT")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> queryService.generateAdministrativeSummary(
+                scope, null, List.of("NON_EXISTENT"), null))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Indicator definition not found: NON_EXISTENT");
+    }
+
+    @Test
+    @DisplayName("Should fail summary when explicit indicator is inactive")
+    void testGenerateAdministrativeSummaryInactiveIndicator() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofDistrict("Madhya Pradesh", "Bhopal");
+        when(definitionRepository.findByCode("INACTIVE_DEF")).thenReturn(Optional.of(inactiveDefinition));
+
+        assertThatThrownBy(() -> queryService.generateAdministrativeSummary(
+                scope, null, List.of("INACTIVE_DEF"), null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Indicator definition is inactive: INACTIVE_DEF");
+    }
+
+    @Test
+    @DisplayName("Should fail summary when explicit indicator calculation is unsupported")
+    void testGenerateAdministrativeSummaryUnsupportedIndicator() {
+        GovernanceScopeQuery scope = GovernanceScopeQuery.ofDistrict("Madhya Pradesh", "Bhopal");
+        GovernanceIndicatorDefinition defWithoutCalc = new GovernanceIndicatorDefinition(
+                "FUTURE_UNSUPPORTED", "Future", "Desc", IndicatorCategory.LAND_USE,
+                IndicatorUnit.PERCENTAGE, AggregationMethod.PERCENTAGE_SHARE, "LAND_RECORD", "1.0");
+        when(definitionRepository.findByCode("FUTURE_UNSUPPORTED")).thenReturn(Optional.of(defWithoutCalc));
+
+        assertThatThrownBy(() -> queryService.generateAdministrativeSummary(
+                scope, null, List.of("FUTURE_UNSUPPORTED"), null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unsupported calculation for indicator code: FUTURE_UNSUPPORTED");
     }
 }

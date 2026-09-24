@@ -7,15 +7,21 @@ import com.bhoomidrishti.collaboration.repository.ProjectRepository;
 import com.bhoomidrishti.collaboration.service.CollaborationSecurityService;
 import com.bhoomidrishti.exception.ResourceNotFoundException;
 import com.bhoomidrishti.governance.dto.CurrentIndicatorQueryResult;
+import com.bhoomidrishti.governance.dto.GovernanceAdministrativeSummaryResponse;
 import com.bhoomidrishti.governance.dto.GovernanceScopeQuery;
+import com.bhoomidrishti.governance.dto.GovernanceScopeSummaryResponse;
+import com.bhoomidrishti.governance.dto.GovernanceSummaryIndicatorItemResponse;
 import com.bhoomidrishti.governance.entity.GovernanceIndicatorDefinition;
 import com.bhoomidrishti.governance.entity.GovernanceIndicatorSnapshot;
 import com.bhoomidrishti.governance.entity.GovernanceScopeType;
+import com.bhoomidrishti.governance.entity.IndicatorCategory;
 import com.bhoomidrishti.governance.entity.SnapshotVisibility;
 import com.bhoomidrishti.governance.repository.GovernanceCalculationRepository;
 import com.bhoomidrishti.governance.repository.GovernanceCalculationRepository.CalculationResult;
 import com.bhoomidrishti.governance.repository.GovernanceIndicatorDefinitionRepository;
 import com.bhoomidrishti.governance.repository.GovernanceIndicatorSnapshotRepository;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
@@ -279,5 +285,142 @@ public class GovernanceQueryService {
         return snapshots.stream()
                 .filter(s -> s.getVisibility() == SnapshotVisibility.PUBLISHED || isOfficialOrAdmin)
                 .toList();
+    }
+
+    public static final List<String> DEFAULT_SUMMARY_INDICATORS = List.of(
+            "PARCEL_COUNT_BY_LAND_USE",
+            "AREA_BY_LAND_USE",
+            "LAND_USE_SHARE",
+            "PARCEL_COUNT_BY_OWNERSHIP",
+            "AREA_BY_OWNERSHIP",
+            "OWNERSHIP_SHARE",
+            "ACTIVE_PARCEL_COUNT",
+            "DISPUTED_PARCEL_COUNT",
+            "PENDING_VERIFICATION_COUNT",
+            "INACTIVE_PARCEL_COUNT"
+    );
+
+    /**
+     * Generates a deterministic, live administrative summary for a specified geographic or project scope.
+     *
+     * <p>Evaluates indicators on-the-fly directly against authoritative spatial land records.
+     * Does NOT persist the calculation or create snapshots.
+     *
+     * @param scopeQuery geographic or project scope parameters
+     * @param categoryFilter optional filter by indicator category
+     * @param requestedIndicators optional list of explicit indicator codes
+     * @param auth authentication context for project authorization
+     * @return structured administrative summary response
+     */
+    public GovernanceAdministrativeSummaryResponse generateAdministrativeSummary(
+            GovernanceScopeQuery scopeQuery,
+            IndicatorCategory categoryFilter,
+            List<String> requestedIndicators,
+            Authentication auth) {
+
+        GovernanceScopeQuery validScope = validateScope(scopeQuery);
+
+        String projectName = null;
+        if (validScope.scopeType() == GovernanceScopeType.PROJECT) {
+            Project project = authorizeProjectScope(validScope.projectId(), auth);
+            projectName = project.getName();
+        }
+
+        // Determine requested indicators
+        List<String> cleanRequestedCodes = null;
+        if (requestedIndicators != null) {
+            cleanRequestedCodes = requestedIndicators.stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(String::trim)
+                    .toList();
+        }
+
+        List<GovernanceIndicatorDefinition> targetDefinitions = new ArrayList<>();
+
+        if (cleanRequestedCodes != null && !cleanRequestedCodes.isEmpty()) {
+            for (String code : cleanRequestedCodes) {
+                GovernanceIndicatorDefinition def = validateIndicator(code);
+                if (categoryFilter == null || def.getCategory() == categoryFilter) {
+                    targetDefinitions.add(def);
+                }
+            }
+            if (targetDefinitions.isEmpty()) {
+                throw new IllegalArgumentException("No requested indicators match the specified category filter: " + categoryFilter);
+            }
+        } else {
+            for (String code : DEFAULT_SUMMARY_INDICATORS) {
+                GovernanceIndicatorDefinition def = validateIndicator(code);
+                if (categoryFilter == null || def.getCategory() == categoryFilter) {
+                    targetDefinitions.add(def);
+                }
+            }
+            if (targetDefinitions.isEmpty()) {
+                throw new IllegalArgumentException("No supported indicators match the specified category filter: " + categoryFilter);
+            }
+        }
+
+        Instant generatedAt = Instant.now();
+        Instant maxSourceDataTimestamp = null;
+        String calculationVersion = "1.0";
+
+        List<GovernanceSummaryIndicatorItemResponse> indicatorItems = new ArrayList<>(targetDefinitions.size());
+
+        for (GovernanceIndicatorDefinition def : targetDefinitions) {
+            CalculationResult calc = calculationRepository.calculateIndicator(
+                    def.getCode(),
+                    validScope.scopeType(),
+                    validScope.state(),
+                    validScope.district(),
+                    validScope.tehsil(),
+                    validScope.village(),
+                    validScope.projectId()
+            );
+
+            if (calc.sourceDataTimestamp() != null) {
+                if (maxSourceDataTimestamp == null || calc.sourceDataTimestamp().isAfter(maxSourceDataTimestamp)) {
+                    maxSourceDataTimestamp = calc.sourceDataTimestamp();
+                }
+            }
+
+            if (def.getCalculationVersion() != null && !def.getCalculationVersion().isBlank()) {
+                calculationVersion = def.getCalculationVersion();
+            }
+
+            indicatorItems.add(new GovernanceSummaryIndicatorItemResponse(
+                    def.getCode(),
+                    def.getName(),
+                    def.getCategory(),
+                    def.getUnit(),
+                    def.getAggregationMethod(),
+                    calc.numericValue(),
+                    calc.denominator(),
+                    calc.breakdownJson(),
+                    calc.sourceDataTimestamp()
+            ));
+        }
+
+        if (maxSourceDataTimestamp == null) {
+            maxSourceDataTimestamp = generatedAt;
+        }
+
+        GovernanceScopeSummaryResponse scopeResponse = new GovernanceScopeSummaryResponse(
+                validScope.scopeType(),
+                validScope.state(),
+                validScope.district(),
+                validScope.tehsil(),
+                validScope.village(),
+                validScope.projectId(),
+                projectName
+        );
+
+        return new GovernanceAdministrativeSummaryResponse(
+                scopeResponse,
+                "LIVE",
+                generatedAt,
+                maxSourceDataTimestamp,
+                calculationVersion,
+                indicatorItems.size(),
+                indicatorItems
+        );
     }
 }
