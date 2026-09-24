@@ -281,4 +281,102 @@ class GovernanceIndicatorControllerTest {
                         .cookie(mockAuthCookie(Role.GOVERNMENT_OFFICIAL, "officer@bhoomi.gov.in")))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    @DisplayName("GET /api/governance/snapshots - Retrieve snapshots by scope hierarchy")
+    void testGetSnapshotsByScopeHierarchy() throws Exception {
+        UUID snapshotId = UUID.randomUUID();
+        GovernanceIndicatorSnapshotResponse res = new GovernanceIndicatorSnapshotResponse(
+                snapshotId,
+                UUID.randomUUID(),
+                "ACTIVE_PARCEL_COUNT",
+                "Active Parcel Count",
+                IndicatorCategory.STATUS_DISTRIBUTION,
+                IndicatorUnit.COUNT,
+                null,
+                GovernanceScopeType.DISTRICT,
+                "Madhya Pradesh",
+                "Bhopal",
+                "Huzur",
+                null,
+                SnapshotVisibility.PUBLISHED,
+                Instant.parse("2026-09-24T00:00:00Z"),
+                null,
+                null,
+                BigDecimal.valueOf(450),
+                null,
+                null,
+                "1.0",
+                Instant.parse("2026-09-24T00:00:00Z"),
+                null,
+                UUID.randomUUID(),
+                "Admin Officer",
+                Instant.now(),
+                0);
+
+        when(governanceIndicatorService.getSnapshotsByScope(
+                eq(GovernanceScopeType.DISTRICT),
+                eq("Madhya Pradesh"),
+                eq("Bhopal"),
+                eq("Huzur"),
+                eq(null),
+                eq("ACTIVE_PARCEL_COUNT"),
+                any()))
+                .thenReturn(List.of(res));
+
+        mockMvc.perform(get("/api/governance/snapshots")
+                        .param("scopeType", "DISTRICT")
+                        .param("state", "Madhya Pradesh")
+                        .param("district", "Bhopal")
+                        .param("tehsil", "Huzur")
+                        .param("indicatorCode", "ACTIVE_PARCEL_COUNT"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(snapshotId.toString()))
+                .andExpect(jsonPath("$[0].scopeType").value("DISTRICT"))
+                .andExpect(jsonPath("$[0].district").value("Bhopal"))
+                .andExpect(jsonPath("$[0].tehsil").value("Huzur"));
+    }
+
+    @Test
+    @DisplayName("GET /api/projects/{projectId}/governance-snapshots - Retrieve project snapshots")
+    void testGetSnapshotsByProject() throws Exception {
+        UUID projectId = UUID.randomUUID();
+        UUID snapshotId = UUID.randomUUID();
+        GovernanceIndicatorSnapshotResponse res = new GovernanceIndicatorSnapshotResponse(
+                snapshotId,
+                UUID.randomUUID(),
+                "ACTIVE_PARCEL_COUNT",
+                "Active Parcel Count",
+                IndicatorCategory.STATUS_DISTRIBUTION,
+                IndicatorUnit.COUNT,
+                projectId,
+                GovernanceScopeType.PROJECT,
+                null,
+                null,
+                null,
+                null,
+                SnapshotVisibility.INTERNAL,
+                Instant.parse("2026-09-24T00:00:00Z"),
+                null,
+                null,
+                BigDecimal.valueOf(12),
+                null,
+                null,
+                "1.0",
+                Instant.parse("2026-09-24T00:00:00Z"),
+                null,
+                UUID.randomUUID(),
+                "Lead Researcher",
+                Instant.now(),
+                0);
+
+        when(governanceIndicatorService.getSnapshotsByProject(eq(projectId), any()))
+                .thenReturn(List.of(res));
+
+        mockMvc.perform(get("/api/projects/" + projectId + "/governance-snapshots"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(snapshotId.toString()))
+                .andExpect(jsonPath("$[0].projectId").value(projectId.toString()))
+                .andExpect(jsonPath("$[0].scopeType").value("PROJECT"));
+    }
 }

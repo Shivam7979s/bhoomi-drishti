@@ -339,4 +339,96 @@ class GovernanceIndicatorIntegrationTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("At least one of researchDocumentId or documentChunkId must be provided");
     }
+
+    @Test
+    @DisplayName("Query foundation: scope hierarchy filtering, indicator code filter, and visibility checks")
+    void testQuerySnapshotsByScopeHierarchy() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String testDistrict = "Dist-" + suffix;
+
+        // Create 1 PUBLISHED snapshot
+        CreateGovernanceSnapshotRequest pubReq = new CreateGovernanceSnapshotRequest(
+                "DISPUTED_PARCEL_COUNT",
+                null,
+                GovernanceScopeType.DISTRICT,
+                "Madhya Pradesh",
+                testDistrict,
+                null,
+                null,
+                SnapshotVisibility.PUBLISHED,
+                Instant.now(),
+                null,
+                null,
+                null);
+        governanceIndicatorService.createSnapshot(pubReq, adminAuth);
+
+        // Create 1 INTERNAL snapshot for the same district
+        CreateGovernanceSnapshotRequest intReq = new CreateGovernanceSnapshotRequest(
+                "ACTIVE_PARCEL_COUNT",
+                null,
+                GovernanceScopeType.DISTRICT,
+                "Madhya Pradesh",
+                testDistrict,
+                null,
+                null,
+                SnapshotVisibility.INTERNAL,
+                Instant.now(),
+                null,
+                null,
+                null);
+        governanceIndicatorService.createSnapshot(intReq, adminAuth);
+
+        // Outsider: only sees 1 (the PUBLISHED one)
+        List<GovernanceIndicatorSnapshotResponse> outsiderResults = governanceIndicatorService.getSnapshotsByScope(
+                GovernanceScopeType.DISTRICT, "Madhya Pradesh", testDistrict, null, null, null, outsiderAuth);
+        assertThat(outsiderResults).hasSize(1);
+        assertThat(outsiderResults.get(0).visibility()).isEqualTo(SnapshotVisibility.PUBLISHED);
+
+        // Admin: sees both (2)
+        List<GovernanceIndicatorSnapshotResponse> adminResults = governanceIndicatorService.getSnapshotsByScope(
+                GovernanceScopeType.DISTRICT, "Madhya Pradesh", testDistrict, null, null, null, adminAuth);
+        assertThat(adminResults).hasSize(2);
+
+        // Indicator code filter: only DISPUTED_PARCEL_COUNT
+        List<GovernanceIndicatorSnapshotResponse> filteredResults = governanceIndicatorService.getSnapshotsByScope(
+                GovernanceScopeType.DISTRICT, "Madhya Pradesh", testDistrict, null, null, "DISPUTED_PARCEL_COUNT", adminAuth);
+        assertThat(filteredResults).hasSize(1);
+        assertThat(filteredResults.get(0).indicatorCode()).isEqualTo("DISPUTED_PARCEL_COUNT");
+
+        // Invalid scope hierarchy: missing district for DISTRICT scope must fail with IllegalArgumentException
+        assertThatThrownBy(() -> governanceIndicatorService.getSnapshotsByScope(
+                GovernanceScopeType.DISTRICT, "Madhya Pradesh", null, null, null, null, adminAuth))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("state and district are required for DISTRICT scope type");
+    }
+
+    @Test
+    @DisplayName("Query foundation: project snapshot query isolation and IDOR protection")
+    void testQuerySnapshotsByProjectIsolation() {
+        CreateGovernanceSnapshotRequest projReq = new CreateGovernanceSnapshotRequest(
+                "ACTIVE_PARCEL_COUNT",
+                privateProject.getId(),
+                GovernanceScopeType.PROJECT,
+                null,
+                null,
+                null,
+                null,
+                SnapshotVisibility.INTERNAL,
+                Instant.now(),
+                null,
+                null,
+                null);
+        governanceIndicatorService.createSnapshot(projReq, leadAuth);
+
+        // Project lead can retrieve project snapshots
+        List<GovernanceIndicatorSnapshotResponse> leadResults =
+                governanceIndicatorService.getSnapshotsByProject(privateProject.getId(), leadAuth);
+        assertThat(leadResults).hasSize(1);
+        assertThat(leadResults.get(0).projectId()).isEqualTo(privateProject.getId());
+
+        // Outsider querying private project snapshots receives 404 (IDOR safe)
+        assertThatThrownBy(() -> governanceIndicatorService.getSnapshotsByProject(privateProject.getId(), outsiderAuth))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Project not found");
+    }
 }

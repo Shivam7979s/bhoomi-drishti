@@ -80,8 +80,12 @@ public class GovernanceIndicatorController {
             @RequestParam GovernanceScopeType scopeType,
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String district,
+            @RequestParam(required = false) String tehsil,
+            @RequestParam(required = false) String village,
+            @RequestParam(required = false) String indicatorCode,
             Authentication auth) {
-        return ResponseEntity.ok(governanceIndicatorService.getSnapshotsByScope(scopeType, state, district, auth));
+        return ResponseEntity.ok(governanceIndicatorService.getSnapshotsByScope(
+                scopeType, state, district, tehsil, village, indicatorCode, auth));
     }
 
     // -------------------------------------------------------------------------

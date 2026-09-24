@@ -33,6 +33,23 @@ public class GovernanceCalculationRepository {
             Instant sourceDataTimestamp
     ) {}
 
+    public static final java.util.Set<String> SUPPORTED_INDICATOR_CODES = java.util.Set.of(
+            "PARCEL_COUNT_BY_LAND_USE",
+            "AREA_BY_LAND_USE",
+            "LAND_USE_SHARE",
+            "PARCEL_COUNT_BY_OWNERSHIP",
+            "AREA_BY_OWNERSHIP",
+            "OWNERSHIP_SHARE",
+            "ACTIVE_PARCEL_COUNT",
+            "DISPUTED_PARCEL_COUNT",
+            "PENDING_VERIFICATION_COUNT",
+            "INACTIVE_PARCEL_COUNT"
+    );
+
+    public boolean supportsIndicator(String indicatorCode) {
+        return indicatorCode != null && SUPPORTED_INDICATOR_CODES.contains(indicatorCode.trim());
+    }
+
     public CalculationResult calculateIndicator(
             String indicatorCode,
             GovernanceScopeType scopeType,
@@ -42,33 +59,68 @@ public class GovernanceCalculationRepository {
             String village,
             UUID projectId) {
 
+        if (scopeType == null) {
+            throw new IllegalArgumentException("scopeType is required");
+        }
+
+        if (indicatorCode == null || !supportsIndicator(indicatorCode)) {
+            throw new IllegalArgumentException("Unsupported calculation for indicator code: " + indicatorCode);
+        }
+
         StringBuilder whereClause = new StringBuilder();
         List<Object> params = new ArrayList<>();
 
         String fromClause;
-        if (scopeType == GovernanceScopeType.PROJECT) {
-            fromClause = "FROM project_land_records plr JOIN land_records lr ON plr.land_record_id = lr.id ";
-            whereClause.append("WHERE plr.project_id = ? ");
-            params.add(projectId);
-        } else {
-            fromClause = "FROM land_records lr ";
-            whereClause.append("WHERE 1=1 ");
-            if (state != null && !state.isBlank()) {
-                whereClause.append("AND lr.state = ? ");
-                params.add(state);
+        switch (scopeType) {
+            case STATE -> {
+                if (state == null || state.isBlank()) {
+                    throw new IllegalArgumentException("state is required for STATE scope");
+                }
+                fromClause = "FROM land_records lr ";
+                whereClause.append("WHERE lr.state = ? ");
+                params.add(state.trim());
             }
-            if (district != null && !district.isBlank()) {
-                whereClause.append("AND lr.district = ? ");
-                params.add(district);
+            case DISTRICT -> {
+                if (state == null || state.isBlank() || district == null || district.isBlank()) {
+                    throw new IllegalArgumentException("state and district are required for DISTRICT scope");
+                }
+                fromClause = "FROM land_records lr ";
+                whereClause.append("WHERE lr.state = ? AND lr.district = ? ");
+                params.add(state.trim());
+                params.add(district.trim());
             }
-            if (tehsil != null && !tehsil.isBlank()) {
-                whereClause.append("AND lr.tehsil = ? ");
-                params.add(tehsil);
+            case TEHSIL -> {
+                if (state == null || state.isBlank() || district == null || district.isBlank()
+                        || tehsil == null || tehsil.isBlank()) {
+                    throw new IllegalArgumentException("state, district, and tehsil are required for TEHSIL scope");
+                }
+                fromClause = "FROM land_records lr ";
+                whereClause.append("WHERE lr.state = ? AND lr.district = ? AND lr.tehsil = ? ");
+                params.add(state.trim());
+                params.add(district.trim());
+                params.add(tehsil.trim());
             }
-            if (village != null && !village.isBlank()) {
-                whereClause.append("AND lr.village = ? ");
-                params.add(village);
+            case VILLAGE -> {
+                if (state == null || state.isBlank() || district == null || district.isBlank()
+                        || tehsil == null || tehsil.isBlank() || village == null || village.isBlank()) {
+                    throw new IllegalArgumentException("state, district, tehsil, and village are required for VILLAGE scope");
+                }
+                fromClause = "FROM land_records lr ";
+                whereClause.append("WHERE lr.state = ? AND lr.district = ? AND lr.tehsil = ? AND lr.village = ? ");
+                params.add(state.trim());
+                params.add(district.trim());
+                params.add(tehsil.trim());
+                params.add(village.trim());
             }
+            case PROJECT -> {
+                if (projectId == null) {
+                    throw new IllegalArgumentException("projectId is required for PROJECT scope");
+                }
+                fromClause = "FROM project_land_records plr JOIN land_records lr ON plr.land_record_id = lr.id ";
+                whereClause.append("WHERE plr.project_id = ? ");
+                params.add(projectId);
+            }
+            default -> throw new IllegalArgumentException("Unsupported scope type: " + scopeType);
         }
 
         // Get source data timestamp

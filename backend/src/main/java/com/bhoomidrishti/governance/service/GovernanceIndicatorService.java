@@ -12,6 +12,7 @@ import com.bhoomidrishti.governance.dto.CreateGovernanceSnapshotRequest;
 import com.bhoomidrishti.governance.dto.GovernanceIndicatorDefinitionResponse;
 import com.bhoomidrishti.governance.dto.GovernanceIndicatorEvidenceResponse;
 import com.bhoomidrishti.governance.dto.GovernanceIndicatorSnapshotResponse;
+import com.bhoomidrishti.governance.dto.GovernanceScopeQuery;
 import com.bhoomidrishti.governance.dto.LinkGovernanceEvidenceRequest;
 import com.bhoomidrishti.governance.entity.GovernanceEvidenceType;
 import com.bhoomidrishti.governance.entity.GovernanceIndicatorDefinition;
@@ -55,6 +56,7 @@ public class GovernanceIndicatorService {
     private final ResearchDocumentService researchDocumentService;
     private final DocumentChunkQueryRepository documentChunkQueryRepository;
     private final CollaborationSecurityService collaborationSecurityService;
+    private final GovernanceQueryService governanceQueryService;
 
     public GovernanceIndicatorService(
             GovernanceIndicatorDefinitionRepository definitionRepository,
@@ -66,6 +68,36 @@ public class GovernanceIndicatorService {
             ResearchDocumentService researchDocumentService,
             DocumentChunkQueryRepository documentChunkQueryRepository,
             CollaborationSecurityService collaborationSecurityService) {
+        this(
+                definitionRepository,
+                snapshotRepository,
+                evidenceRepository,
+                calculationRepository,
+                projectRepository,
+                researchDocumentRepository,
+                researchDocumentService,
+                documentChunkQueryRepository,
+                collaborationSecurityService,
+                new GovernanceQueryService(
+                        calculationRepository,
+                        definitionRepository,
+                        snapshotRepository,
+                        projectRepository,
+                        collaborationSecurityService));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public GovernanceIndicatorService(
+            GovernanceIndicatorDefinitionRepository definitionRepository,
+            GovernanceIndicatorSnapshotRepository snapshotRepository,
+            GovernanceIndicatorEvidenceRepository evidenceRepository,
+            GovernanceCalculationRepository calculationRepository,
+            ProjectRepository projectRepository,
+            ResearchDocumentRepository researchDocumentRepository,
+            ResearchDocumentService researchDocumentService,
+            DocumentChunkQueryRepository documentChunkQueryRepository,
+            CollaborationSecurityService collaborationSecurityService,
+            GovernanceQueryService governanceQueryService) {
         this.definitionRepository = definitionRepository;
         this.snapshotRepository = snapshotRepository;
         this.evidenceRepository = evidenceRepository;
@@ -75,6 +107,7 @@ public class GovernanceIndicatorService {
         this.researchDocumentService = researchDocumentService;
         this.documentChunkQueryRepository = documentChunkQueryRepository;
         this.collaborationSecurityService = collaborationSecurityService;
+        this.governanceQueryService = governanceQueryService;
     }
 
     // -------------------------------------------------------------------------
@@ -109,25 +142,23 @@ public class GovernanceIndicatorService {
             CreateGovernanceSnapshotRequest request, Authentication auth) {
         User user = collaborationSecurityService.requireAuthenticatedUser(auth);
 
-        GovernanceIndicatorDefinition definition = definitionRepository.findByCode(request.indicatorCode())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Indicator definition not found: " + request.indicatorCode()));
-
-        if (!definition.isActive()) {
-            throw new IllegalArgumentException("Indicator definition is inactive: " + request.indicatorCode());
-        }
+        GovernanceIndicatorDefinition definition = governanceQueryService.validateIndicator(request.indicatorCode());
+        GovernanceScopeQuery scopeQuery = new GovernanceScopeQuery(
+                request.scopeType(),
+                request.state(),
+                request.district(),
+                request.tehsil(),
+                request.village(),
+                request.projectId());
+        governanceQueryService.validateScope(scopeQuery);
 
         // Scope validation & authorization
         Project project = null;
         if (request.scopeType() == GovernanceScopeType.PROJECT) {
-            if (request.projectId() == null) {
-                throw new IllegalArgumentException("projectId is required for PROJECT scope type");
-            }
             project = projectRepository.findById(request.projectId())
                     .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + request.projectId()));
             collaborationSecurityService.checkCanContributeToProject(project, user);
         } else {
-            validateRegionalScope(request);
             if (user.getRole() != Role.GOVERNMENT_OFFICIAL && user.getRole() != Role.ADMIN) {
                 throw new AccessDeniedException("Only GOVERNMENT_OFFICIAL or ADMIN can create regional governance snapshots");
             }
@@ -206,21 +237,24 @@ public class GovernanceIndicatorService {
 
     @Transactional(readOnly = true)
     public List<GovernanceIndicatorSnapshotResponse> getSnapshotsByScope(
-            GovernanceScopeType scopeType, String state, String district, Authentication auth) {
-        List<GovernanceIndicatorSnapshot> snapshots;
-        if (state != null && district != null) {
-            snapshots = snapshotRepository.findByScopeTypeAndStateAndDistrictOrderByAsOfDesc(scopeType, state, district);
-        } else {
-            snapshots = snapshotRepository.findByScopeTypeOrderByAsOfDesc(scopeType);
-        }
-
-        User user = collaborationSecurityService.resolveCurrentUser(auth).orElse(null);
-        boolean isOfficialOrAdmin = user != null && (user.getRole() == Role.GOVERNMENT_OFFICIAL || user.getRole() == Role.ADMIN);
-
+            GovernanceScopeType scopeType,
+            String state,
+            String district,
+            String tehsil,
+            String village,
+            String indicatorCode,
+            Authentication auth) {
+        GovernanceScopeQuery scopeQuery = new GovernanceScopeQuery(scopeType, state, district, tehsil, village, null);
+        List<GovernanceIndicatorSnapshot> snapshots = governanceQueryService.queryPersistedSnapshots(scopeQuery, indicatorCode, auth);
         return snapshots.stream()
-                .filter(s -> s.getVisibility() == SnapshotVisibility.PUBLISHED || isOfficialOrAdmin)
                 .map(GovernanceIndicatorSnapshotResponse::fromEntity)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GovernanceIndicatorSnapshotResponse> getSnapshotsByScope(
+            GovernanceScopeType scopeType, String state, String district, Authentication auth) {
+        return getSnapshotsByScope(scopeType, state, district, null, null, null, auth);
     }
 
     // -------------------------------------------------------------------------
