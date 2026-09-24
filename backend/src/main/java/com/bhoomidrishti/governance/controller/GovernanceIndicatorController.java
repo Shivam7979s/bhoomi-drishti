@@ -1,0 +1,115 @@
+package com.bhoomidrishti.governance.controller;
+
+import com.bhoomidrishti.governance.dto.CreateGovernanceSnapshotRequest;
+import com.bhoomidrishti.governance.dto.GovernanceIndicatorDefinitionResponse;
+import com.bhoomidrishti.governance.dto.GovernanceIndicatorEvidenceResponse;
+import com.bhoomidrishti.governance.dto.GovernanceIndicatorSnapshotResponse;
+import com.bhoomidrishti.governance.dto.LinkGovernanceEvidenceRequest;
+import com.bhoomidrishti.governance.entity.GovernanceScopeType;
+import com.bhoomidrishti.governance.entity.IndicatorCategory;
+import com.bhoomidrishti.governance.service.GovernanceIndicatorService;
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping
+public class GovernanceIndicatorController {
+
+    private final GovernanceIndicatorService governanceIndicatorService;
+
+    public GovernanceIndicatorController(GovernanceIndicatorService governanceIndicatorService) {
+        this.governanceIndicatorService = governanceIndicatorService;
+    }
+
+    // -------------------------------------------------------------------------
+    // Indicator Definitions (Metadata)
+    // -------------------------------------------------------------------------
+
+    @GetMapping("/api/governance/indicators")
+    public ResponseEntity<List<GovernanceIndicatorDefinitionResponse>> getIndicatorDefinitions(
+            @RequestParam(required = false) IndicatorCategory category) {
+        return ResponseEntity.ok(governanceIndicatorService.getIndicatorDefinitions(category));
+    }
+
+    @GetMapping("/api/governance/indicators/{code}")
+    public ResponseEntity<GovernanceIndicatorDefinitionResponse> getIndicatorDefinitionByCode(
+            @PathVariable String code) {
+        return ResponseEntity.ok(governanceIndicatorService.getIndicatorDefinitionByCode(code));
+    }
+
+    // -------------------------------------------------------------------------
+    // Indicator Snapshots (Immutable calculation outputs)
+    // -------------------------------------------------------------------------
+
+    @PostMapping("/api/governance/snapshots")
+    public ResponseEntity<GovernanceIndicatorSnapshotResponse> createSnapshot(
+            @Valid @RequestBody CreateGovernanceSnapshotRequest request,
+            Authentication auth) {
+        GovernanceIndicatorSnapshotResponse response = governanceIndicatorService.createSnapshot(request, auth);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/api/governance/snapshots/{id}")
+    public ResponseEntity<GovernanceIndicatorSnapshotResponse> getSnapshotById(
+            @PathVariable UUID id,
+            Authentication auth) {
+        return ResponseEntity.ok(governanceIndicatorService.getSnapshotById(id, auth));
+    }
+
+    @GetMapping("/api/projects/{projectId}/governance-snapshots")
+    public ResponseEntity<List<GovernanceIndicatorSnapshotResponse>> getSnapshotsByProject(
+            @PathVariable UUID projectId,
+            Authentication auth) {
+        return ResponseEntity.ok(governanceIndicatorService.getSnapshotsByProject(projectId, auth));
+    }
+
+    @GetMapping("/api/governance/snapshots")
+    public ResponseEntity<List<GovernanceIndicatorSnapshotResponse>> getSnapshotsByScope(
+            @RequestParam GovernanceScopeType scopeType,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String district,
+            Authentication auth) {
+        return ResponseEntity.ok(governanceIndicatorService.getSnapshotsByScope(scopeType, state, district, auth));
+    }
+
+    // -------------------------------------------------------------------------
+    // Evidence & Provenance Linking
+    // -------------------------------------------------------------------------
+
+    @GetMapping("/api/governance/snapshots/{snapshotId}/evidence")
+    public ResponseEntity<List<GovernanceIndicatorEvidenceResponse>> getSnapshotEvidence(
+            @PathVariable UUID snapshotId,
+            Authentication auth) {
+        return ResponseEntity.ok(governanceIndicatorService.getSnapshotEvidence(snapshotId, auth));
+    }
+
+    @PostMapping("/api/governance/snapshots/{snapshotId}/evidence")
+    public ResponseEntity<GovernanceIndicatorEvidenceResponse> linkEvidence(
+            @PathVariable UUID snapshotId,
+            @Valid @RequestBody LinkGovernanceEvidenceRequest request,
+            Authentication auth) {
+        GovernanceIndicatorEvidenceResponse response = governanceIndicatorService.linkEvidence(snapshotId, request, auth);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @DeleteMapping("/api/governance/snapshots/{snapshotId}/evidence/{evidenceId}")
+    public ResponseEntity<Void> unlinkEvidence(
+            @PathVariable UUID snapshotId,
+            @PathVariable UUID evidenceId,
+            Authentication auth) {
+        governanceIndicatorService.unlinkEvidence(snapshotId, evidenceId, auth);
+        return ResponseEntity.noContent().build();
+    }
+}

@@ -130,6 +130,17 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST,
                                 "/api/policy/compare")
                                 .permitAll()
+                        // Phase 9: Governance Intelligence & Decision Support Foundation.
+                        // Public GET access to indicator definitions, regional snapshots, and public project snapshots.
+                        // Writes, regional snapshot creation, and evidence modifications require authentication and RBAC.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/governance/indicators",
+                                "/api/governance/indicators/*",
+                                "/api/governance/snapshots",
+                                "/api/governance/snapshots/*",
+                                "/api/governance/snapshots/*/evidence",
+                                "/api/projects/*/governance-snapshots")
+                                .permitAll()
                         // Everything else needs a signed-in user. Fine-grained rules for the
                         // modules of later phases are added here as those endpoints appear.
                         .anyRequest().authenticated())
