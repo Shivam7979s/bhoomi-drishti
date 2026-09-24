@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,6 +35,17 @@ class Settings(BaseSettings):
     data_documents_dir: str = os.getenv(
         "DATA_DOCUMENTS_DIR", str(Path(__file__).parents[2] / "data" / "documents")
     )
+
+    # AI Synthesis Provider configuration (Phase 10.2)
+    ai_synthesis_provider: str = os.getenv("AI_SYNTHESIS_PROVIDER", "extractive")
+    ai_synthesis_base_url: str = os.getenv("AI_SYNTHESIS_BASE_URL", "http://localhost:11434/v1")
+    ai_synthesis_model: str = os.getenv("AI_SYNTHESIS_MODEL", "llama3.2")
+    ai_synthesis_api_key: Optional[str] = os.getenv("AI_SYNTHESIS_API_KEY", None)
+    ai_synthesis_timeout_seconds: float = float(os.getenv("AI_SYNTHESIS_TIMEOUT_SECONDS", "25.0"))
+
+    # Evidence Quality Gate thresholds (Provisional / configurable; not calibrated probabilities)
+    evidence_gate_min_similarity: float = float(os.getenv("EVIDENCE_GATE_MIN_SIMILARITY", "0.35"))
+    evidence_gate_sufficient_similarity: float = float(os.getenv("EVIDENCE_GATE_SUFFICIENT_SIMILARITY", "0.55"))
 
     model_config = SettingsConfigDict(
         env_file=("../.env", ".env"),

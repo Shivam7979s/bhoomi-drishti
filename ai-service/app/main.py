@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.db.session import init_db_pool, close_db_pool
 from app.embeddings.local_provider import local_embedding_provider
-from app.api import health, ingestion, retrieval
+from app.api import health, ingestion, retrieval, assistant
 
 logging.basicConfig(
     level=logging.INFO,
@@ -71,3 +71,4 @@ async def verify_internal_secret_middleware(request: Request, call_next):
 app.include_router(health.router)
 app.include_router(ingestion.router)
 app.include_router(retrieval.router)
+app.include_router(assistant.router)

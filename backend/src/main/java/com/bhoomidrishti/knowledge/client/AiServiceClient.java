@@ -7,6 +7,7 @@ import com.bhoomidrishti.knowledge.dto.KnowledgeSearchRequest;
 import com.bhoomidrishti.knowledge.dto.KnowledgeSearchResponse;
 import com.bhoomidrishti.knowledge.entity.ProcessingStatus;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -184,6 +185,143 @@ public class AiServiceClient {
         } catch (Exception ex) {
             log.warn("Failed to query AI service /internal/status/{}: {}", documentId, ex.getMessage());
             return DocumentProcessingStatusResponse.notIngested(documentId);
+        }
+    }
+
+    public com.bhoomidrishti.assistant.dto.AssistantQueryResponseDTO queryAssistant(
+            com.bhoomidrishti.assistant.dto.AssistantQueryRequestDTO request,
+            boolean onlyPublished,
+            List<UUID> allowedDocIds) {
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("query", request.query());
+            body.put("top_k", request.resolvedTopK());
+            body.put("only_published", onlyPublished);
+            if (allowedDocIds != null && !allowedDocIds.isEmpty()) {
+                body.put("allowed_document_ids", allowedDocIds.stream().map(UUID::toString).toList());
+            }
+            if (request.documentType() != null) {
+                body.put("document_type", request.documentType().name());
+            }
+            if (request.organization() != null && !request.organization().isBlank()) {
+                body.put("organization", request.organization().trim());
+            }
+
+            Map<?, ?> response = restClient.post()
+                    .uri("/internal/assistant/query")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response == null) {
+                return new com.bhoomidrishti.assistant.dto.AssistantQueryResponseDTO(
+                        request.query(),
+                        "No response received from AI assistant engine.",
+                        com.bhoomidrishti.assistant.dto.GroundingStatus.FALLBACK,
+                        List.of(),
+                        "",
+                        Map.of()
+                );
+            }
+
+            String answer = response.get("answer") != null ? response.get("answer").toString() : "";
+            String statusStr = response.get("grounding_status") != null
+                    ? response.get("grounding_status").toString()
+                    : "NO_EVIDENCE";
+
+            com.bhoomidrishti.assistant.dto.GroundingStatus groundingStatus;
+            try {
+                groundingStatus = com.bhoomidrishti.assistant.dto.GroundingStatus.valueOf(statusStr);
+            } catch (Exception e) {
+                groundingStatus = com.bhoomidrishti.assistant.dto.GroundingStatus.FALLBACK;
+            }
+
+            String disclaimer = response.get("disclaimer") != null ? response.get("disclaimer").toString() : "";
+
+            List<?> rawCitations = (List<?>) response.get("citations");
+            List<com.bhoomidrishti.assistant.dto.CitationDTO> citations = new java.util.ArrayList<>();
+            if (rawCitations != null) {
+                for (Object raw : rawCitations) {
+                    if (raw instanceof Map<?, ?> citeMap) {
+                        int citeIdx = citeMap.get("citation_index") != null
+                                ? ((Number) citeMap.get("citation_index")).intValue()
+                                : 1;
+                        UUID chunkId = citeMap.get("chunk_id") != null
+                                ? UUID.fromString(citeMap.get("chunk_id").toString())
+                                : null;
+                        UUID docId = citeMap.get("document_id") != null
+                                ? UUID.fromString(citeMap.get("document_id").toString())
+                                : null;
+                        String docTitle = citeMap.get("document_title") != null
+                                ? citeMap.get("document_title").toString()
+                                : "";
+                        String docType = citeMap.get("document_type") != null
+                                ? citeMap.get("document_type").toString()
+                                : "";
+                        Integer pageNum = citeMap.get("page_number") != null
+                                ? ((Number) citeMap.get("page_number")).intValue()
+                                : null;
+                        String secTitle = citeMap.get("section_title") != null
+                                ? citeMap.get("section_title").toString()
+                                : null;
+                        String authors = citeMap.get("authors") != null
+                                ? citeMap.get("authors").toString()
+                                : null;
+                        String org = citeMap.get("organization") != null
+                                ? citeMap.get("organization").toString()
+                                : null;
+                        String pubDateStr = citeMap.get("publication_date") != null
+                                ? citeMap.get("publication_date").toString()
+                                : null;
+                        LocalDate pubDate = pubDateStr != null ? LocalDate.parse(pubDateStr) : null;
+                        String sourceUrl = citeMap.get("source_url") != null
+                                ? citeMap.get("source_url").toString()
+                                : null;
+                        double similarity = citeMap.get("similarity") != null
+                                ? ((Number) citeMap.get("similarity")).doubleValue()
+                                : 0.0;
+                        String formattedCitation = citeMap.get("formatted_citation") != null
+                                ? citeMap.get("formatted_citation").toString()
+                                : "";
+                        String quote = citeMap.get("quote") != null
+                                ? citeMap.get("quote").toString()
+                                : "";
+
+                        citations.add(new com.bhoomidrishti.assistant.dto.CitationDTO(
+                                citeIdx, chunkId, docId, docTitle, docType, pageNum, secTitle,
+                                authors, org, pubDate, sourceUrl, similarity, formattedCitation, quote
+                        ));
+                    }
+                }
+            }
+
+            Map<String, Object> metadata = new HashMap<>();
+            if (response.get("retrieval_duration_ms") != null) {
+                metadata.put("retrievalDurationMs", response.get("retrieval_duration_ms"));
+            }
+            if (response.get("synthesis_duration_ms") != null) {
+                metadata.put("synthesisDurationMs", response.get("synthesis_duration_ms"));
+            }
+            if (response.get("total_duration_ms") != null) {
+                metadata.put("totalDurationMs", response.get("total_duration_ms"));
+            }
+            if (response.get("provider_used") != null) {
+                metadata.put("providerUsed", response.get("provider_used"));
+            }
+            metadata.put("citationCount", citations.size());
+
+            return new com.bhoomidrishti.assistant.dto.AssistantQueryResponseDTO(
+                    request.query(),
+                    answer,
+                    groundingStatus,
+                    citations,
+                    disclaimer,
+                    metadata
+            );
+        } catch (Exception ex) {
+            log.error("Failed to call AI service /internal/assistant/query: {}", ex.getMessage());
+            throw new AiServiceUnavailableException("AI Knowledge Service is currently unavailable.", ex);
         }
     }
 }

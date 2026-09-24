@@ -96,6 +96,10 @@ public class SecurityConfig {
                                 .permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/research-documents/*/ingest")
                                 .authenticated()
+                        // Phase 10: Evidence-Grounded Statutory AI Assistant.
+                        // Assistant query is open to all callers (service strictly enforces PUBLISHED-only for public).
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/ai/assistant/query")
+                                .permitAll()
                         // Phase 6: GIS & Geospatial Intelligence Layer.
                         // Open to all callers; GisService strictly enforces ACTIVE-only and redacts owner PII for public.
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/gis/**")
