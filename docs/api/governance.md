@@ -377,13 +377,13 @@ The Temporal Governance Comparison API enables deterministic, purely descriptive
   "breakdownVariances": [
     {
       "key": "residential",
-      "baseValue": 60.0000,
+      "baselineValue": 60.0000,
       "targetValue": 80.0000,
       "delta": 20.0000,
       "percentageChange": 33.3333,
       "percentageChangeDefined": true,
-      "baseRaw": "60",
-      "targetRaw": "80"
+      "baselineRawValue": "60",
+      "targetRawValue": "80"
     }
   ],
   "evidenceDelta": {

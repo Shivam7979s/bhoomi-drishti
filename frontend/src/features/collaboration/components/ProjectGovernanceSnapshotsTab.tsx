@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertCircle,
   Calendar,
@@ -390,6 +391,15 @@ export function ProjectGovernanceSnapshotsTab({
                       </div>
                     </td>
                     <td className="px-5 py-4 text-right whitespace-nowrap space-x-2">
+                      <Link
+                        to={`/governance/compare?baseline=${encodeURIComponent(snap.id)}&scopeType=PROJECT&projectId=${encodeURIComponent(projectId)}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-3 py-1.5 text-xs font-semibold text-indigo-800 shadow-2xs hover:bg-indigo-100 transition"
+                        title="Compare this project snapshot against another snapshot or LIVE"
+                      >
+                        <Scale className="h-3.5 w-3.5 text-indigo-600" />
+                        <span>Compare</span>
+                      </Link>
+
                       <button
                         type="button"
                         onClick={() => setInspectingSnapshot(snap)}

@@ -3,6 +3,8 @@ import type {
   BreakdownChartDatum,
   CreateGovernanceSnapshotRequest,
   GovernanceAdministrativeSummaryResponse,
+  GovernanceComparisonRequest,
+  GovernanceComparisonResponse,
   GovernanceIndicatorDefinitionResponse,
   GovernanceIndicatorEvidenceResponse,
   GovernanceIndicatorSnapshotResponse,
@@ -166,6 +168,21 @@ export async function unlinkSnapshotEvidence(
     `/api/governance/snapshots/${encodeURIComponent(snapshotId)}/evidence/${encodeURIComponent(evidenceId)}`,
   );
 }
+
+/**
+ * Executes a deterministic temporal comparison between two governance audit snapshots,
+ * or between a baseline snapshot and the active LIVE cadastral state.
+ */
+export async function compareGovernanceSnapshots(
+  request: GovernanceComparisonRequest,
+): Promise<GovernanceComparisonResponse> {
+  return postJson<GovernanceComparisonResponse>(
+    '/api/governance/compare',
+    request,
+    15000,
+  );
+}
+
 
 
 /**

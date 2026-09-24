@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Calendar,
   FileText,
@@ -6,6 +7,7 @@ import {
   Lock,
   Plus,
   RefreshCw,
+  Scale,
   Shield,
   User,
 } from 'lucide-react';
@@ -180,6 +182,22 @@ export function GovernanceSnapshotAuditList({
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-right whitespace-nowrap space-x-2">
+                    <Link
+                      to={`/governance/compare?${new URLSearchParams({
+                        baseline: snap.id,
+                        scopeType,
+                        ...(state ? { state } : {}),
+                        ...(district ? { district } : {}),
+                        ...(tehsil ? { tehsil } : {}),
+                        ...(village ? { village } : {}),
+                        ...(projectId ? { projectId } : {}),
+                      }).toString()}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1 text-[11px] font-semibold text-indigo-800 shadow-2xs hover:bg-indigo-100 transition"
+                      title="Compare this snapshot against another snapshot or LIVE"
+                    >
+                      <Scale className="h-3 w-3 text-indigo-600" />
+                      <span>Compare</span>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => onSelectSnapshotForEvidence(snap)}

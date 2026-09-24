@@ -205,3 +205,89 @@ export interface GovernanceSnapshotQueryParams {
   village?: string;
   indicatorCode?: string;
 }
+
+/**
+ * Request payload for comparing two governance snapshots or comparing a snapshot against live data.
+ */
+export interface GovernanceComparisonRequest {
+  baselineSnapshotId: string;
+  targetSnapshotId?: string | null;
+  compareToLive?: boolean | null;
+}
+
+/**
+ * Quantitative, temporal, and provenance metadata of an individual measurement milestone.
+ */
+export interface GovernanceMilestoneDTO {
+  snapshotId: string | null;
+  asOf: string;
+  numericValue: number;
+  denominator: number | null;
+  calculationVersion: string;
+  isLive: boolean;
+  evidenceCount: number;
+}
+
+/**
+ * Deterministic quantitative variance between two governance measurement milestones.
+ */
+export interface GovernanceMetricDeltaDTO {
+  absoluteDelta: number;
+  percentageChange: number | null;
+  percentageChangeDefined: boolean;
+  trendDirection: string;
+  denominatorDelta: number | null;
+}
+
+/**
+ * Key-level categorical and distribution variance between two snapshot breakdowns.
+ */
+export interface BreakdownVarianceItemDTO {
+  key: string;
+  baselineValue: number | null;
+  targetValue: number | null;
+  delta: number | null;
+  percentageChange: number | null;
+  percentageChangeDefined: boolean;
+  baselineRawValue: string | null;
+  targetRawValue: string | null;
+}
+
+/**
+ * Provenance change summary of statutory and administrative evidence.
+ */
+export interface GovernanceEvidenceDeltaDTO {
+  commonEvidenceCount: number;
+  addedEvidenceCount: number;
+  removedEvidenceCount: number;
+  commonEvidence: GovernanceIndicatorEvidenceResponse[];
+  addedEvidence: GovernanceIndicatorEvidenceResponse[];
+  removedEvidence: GovernanceIndicatorEvidenceResponse[];
+}
+
+/**
+ * Complete deterministic response payload for a temporal governance comparison.
+ */
+export interface GovernanceComparisonResponse {
+  indicatorCode: string;
+  indicatorName: string;
+  category: IndicatorCategory;
+  unit: IndicatorUnit;
+  scopeType: GovernanceScopeType;
+  state: string | null;
+  district: string | null;
+  tehsil: string | null;
+  village: string | null;
+  projectId: string | null;
+
+  baseline: GovernanceMilestoneDTO;
+  target: GovernanceMilestoneDTO;
+
+  quantitativeVariance: GovernanceMetricDeltaDTO;
+  breakdownVariances: BreakdownVarianceItemDTO[];
+  evidenceDelta: GovernanceEvidenceDeltaDTO;
+
+  calculationVersionMismatch: boolean;
+  elapsedDays: number | null;
+  chronologicalReversal: boolean;
+}
