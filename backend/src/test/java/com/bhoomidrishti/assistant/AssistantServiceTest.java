@@ -144,6 +144,36 @@ class AssistantServiceTest {
     }
 
     @Test
+    void query_publicUser_enforcesOnlyPublishedTrue() {
+        AssistantQueryRequestDTO request = new AssistantQueryRequestDTO("Public land query", 5, null, null);
+        Authentication auth = new TestingAuthenticationToken("citizen@example.com", "pass", Role.PUBLIC.authority());
+
+        AssistantQueryResponseDTO dummy = new AssistantQueryResponseDTO(
+                request.query(), "Answer", GroundingStatus.GROUNDED, List.of(), "", Map.of()
+        );
+        when(aiServiceClient.queryAssistant(eq(request), eq(true), any())).thenReturn(dummy);
+
+        assistantService.query(request, auth);
+
+        verify(aiServiceClient).queryAssistant(eq(request), eq(true), any());
+    }
+
+    @Test
+    void query_academiaUser_enforcesOnlyPublishedTrue() {
+        AssistantQueryRequestDTO request = new AssistantQueryRequestDTO("Academic research query", 5, null, null);
+        Authentication auth = new TestingAuthenticationToken("prof@university.edu", "pass", Role.ACADEMIA.authority());
+
+        AssistantQueryResponseDTO dummy = new AssistantQueryResponseDTO(
+                request.query(), "Answer", GroundingStatus.GROUNDED, List.of(), "", Map.of()
+        );
+        when(aiServiceClient.queryAssistant(eq(request), eq(true), any())).thenReturn(dummy);
+
+        assistantService.query(request, auth);
+
+        verify(aiServiceClient).queryAssistant(eq(request), eq(true), any());
+    }
+
+    @Test
     void query_aiServiceUnavailable_propagatesException() {
         AssistantQueryRequestDTO request = new AssistantQueryRequestDTO("Valid query", 5, null, null);
         when(aiServiceClient.queryAssistant(any(), any(Boolean.class), any()))

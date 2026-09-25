@@ -147,6 +147,8 @@ async def query_assistant(request: AssistantQueryRequest):
             raw_answer, _, provider_used = await provider.synthesize(
                 request.query, evidence_items, context=request.context
             )
+            if not raw_answer or not raw_answer.strip():
+                raise SynthesisProviderError("Provider returned empty or whitespace synthesis output")
         except (SynthesisProviderError, Exception):
             # Fall back gracefully to ExtractiveFallbackProvider
             fallback_provider = ExtractiveFallbackProvider()
