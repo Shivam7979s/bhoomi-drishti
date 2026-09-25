@@ -52,6 +52,10 @@ import type {
   WorkspaceMember,
   ProjectRole,
 } from '../types';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { EmptyState } from '../../../components/layout/EmptyState';
+import { ErrorState } from '../../../components/layout/ErrorState';
 
 export function ProjectDetailsPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -395,82 +399,77 @@ export function ProjectDetailsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-      </div>
+      <AppContainer>
+        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent" />
+          <p className="text-xs font-medium text-slate-500">Loading project dossier...</p>
+        </div>
+      </AppContainer>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
-        <h2 className="text-lg font-bold">Project Unavailable</h2>
-        <p className="mt-1 text-sm">{error || 'Project not found or access restricted.'}</p>
-        <Link
-          to="/workspaces"
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Workspaces
-        </Link>
-      </div>
+      <AppContainer>
+        <ErrorState
+          title="Project Unavailable"
+          description={error || 'Project not found or access restricted.'}
+          action={
+            <Link
+              to="/workspaces"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Workspaces
+            </Link>
+          }
+        />
+      </AppContainer>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link to="/workspaces" className="hover:text-slate-800">
-          Workspaces
-        </Link>
-        <span>/</span>
-        <Link to={`/workspaces/${project.workspaceId}`} className="hover:text-slate-800">
-          {project.workspaceName || 'Workspace'}
-        </Link>
-        <span>/</span>
-        <span className="font-semibold text-slate-900">{project.name}</span>
-      </div>
-
-      {/* Header Banner */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                {project.status}
+    <AppContainer>
+      {/* Standard Institutional Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Workspaces', to: '/workspaces' },
+          { label: project.workspaceName || 'Workspace', to: `/workspaces/${project.workspaceId}` },
+          { label: project.name },
+        ]}
+        badge={{
+          text: `Project · ${project.status}`,
+          icon: Layers,
+          variant: project.status === 'ACTIVE' ? 'emerald' : 'slate',
+        }}
+        title={project.name}
+        description={project.description || 'Collaborative land intelligence project dossier.'}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700">
+              {project.status}
+            </span>
+            <span className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800">
+              {project.visibility}
+            </span>
+            {project.currentUserRole && (
+              <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 border border-emerald-200">
+                <Shield className="h-3.5 w-3.5 text-emerald-600" /> {project.currentUserRole}
               </span>
-              <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
-                {project.visibility}
-              </span>
-              {project.currentUserRole && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-                  <Shield className="h-3 w-3" /> {project.currentUserRole}
-                </span>
-              )}
-            </div>
-
-            <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">
-              {project.name}
-            </h1>
-
-            {project.description && (
-              <p className="mt-2 max-w-3xl text-sm text-slate-600">
-                {project.description}
-              </p>
             )}
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Tabs */}
-      <div className="flex flex-wrap border-b border-slate-200">
+      <div className="flex flex-wrap border-b border-slate-200/80 gap-1">
         <button
           type="button"
           onClick={() => setActiveTab('parcels')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'parcels'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <MapPin className="h-4 w-4" />
@@ -480,10 +479,10 @@ export function ProjectDetailsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('research')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'research'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <FileText className="h-4 w-4" />
@@ -493,10 +492,10 @@ export function ProjectDetailsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('datasets')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'datasets'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <Database className="h-4 w-4" />
@@ -506,10 +505,10 @@ export function ProjectDetailsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('comments')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'comments'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <MessageSquare className="h-4 w-4" />
@@ -519,10 +518,10 @@ export function ProjectDetailsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('members')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'members'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <Users className="h-4 w-4" />
@@ -532,10 +531,10 @@ export function ProjectDetailsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('scenarios')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'scenarios'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <Layers className="h-4 w-4" />
@@ -545,10 +544,10 @@ export function ProjectDetailsPage() {
         <button
           type="button"
           onClick={() => setActiveTab('governance')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'governance'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <Landmark className="h-4 w-4" />
@@ -556,63 +555,75 @@ export function ProjectDetailsPage() {
         </button>
       </div>
 
+
       {/* TAB 1: PARCELS */}
       {activeTab === 'parcels' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-500">
               Land parcels under active audit, research analysis, or cross-referencing.
             </p>
             {canContribute && (
               <button
                 type="button"
                 onClick={() => setShowParcelModal(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
-                <Plus className="h-3.5 w-3.5" />
-                Link Parcel
+                <Plus className="h-4 w-4" />
+                <span>Link Parcel</span>
               </button>
             )}
           </div>
 
           {loadingParcels ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading linked parcels...</p>
             </div>
           ) : parcels.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <MapPin className="mx-auto h-10 w-10 text-slate-400" />
-              <h3 className="mt-2 text-sm font-semibold text-slate-800">No parcels linked</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Link land parcels directly from GIS map or enter a land record ID.
-              </p>
-            </div>
+            <EmptyState
+              icon={MapPin}
+              title="No parcels linked"
+              description="Link cadastral land parcels from PostGIS to cross-reference with legal research and statutory audits."
+              action={
+                canContribute ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowParcelModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Link First Parcel</span>
+                  </button>
+                ) : undefined
+              }
+            />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
               <table className="w-full text-left text-sm text-slate-700">
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                <thead className="border-b border-slate-200/80 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="px-6 py-3">Parcel / Khasra</th>
-                    <th className="px-6 py-3">Location</th>
-                    <th className="px-6 py-3">Area (sq m)</th>
-                    <th className="px-6 py-3">Land Use</th>
-                    <th className="px-6 py-3">Context Notes</th>
-                    {canContribute && <th className="px-6 py-3 text-right">Action</th>}
+                    <th className="px-6 py-3.5">Parcel / Khasra</th>
+                    <th className="px-6 py-3.5">Location</th>
+                    <th className="px-6 py-3.5">Area (sq m)</th>
+                    <th className="px-6 py-3.5">Land Use</th>
+                    <th className="px-6 py-3.5">Context Notes</th>
+                    {canContribute && <th className="px-6 py-3.5 text-right">Action</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {parcels.map((p) => (
-                    <tr key={p.landRecordId} className="hover:bg-slate-50/50">
+                    <tr key={p.landRecordId} className="hover:bg-slate-50/60 transition">
                       <td className="px-6 py-4 font-bold text-slate-900">
                         {p.parcelNumber}
                       </td>
                       <td className="px-6 py-4 text-xs text-slate-600">
                         {p.village}, {p.tehsil}, {p.district}
                       </td>
-                      <td className="px-6 py-4 text-xs font-mono">
+                      <td className="px-6 py-4 text-xs font-mono text-slate-700">
                         {p.areaAcres ? p.areaAcres.toLocaleString() : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 text-xs font-medium">
+                      <td className="px-6 py-4 text-xs font-semibold text-slate-700">
                         {p.landUseType || 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-xs text-slate-600 italic">
@@ -623,7 +634,7 @@ export function ProjectDetailsPage() {
                           <button
                             type="button"
                             onClick={() => handleUnlinkParcel(p.landRecordId)}
-                            className="text-xs text-red-600 hover:underline"
+                            className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition"
                           >
                             Unlink
                           </button>
@@ -641,40 +652,51 @@ export function ProjectDetailsPage() {
       {/* TAB 2: RESEARCH */}
       {activeTab === 'research' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-500">
               Research publications, court rulings, and policy documents linked to this project.
             </p>
             {canContribute && (
               <button
                 type="button"
                 onClick={() => setShowResearchModal(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
-                <Plus className="h-3.5 w-3.5" />
-                Link Research Doc
+                <Plus className="h-4 w-4" />
+                <span>Link Research Doc</span>
               </button>
             )}
           </div>
 
           {loadingResearch ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading research docs...</p>
             </div>
           ) : researchDocs.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <FileText className="mx-auto h-10 w-10 text-slate-400" />
-              <h3 className="mt-2 text-sm font-semibold text-slate-800">No research documents linked</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Link articles from the Research Hub to anchor land intelligence in verified sources.
-              </p>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="No research documents linked"
+              description="Link articles, statutory precedents, or judicial rulings from the Research Hub."
+              action={
+                canContribute ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowResearchModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Link First Document</span>
+                  </button>
+                ) : undefined
+              }
+            />
           ) : (
-            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
               {researchDocs.map((doc) => (
-                <div key={doc.researchDocumentId} className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div key={doc.researchDocumentId} className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/50 transition">
                   <div>
-                    <span className="rounded bg-teal-50 px-2 py-0.5 text-xs font-bold text-teal-700 border border-teal-200">
+                    <span className="rounded-md bg-teal-50 px-2 py-0.5 text-xs font-bold text-teal-800 border border-teal-200/70">
                       {doc.documentType || 'DOCUMENT'}
                     </span>
                     <h4 className="mt-1 text-sm font-bold text-slate-900">{doc.title}</h4>
@@ -682,7 +704,7 @@ export function ProjectDetailsPage() {
                       {doc.authors} {doc.organization && `· ${doc.organization}`}
                     </p>
                     {doc.relevanceNotes && (
-                      <p className="mt-2 rounded bg-slate-50 p-2 text-xs text-slate-600 italic">
+                      <p className="mt-2 rounded-xl bg-slate-50 border border-slate-100 p-2.5 text-xs text-slate-700 italic">
                         "{doc.relevanceNotes}"
                       </p>
                     )}
@@ -691,7 +713,7 @@ export function ProjectDetailsPage() {
                   <div className="flex items-center gap-3">
                     <Link
                       to="/research"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 hover:text-emerald-950 transition"
                     >
                       View in Hub <ExternalLink className="h-3 w-3" />
                     </Link>
@@ -699,7 +721,7 @@ export function ProjectDetailsPage() {
                       <button
                         type="button"
                         onClick={() => handleUnlinkResearch(doc.researchDocumentId)}
-                        className="text-xs text-red-600 hover:underline"
+                        className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition"
                       >
                         Unlink
                       </button>
@@ -715,40 +737,51 @@ export function ProjectDetailsPage() {
       {/* TAB 3: DATASETS */}
       {activeTab === 'datasets' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-500">
               Datasets linked from the parent workspace catalog.
             </p>
             {canContribute && (
               <button
                 type="button"
                 onClick={openLinkDatasetModal}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
-                <Plus className="h-3.5 w-3.5" />
-                Link Workspace Dataset
+                <Plus className="h-4 w-4" />
+                <span>Link Workspace Dataset</span>
               </button>
             )}
           </div>
 
           {loadingDatasets ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading datasets...</p>
             </div>
           ) : datasets.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <Database className="mx-auto h-10 w-10 text-slate-400" />
-              <h3 className="mt-2 text-sm font-semibold text-slate-800">No datasets linked</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Link GeoJSON, shapefiles, or API catalogs from {project.workspaceName}.
-              </p>
-            </div>
+            <EmptyState
+              icon={Database}
+              title="No datasets linked"
+              description={`Link GeoJSON, shapefiles, or API catalogs from ${project.workspaceName || 'the workspace'}.`}
+              action={
+                canContribute ? (
+                  <button
+                    type="button"
+                    onClick={openLinkDatasetModal}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Link First Dataset</span>
+                  </button>
+                ) : undefined
+              }
+            />
           ) : (
-            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
               {datasets.map((ds) => (
-                <div key={ds.sharedDatasetId} className="flex items-center justify-between p-5">
+                <div key={ds.sharedDatasetId} className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
                   <div>
-                    <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
+                    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-800 border border-blue-200/70">
                       {ds.format}
                     </span>
                     <h4 className="mt-1 text-sm font-bold text-slate-900">{ds.title}</h4>
@@ -758,7 +791,7 @@ export function ProjectDetailsPage() {
                     <button
                       type="button"
                       onClick={() => handleUnlinkDataset(ds.sharedDatasetId)}
-                      className="text-xs text-red-600 hover:underline"
+                      className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition"
                     >
                       Unlink
                     </button>
@@ -775,47 +808,46 @@ export function ProjectDetailsPage() {
         <div className="space-y-6">
           {/* Post top comment */}
           {canContribute && (
-            <form onSubmit={handlePostComment} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <label className="block text-xs font-semibold text-slate-700">Project Discussion & Findings</label>
+            <form onSubmit={handlePostComment} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-3">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">Project Discussion & Findings</label>
               <textarea
                 required
                 rows={3}
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
                 placeholder="Share evidence analysis, field observations, or methodology notes..."
-                className="mt-2 w-full rounded-lg border border-slate-300 p-3 text-sm focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 p-3 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
               />
-              <div className="mt-3 flex justify-end">
+              <div className="flex justify-end">
                 <button
                   type="submit"
                   disabled={postingComment}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   <Send className="h-3.5 w-3.5" />
-                  {postingComment ? 'Posting...' : 'Post Comment'}
+                  <span>{postingComment ? 'Posting...' : 'Post Comment'}</span>
                 </button>
               </div>
             </form>
           )}
 
           {loadingComments ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading discussion...</p>
             </div>
           ) : comments.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <MessageSquare className="mx-auto h-10 w-10 text-slate-400" />
-              <h3 className="mt-2 text-sm font-semibold text-slate-800">No comments yet</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Start the collaborative conversation on this project.
-              </p>
-            </div>
+            <EmptyState
+              icon={MessageSquare}
+              title="No comments yet"
+              description="Start the collaborative inquiry on this project dossier."
+            />
           ) : (
             <div className="space-y-4">
               {comments.map((comment) => {
                 const isAuthor = currentUser?.id === comment.userId;
                 return (
-                  <div key={comment.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                  <div key={comment.id} className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs space-y-3">
                     {/* Top Comment Header */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -836,7 +868,7 @@ export function ProjectDetailsPage() {
                               setEditingCommentId(comment.id);
                               setEditText(comment.content);
                             }}
-                            className="text-slate-500 hover:text-slate-800"
+                            className="p-1 text-slate-400 hover:text-slate-800 transition"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
@@ -845,7 +877,7 @@ export function ProjectDetailsPage() {
                           <button
                             type="button"
                             onClick={() => handleDeleteComment(comment.id)}
-                            className="text-slate-500 hover:text-red-600"
+                            className="p-1 text-slate-400 hover:text-rose-600 transition"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -860,27 +892,27 @@ export function ProjectDetailsPage() {
                           rows={2}
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
-                          className="w-full rounded border border-slate-300 p-2 text-sm"
+                          className="w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:outline-none"
                         />
                         <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={() => handleUpdateComment(comment.id)}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white"
+                            className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 transition"
                           >
                             Save
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingCommentId(null)}
-                            className="rounded border border-slate-300 px-3 py-1 text-xs"
+                            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
                           >
                             Cancel
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-800 whitespace-pre-wrap">{comment.content}</p>
+                      <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
                     )}
 
                     {/* Reply Action */}
@@ -891,7 +923,7 @@ export function ProjectDetailsPage() {
                           setReplyingToId(comment.id);
                           setReplyText('');
                         }}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:underline pt-1"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 hover:text-emerald-950 pt-1 transition"
                       >
                         <Reply className="h-3 w-3" /> Reply
                       </button>
@@ -899,26 +931,26 @@ export function ProjectDetailsPage() {
 
                     {/* Inline Reply Input */}
                     {replyingToId === comment.id && (
-                      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2">
                         <textarea
                           rows={2}
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
                           placeholder={`Replying to ${comment.userName}...`}
-                          className="w-full rounded border border-slate-300 p-2 text-xs focus:outline-none"
+                          className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-emerald-600 focus:outline-none"
                         />
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => setReplyingToId(null)}
-                            className="rounded border border-slate-300 px-2.5 py-1 text-xs"
+                            className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-white transition"
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
                             onClick={() => handlePostReply(comment.id)}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white"
+                            className="rounded-lg bg-emerald-700 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-800 transition"
                           >
                             Send Reply
                           </button>
@@ -928,7 +960,7 @@ export function ProjectDetailsPage() {
 
                     {/* Nested Replies (1 level only) */}
                     {comment.replies && comment.replies.length > 0 && (
-                      <div className="mt-3 space-y-3 border-l-2 border-emerald-200 pl-4 pt-2">
+                      <div className="mt-3 space-y-3 border-l-2 border-emerald-300 pl-4 pt-2">
                         {comment.replies.map((reply) => {
                           const isReplyAuthor = currentUser?.id === reply.userId;
                           return (
@@ -949,13 +981,13 @@ export function ProjectDetailsPage() {
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteComment(reply.id)}
-                                    className="text-slate-400 hover:text-red-600"
+                                    className="p-1 text-slate-400 hover:text-rose-600 transition"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </button>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-700 whitespace-pre-wrap">{reply.content}</p>
+                              <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{reply.content}</p>
                             </div>
                           );
                         })}
@@ -972,47 +1004,48 @@ export function ProjectDetailsPage() {
       {/* TAB 5: MEMBERS */}
       {activeTab === 'members' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-500">
               Users assigned to this project (must be workspace members).
             </p>
             {isLead && (
               <button
                 type="button"
                 onClick={openAddMemberModal}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
-                <Plus className="h-3.5 w-3.5" />
-                Assign Member
+                <Plus className="h-4 w-4" />
+                <span>Assign Member</span>
               </button>
             )}
           </div>
 
           {loadingMembers ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading members...</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
               <table className="w-full text-left text-sm text-slate-700">
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                <thead className="border-b border-slate-200/80 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="px-6 py-3">Member</th>
-                    <th className="px-6 py-3">Role</th>
-                    <th className="px-6 py-3">Assigned</th>
-                    {isLead && <th className="px-6 py-3 text-right">Actions</th>}
+                    <th className="px-6 py-3.5">Member</th>
+                    <th className="px-6 py-3.5">Role</th>
+                    <th className="px-6 py-3.5">Assigned</th>
+                    {isLead && <th className="px-6 py-3.5 text-right">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {members.map((m) => (
-                    <tr key={m.id} className="hover:bg-slate-50/50">
+                    <tr key={m.id} className="hover:bg-slate-50/60 transition">
                       <td className="px-6 py-4 font-semibold text-slate-900">{m.userName}</td>
                       <td className="px-6 py-4">
-                        <span className="rounded bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                        <span className="rounded-md bg-slate-100 border border-slate-200/60 px-2.5 py-0.5 text-xs font-bold text-slate-700">
                           {m.role}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-xs text-slate-400">
+                      <td className="px-6 py-4 text-xs text-slate-500">
                         {new Date(m.joinedAt).toLocaleDateString()}
                       </td>
                       {isLead && (
@@ -1020,7 +1053,7 @@ export function ProjectDetailsPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveProjectMember(m.userId)}
-                            className="text-xs text-red-600 hover:underline"
+                            className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition"
                           >
                             Remove
                           </button>
@@ -1053,14 +1086,14 @@ export function ProjectDetailsPage() {
 
       {/* LINK PARCEL MODAL */}
       {showParcelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">Link Land Record</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Link Land Record</h2>
             <p className="mt-1 text-xs text-slate-500">
               Attach a cadastral land record to this project.
             </p>
 
-            <form onSubmit={handleLinkParcel} className="mt-4 space-y-4">
+            <form onSubmit={handleLinkParcel} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">Land Record ID (UUID) *</label>
                 <input
@@ -1069,7 +1102,7 @@ export function ProjectDetailsPage() {
                   value={parcelIdInput}
                   onChange={(e) => setParcelIdInput(e.target.value)}
                   placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
@@ -1080,22 +1113,22 @@ export function ProjectDetailsPage() {
                   value={parcelNotesInput}
                   onChange={(e) => setParcelNotesInput(e.target.value)}
                   placeholder="Reason for inclusion in this study..."
-                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowParcelModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={linkingParcel}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   {linkingParcel ? 'Linking...' : 'Link Parcel'}
                 </button>
@@ -1107,14 +1140,14 @@ export function ProjectDetailsPage() {
 
       {/* LINK RESEARCH MODAL */}
       {showResearchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">Link Research Document</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Link Research Document</h2>
             <p className="mt-1 text-xs text-slate-500">
               Attach a Research Hub document to this project dossier.
             </p>
 
-            <form onSubmit={handleLinkResearch} className="mt-4 space-y-4">
+            <form onSubmit={handleLinkResearch} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">Research Document ID (UUID) *</label>
                 <input
@@ -1123,7 +1156,7 @@ export function ProjectDetailsPage() {
                   value={researchIdInput}
                   onChange={(e) => setResearchIdInput(e.target.value)}
                   placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
@@ -1134,22 +1167,22 @@ export function ProjectDetailsPage() {
                   value={researchNotesInput}
                   onChange={(e) => setResearchNotesInput(e.target.value)}
                   placeholder="Key takeaway or section cited..."
-                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowResearchModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={linkingResearch}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   {linkingResearch ? 'Linking...' : 'Link Document'}
                 </button>
@@ -1161,21 +1194,21 @@ export function ProjectDetailsPage() {
 
       {/* LINK DATASET MODAL */}
       {showDatasetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">Link Workspace Dataset</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Link Workspace Dataset</h2>
             <p className="mt-1 text-xs text-slate-500">
               Select a dataset registered in {project.workspaceName}.
             </p>
 
-            <form onSubmit={handleLinkDataset} className="mt-4 space-y-4">
+            <form onSubmit={handleLinkDataset} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">Select Dataset *</label>
                 <select
                   required
                   value={selectedDatasetId}
                   onChange={(e) => setSelectedDatasetId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 >
                   <option value="">-- Choose dataset --</option>
                   {workspaceDatasets.map((ds) => (
@@ -1186,18 +1219,18 @@ export function ProjectDetailsPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowDatasetModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={linkingDataset || !selectedDatasetId}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   {linkingDataset ? 'Linking...' : 'Link Dataset'}
                 </button>
@@ -1209,21 +1242,21 @@ export function ProjectDetailsPage() {
 
       {/* ASSIGN MEMBER MODAL */}
       {showMemberModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">Assign Member to Project</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Assign Member to Project</h2>
             <p className="mt-1 text-xs text-slate-500">
               Choose an active member from the parent workspace.
             </p>
 
-            <form onSubmit={handleAddProjectMember} className="mt-4 space-y-4">
+            <form onSubmit={handleAddProjectMember} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">Select Workspace Member *</label>
                 <select
                   required
                   value={selectedMemberUserId}
                   onChange={(e) => setSelectedMemberUserId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 >
                   <option value="">-- Choose member --</option>
                   {workspaceMembers.map((m) => (
@@ -1239,7 +1272,7 @@ export function ProjectDetailsPage() {
                 <select
                   value={selectedMemberRole}
                   onChange={(e) => setSelectedMemberRole(e.target.value as ProjectRole)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 >
                   <option value="CONTRIBUTOR">CONTRIBUTOR (Can link parcels & comment)</option>
                   <option value="LEAD">LEAD (Full project administration)</option>
@@ -1247,18 +1280,18 @@ export function ProjectDetailsPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowMemberModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addingMember || !selectedMemberUserId}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   {addingMember ? 'Assigning...' : 'Assign Member'}
                 </button>
@@ -1267,6 +1300,6 @@ export function ProjectDetailsPage() {
           </div>
         </div>
       )}
-    </div>
+    </AppContainer>
   );
 }

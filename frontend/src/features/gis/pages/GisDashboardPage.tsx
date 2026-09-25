@@ -162,16 +162,16 @@ export function GisDashboardPage() {
           <button
             type="button"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-semibold shadow-md transition backdrop-blur-xs ${
+            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold shadow-md transition backdrop-blur-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700 ${
               isFilterOpen || activeFilterCount > 0
-                ? 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700'
-                : 'border-slate-200 bg-white/95 text-slate-700 hover:bg-slate-50'
+                ? 'border-emerald-700 bg-emerald-800 text-white hover:bg-emerald-900'
+                : 'border-slate-200 bg-white/95 text-slate-800 hover:bg-slate-50'
             }`}
           >
-            <Filter className="h-4 w-4" />
+            <Filter className="h-4 w-4" aria-hidden="true" />
             <span>GIS Filters</span>
             {activeFilterCount > 0 && (
-              <span className="ml-1 rounded-full bg-white px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
+              <span className="ml-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                 {activeFilterCount}
               </span>
             )}
@@ -180,7 +180,7 @@ export function GisDashboardPage() {
 
         {/* Collapsible Filter Panel Floating on Left */}
         {isFilterOpen && (
-          <div className="absolute top-16 left-4 z-20 w-80 sm:w-88 max-h-[calc(100%-5rem)]">
+          <div className="absolute top-16 left-4 z-20 w-80 sm:w-88 max-h-[calc(100%-5rem)] shadow-xl rounded-2xl">
             <GisFilterPanel
               filters={activeFilters}
               filterOptions={filterOptions}
@@ -193,21 +193,21 @@ export function GisDashboardPage() {
         )}
 
         {/* Floating Map Legend (Bottom-Right) */}
-        <div className="absolute bottom-6 right-4 z-20">
+        <div className="absolute bottom-6 right-4 z-20 shadow-md rounded-2xl">
           <MapLegend />
         </div>
 
         {/* Error Notification Banner */}
         {error && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50/95 px-4 py-2 text-xs font-medium text-red-800 shadow-lg backdrop-blur-xs">
-            <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/95 px-4 py-2.5 text-xs font-medium text-rose-900 shadow-xl backdrop-blur-xs">
+            <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" aria-hidden="true" />
             <span>{error}</span>
             <button
               type="button"
               onClick={() => currentBbox && loadParcels(currentBbox, currentZoom, activeFilters)}
-              className="ml-2 inline-flex items-center gap-1 font-semibold text-red-700 underline hover:text-red-900"
+              className="ml-2 inline-flex items-center gap-1 font-bold text-rose-800 hover:text-rose-950 underline"
             >
-              <RefreshCw className="h-3 w-3" /> Retry
+              <RefreshCw className="h-3 w-3" aria-hidden="true" /> Retry
             </button>
           </div>
         )}

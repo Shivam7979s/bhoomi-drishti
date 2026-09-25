@@ -5,12 +5,16 @@ import {
   ArrowRight,
   Camera,
   Database,
+  GitCompare,
+  Landmark,
   Loader2,
   RefreshCw,
   Shield,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ApiError } from '../../../services/apiClient';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { GovernanceBreakdownSection } from '../components/GovernanceBreakdownSection';
 import { GovernanceEvidenceLinkModal } from '../components/GovernanceEvidenceLinkModal';
@@ -83,7 +87,43 @@ export function GovernanceDashboardPage() {
     scopeType === 'PROJECT';
 
   return (
-    <div className="space-y-6">
+    <AppContainer>
+      {/* Sovereign Page Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Explore', to: '/explore' },
+          { label: 'Governance Intelligence' },
+        ]}
+        badge={{
+          text: 'Revenue Intelligence',
+          icon: Landmark,
+          variant: 'emerald',
+        }}
+        title="Governance Intelligence Framework"
+        description="Monitor standardized revenue indicators, mutation timeliness, dispute distributions, and point-in-time audit snapshots across multi-tier administrative jurisdictions."
+        actions={
+          <>
+            <Link
+              to="/governance/compare"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-emerald-900 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700"
+            >
+              <GitCompare className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+              <span>Temporal Comparisons</span>
+            </Link>
+            <button
+              type="button"
+              onClick={refetch}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700"
+            >
+              <RefreshCw className={`h-4 w-4 text-slate-500 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+              <span>Refresh</span>
+            </button>
+          </>
+        }
+      />
+
       {/* Scope Selector Section */}
       <GovernanceScopeSelector
         scopeType={scopeType}
@@ -319,6 +359,6 @@ export function GovernanceDashboardPage() {
         }}
         snapshot={snapshotForEvidenceLink}
       />
-    </div>
+    </AppContainer>
   );
 }

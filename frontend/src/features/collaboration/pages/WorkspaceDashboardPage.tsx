@@ -43,6 +43,10 @@ import type {
   ProjectVisibility,
   DatasetFormat,
 } from '../types';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { EmptyState } from '../../../components/layout/EmptyState';
+import { ErrorState } from '../../../components/layout/ErrorState';
 
 export function WorkspaceDashboardPage() {
   const { idOrSlug } = useParams<{ idOrSlug: string }>();
@@ -317,108 +321,92 @@ export function WorkspaceDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-      </div>
+      <AppContainer>
+        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent" />
+          <p className="text-xs font-medium text-slate-500">Loading workspace...</p>
+        </div>
+      </AppContainer>
     );
   }
 
   if (error || !workspace) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
-        <h2 className="text-lg font-bold">Workspace Unavailable</h2>
-        <p className="mt-1 text-sm">{error || 'Workspace could not be found or you do not have permission to view it.'}</p>
-        <Link
-          to="/workspaces"
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Workspaces
-        </Link>
-      </div>
+      <AppContainer>
+        <ErrorState
+          title="Workspace Unavailable"
+          description={error || 'Workspace could not be found or you do not have permission to view it.'}
+          action={
+            <Link
+              to="/workspaces"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Workspaces
+            </Link>
+          }
+        />
+      </AppContainer>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Back button & Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link to="/workspaces" className="hover:text-slate-800">
-          Workspaces
-        </Link>
-        <span>/</span>
-        <span className="font-semibold text-slate-900">{workspace.name}</span>
-      </div>
-
-      {/* Header Banner */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                  workspace.visibility === 'PUBLIC'
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : 'bg-slate-100 text-slate-700 border border-slate-200'
-                }`}
-              >
-                {workspace.visibility === 'PUBLIC' ? (
-                  <>
-                    <Globe className="h-3 w-3" /> Public
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-3 w-3" /> Private
-                  </>
-                )}
-              </span>
-
-              {workspace.currentUserRole && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-                  <Shield className="h-3 w-3" /> {workspace.currentUserRole}
-                </span>
-              )}
-            </div>
-
-            <h1 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">
-              {workspace.name}
-            </h1>
-
+    <AppContainer>
+      {/* Standard Institutional Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Workspaces', to: '/workspaces' },
+          { label: workspace.name },
+        ]}
+        badge={{
+          text: workspace.visibility === 'PUBLIC' ? 'Public Institutional Workspace' : 'Private Institutional Workspace',
+          icon: workspace.visibility === 'PUBLIC' ? Globe : Lock,
+          variant: workspace.visibility === 'PUBLIC' ? 'blue' : 'slate',
+        }}
+        title={workspace.name}
+        description={
+          workspace.description ||
+          (workspace.institution ? `Institutional workspace for ${workspace.institution}` : 'Collaborative research and spatial parcel workspace.')
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-2.5">
             {workspace.institution && (
-              <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-slate-500">
-                <Building2 className="h-4 w-4" />
-                {workspace.institution}
-              </p>
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                <Building2 className="h-3.5 w-3.5 text-slate-500" />
+                <span>{workspace.institution}</span>
+              </span>
             )}
 
-            {workspace.description && (
-              <p className="mt-3 max-w-3xl text-sm text-slate-600">
-                {workspace.description}
-              </p>
+            {workspace.currentUserRole && (
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800">
+                <Shield className="h-3.5 w-3.5 text-emerald-600" />
+                <span>{workspace.currentUserRole}</span>
+              </span>
+            )}
+
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => setShowTransferModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+              >
+                <KeyRound className="h-3.5 w-3.5 text-amber-600" />
+                <span>Transfer Ownership</span>
+              </button>
             )}
           </div>
-
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => setShowTransferModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-            >
-              <KeyRound className="h-3.5 w-3.5 text-amber-600" />
-              Transfer Ownership
-            </button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-slate-200/80 gap-1">
         <button
           type="button"
           onClick={() => setActiveTab('projects')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'projects'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <FolderKanban className="h-4 w-4" />
@@ -428,10 +416,10 @@ export function WorkspaceDashboardPage() {
         <button
           type="button"
           onClick={() => setActiveTab('datasets')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'datasets'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <Database className="h-4 w-4" />
@@ -441,10 +429,10 @@ export function WorkspaceDashboardPage() {
         <button
           type="button"
           onClick={() => setActiveTab('members')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs sm:text-sm font-semibold transition ${
             activeTab === 'members'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           <Users className="h-4 w-4" />
@@ -455,10 +443,10 @@ export function WorkspaceDashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition ${
+            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs sm:text-sm font-semibold transition ${
               activeTab === 'settings'
-                ? 'border-emerald-600 text-emerald-700 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'border-emerald-700 text-emerald-800'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
             }`}
           >
             <Settings className="h-4 w-4" />
@@ -470,62 +458,75 @@ export function WorkspaceDashboardPage() {
       {/* TAB 1: PROJECTS */}
       {activeTab === 'projects' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-500">
               Active research initiatives, land parcel dossiers, and policy analysis projects.
             </p>
             {isAuthenticated && (
               <button
                 type="button"
                 onClick={() => setShowProjectModal(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
-                <Plus className="h-3.5 w-3.5" />
-                New Project
+                <Plus className="h-4 w-4" />
+                <span>New Project</span>
               </button>
             )}
           </div>
 
           {loadingProjects ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading projects...</p>
             </div>
           ) : projects.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <FolderKanban className="mx-auto h-10 w-10 text-slate-400" />
-              <h3 className="mt-2 text-sm font-semibold text-slate-800">No projects yet</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Create a project to bundle land parcels, research papers, and discussion threads.
-              </p>
-            </div>
+            <EmptyState
+              icon={FolderKanban}
+              title="No projects yet"
+              description="Create a project to bundle land parcels, research papers, datasets, and discussion threads in this workspace."
+              action={
+                isAuthenticated ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowProjectModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Create First Project</span>
+                  </button>
+                ) : undefined
+              }
+            />
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {projects.map((proj) => (
                 <Link
                   key={proj.id}
                   to={`/projects/${proj.id}`}
-                  className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+                  className="group rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs transition-all hover:border-emerald-300 hover:shadow-md flex flex-col justify-between"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-                      {proj.status}
-                    </span>
-                    {proj.currentUserRole && (
-                      <span className="text-xs font-semibold text-emerald-600">
-                        {proj.currentUserRole}
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="rounded-md bg-slate-100 border border-slate-200/60 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                        {proj.status}
                       </span>
-                    )}
+                      {proj.currentUserRole && (
+                        <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                          {proj.currentUserRole}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="mt-3 text-base font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
+                      {proj.name}
+                    </h3>
+
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-500 leading-relaxed">
+                      {proj.description || 'No description provided.'}
+                    </p>
                   </div>
 
-                  <h3 className="mt-3 text-base font-bold text-slate-900 group-hover:text-emerald-700">
-                    {proj.name}
-                  </h3>
-
-                  <p className="mt-1 line-clamp-2 text-xs text-slate-500">
-                    {proj.description || 'No description.'}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                  <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3.5 w-3.5 text-emerald-600" />
                       {proj.landRecordCount} parcels
@@ -553,47 +554,58 @@ export function WorkspaceDashboardPage() {
       {/* TAB 2: DATASETS */}
       {activeTab === 'datasets' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-500">
               Shared GIS and tabular dataset catalog for this workspace.
             </p>
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => setShowDatasetModal(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
-                <Plus className="h-3.5 w-3.5" />
-                Register Dataset
+                <Plus className="h-4 w-4" />
+                <span>Register Dataset</span>
               </button>
             )}
           </div>
 
           {loadingDatasets ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading datasets...</p>
             </div>
           ) : datasets.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <Database className="mx-auto h-10 w-10 text-slate-400" />
-              <h3 className="mt-2 text-sm font-semibold text-slate-800">No shared datasets</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Register GeoJSON, Shapefile, CSV, or API endpoints available to workspace projects.
-              </p>
-            </div>
+            <EmptyState
+              icon={Database}
+              title="No shared datasets"
+              description="Register GeoJSON, Shapefile, CSV, or API endpoints available to workspace projects."
+              action={
+                isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowDatasetModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Register First Dataset</span>
+                  </button>
+                ) : undefined
+              }
+            />
           ) : (
-            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
               {datasets.map((ds) => (
-                <div key={ds.id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div key={ds.id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/50 transition">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
+                      <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-800 border border-blue-200/70">
                         {ds.format}
                       </span>
                       <h4 className="text-sm font-bold text-slate-900">{ds.title}</h4>
                     </div>
-                    <p className="mt-1 text-xs text-slate-600">{ds.description}</p>
-                    <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-600 leading-relaxed">{ds.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
                       {ds.spatialCoverage && <span>Coverage: {ds.spatialCoverage}</span>}
                       {ds.recordCount && <span>{ds.recordCount.toLocaleString()} records</span>}
                       {ds.license && <span>License: {ds.license}</span>}
@@ -606,7 +618,7 @@ export function WorkspaceDashboardPage() {
                         href={ds.sourceUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 hover:text-emerald-950 transition"
                       >
                         Source <ExternalLink className="h-3 w-3" />
                       </a>
@@ -615,7 +627,7 @@ export function WorkspaceDashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleDeleteDataset(ds.id)}
-                        className="p-1 text-slate-400 hover:text-red-600"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                         title="Delete dataset"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -632,40 +644,41 @@ export function WorkspaceDashboardPage() {
       {/* TAB 3: MEMBERS */}
       {activeTab === 'members' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-500">
               Users with access to this workspace and eligible for project assignment.
             </p>
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => setShowAddMemberModal(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
-                <Plus className="h-3.5 w-3.5" />
-                Add Member
+                <Plus className="h-4 w-4" />
+                <span>Add Member</span>
               </button>
             )}
           </div>
 
           {loadingMembers ? (
-            <div className="flex justify-center py-10">
+            <div className="flex flex-col items-center justify-center py-12 space-y-2">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <p className="text-xs text-slate-500">Loading members...</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
               <table className="w-full text-left text-sm text-slate-700">
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                <thead className="border-b border-slate-200/80 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="px-6 py-3">Member</th>
-                    <th className="px-6 py-3">Role</th>
-                    <th className="px-6 py-3">Joined</th>
-                    {isAdmin && <th className="px-6 py-3 text-right">Actions</th>}
+                    <th className="px-6 py-3.5">Member</th>
+                    <th className="px-6 py-3.5">Role</th>
+                    <th className="px-6 py-3.5">Joined</th>
+                    {isAdmin && <th className="px-6 py-3.5 text-right">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {members.map((m) => (
-                    <tr key={m.id} className="hover:bg-slate-50/50">
+                    <tr key={m.id} className="hover:bg-slate-50/60 transition">
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-900">{m.userName}</div>
                         {m.userEmail && <div className="text-xs text-slate-400">{m.userEmail}</div>}
@@ -675,7 +688,7 @@ export function WorkspaceDashboardPage() {
                           <select
                             value={m.role}
                             onChange={(e) => handleRoleChange(m.userId, e.target.value as WorkspaceRole)}
-                            className="rounded border border-slate-300 px-2 py-1 text-xs font-medium focus:border-emerald-500 focus:outline-none"
+                            className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-emerald-600 focus:outline-none"
                           >
                             <option value="ADMIN">ADMIN</option>
                             <option value="MEMBER">MEMBER</option>
@@ -683,12 +696,12 @@ export function WorkspaceDashboardPage() {
                           </select>
                         ) : (
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                               m.role === 'OWNER'
-                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                ? 'bg-amber-50 text-amber-900 border border-amber-200/80'
                                 : m.role === 'ADMIN'
-                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                : 'bg-slate-100 text-slate-700'
+                                ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/80'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200/60'
                             }`}
                           >
                             {m.role === 'OWNER' && <Shield className="h-3 w-3 text-amber-600" />}
@@ -696,7 +709,7 @@ export function WorkspaceDashboardPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-xs text-slate-400">
+                      <td className="px-6 py-4 text-xs text-slate-500">
                         {new Date(m.joinedAt).toLocaleDateString()}
                       </td>
                       {isAdmin && (
@@ -705,7 +718,7 @@ export function WorkspaceDashboardPage() {
                             <button
                               type="button"
                               onClick={() => handleRemoveMember(m.userId)}
-                              className="text-xs font-medium text-red-600 hover:underline"
+                              className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition"
                             >
                               Remove
                             </button>
@@ -723,18 +736,23 @@ export function WorkspaceDashboardPage() {
 
       {/* TAB 4: SETTINGS */}
       {activeTab === 'settings' && isAdmin && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
-          <h3 className="text-base font-bold text-slate-900">Workspace Settings</h3>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs space-y-6">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Workspace Settings</h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Update institutional metadata, organization affiliation, and scope.
+            </p>
+          </div>
 
           <form onSubmit={handleSaveSettings} className="max-w-xl space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700">Workspace Name</label>
+              <label className="block text-xs font-semibold text-slate-700">Workspace Name *</label>
               <input
                 type="text"
                 required
                 value={settingsName}
                 onChange={(e) => setSettingsName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
               />
             </div>
 
@@ -744,7 +762,7 @@ export function WorkspaceDashboardPage() {
                 type="text"
                 value={settingsInstitution}
                 onChange={(e) => setSettingsInstitution(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
               />
             </div>
 
@@ -754,33 +772,37 @@ export function WorkspaceDashboardPage() {
                 rows={3}
                 value={settingsDesc}
                 onChange={(e) => setSettingsDesc(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={settingsSaving}
-              className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
             >
               {settingsSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
 
           {isOwner && (
-            <div className="border-t border-slate-200 pt-6">
-              <h4 className="text-sm font-bold text-red-700">Danger Zone</h4>
-              <p className="mt-1 text-xs text-slate-500">
-                Archiving hides this workspace from member project lists.
-              </p>
-              <button
-                type="button"
-                onClick={handleArchive}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
-              >
-                <Trash2 className="h-4 w-4" />
-                Archive Workspace
-              </button>
+            <div className="border-t border-slate-200/80 pt-6">
+              <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 sm:p-5 space-y-2">
+                <h4 className="text-sm font-bold text-rose-900">Danger Zone</h4>
+                <p className="text-xs text-rose-700">
+                  Archiving hides this workspace from member project lists and disables new additions.
+                </p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleArchive}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-white px-4 py-2 text-xs font-semibold text-rose-700 shadow-2xs hover:bg-rose-50 transition"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Archive Workspace
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -788,14 +810,14 @@ export function WorkspaceDashboardPage() {
 
       {/* CREATE PROJECT MODAL */}
       {showProjectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">New Project</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">New Project</h2>
             <p className="mt-1 text-xs text-slate-500">
               Create a collaboration project within {workspace.name}.
             </p>
 
-            <form onSubmit={handleCreateProject} className="mt-4 space-y-4">
+            <form onSubmit={handleCreateProject} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">Project Name *</label>
                 <input
@@ -804,7 +826,7 @@ export function WorkspaceDashboardPage() {
                   value={projName}
                   onChange={(e) => setProjName(e.target.value)}
                   placeholder="e.g., Khasra Encroachment Audit"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
@@ -813,7 +835,7 @@ export function WorkspaceDashboardPage() {
                 <select
                   value={projVisibility}
                   onChange={(e) => setProjVisibility(e.target.value as ProjectVisibility)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 >
                   <option value="WORKSPACE_INHERITED">Workspace Inherited</option>
                   <option value="PRIVATE_TO_PROJECT_MEMBERS">Private to Project Members</option>
@@ -828,22 +850,22 @@ export function WorkspaceDashboardPage() {
                   value={projDesc}
                   onChange={(e) => setProjDesc(e.target.value)}
                   placeholder="Goals and methodology..."
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowProjectModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingProject}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   {savingProject ? 'Creating...' : 'Create Project'}
                 </button>
@@ -855,14 +877,14 @@ export function WorkspaceDashboardPage() {
 
       {/* ADD MEMBER MODAL */}
       {showAddMemberModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">Add Workspace Member</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Add Workspace Member</h2>
             <p className="mt-1 text-xs text-slate-500">
               Grant a registered platform user access to this workspace.
             </p>
 
-            <form onSubmit={handleAddMember} className="mt-4 space-y-4">
+            <form onSubmit={handleAddMember} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">User ID (UUID) *</label>
                 <input
@@ -871,7 +893,7 @@ export function WorkspaceDashboardPage() {
                   value={newMemberUserId}
                   onChange={(e) => setNewMemberUserId(e.target.value)}
                   placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
@@ -880,7 +902,7 @@ export function WorkspaceDashboardPage() {
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value as WorkspaceRole)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 >
                   <option value="MEMBER">MEMBER (Can participate in projects)</option>
                   <option value="ADMIN">ADMIN (Can manage workspace & members)</option>
@@ -888,18 +910,18 @@ export function WorkspaceDashboardPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAddMemberModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingMember}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   {savingMember ? 'Adding...' : 'Add Member'}
                 </button>
@@ -911,21 +933,21 @@ export function WorkspaceDashboardPage() {
 
       {/* TRANSFER OWNERSHIP MODAL */}
       {showTransferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">Transfer Workspace Ownership</h2>
-            <p className="mt-1 text-xs text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-              Warning: You will be demoted to ADMIN and the selected member will become the sole OWNER.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Transfer Workspace Ownership</h2>
+            <p className="mt-2 text-xs text-amber-800 bg-amber-50 p-3 rounded-xl border border-amber-200/80 leading-relaxed">
+              Warning: You will be demoted to ADMIN and the selected member will become the sole OWNER of this workspace.
             </p>
 
-            <form onSubmit={handleTransferOwnership} className="mt-4 space-y-4">
+            <form onSubmit={handleTransferOwnership} className="mt-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">Select Active Member</label>
                 <select
                   required
                   value={transferTargetUserId}
                   onChange={(e) => setTransferTargetUserId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 >
                   <option value="">-- Choose member --</option>
                   {members
@@ -938,18 +960,18 @@ export function WorkspaceDashboardPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={transferring || !transferTargetUserId}
-                  className="rounded-lg bg-amber-600 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                  className="rounded-xl bg-amber-600 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-amber-700 disabled:opacity-50 transition"
                 >
                   {transferring ? 'Transferring...' : 'Confirm Transfer'}
                 </button>
@@ -961,14 +983,14 @@ export function WorkspaceDashboardPage() {
 
       {/* REGISTER DATASET MODAL */}
       {showDatasetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">Register Shared Dataset</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Register Shared Dataset</h2>
             <p className="mt-1 text-xs text-slate-500">
               Provide metadata for datasets available to projects in this workspace.
             </p>
 
-            <form onSubmit={handleCreateDataset} className="mt-4 space-y-3">
+            <form onSubmit={handleCreateDataset} className="mt-5 space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700">Dataset Title *</label>
                 <input
@@ -977,7 +999,7 @@ export function WorkspaceDashboardPage() {
                   value={dsTitle}
                   onChange={(e) => setDsTitle(e.target.value)}
                   placeholder="e.g. North Delhi Floodplain Boundaries"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
@@ -987,7 +1009,7 @@ export function WorkspaceDashboardPage() {
                   <select
                     value={dsFormat}
                     onChange={(e) => setDsFormat(e.target.value as DatasetFormat)}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                   >
                     <option value="GEOJSON">GEOJSON</option>
                     <option value="SHAPEFILE">SHAPEFILE</option>
@@ -1005,7 +1027,7 @@ export function WorkspaceDashboardPage() {
                     value={dsLicense}
                     onChange={(e) => setDsLicense(e.target.value)}
                     placeholder="e.g. OGL India / CC-BY-4.0"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1017,7 +1039,7 @@ export function WorkspaceDashboardPage() {
                   value={dsSourceUrl}
                   onChange={(e) => setDsSourceUrl(e.target.value)}
                   placeholder="https://data.gov.in/..."
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
@@ -1029,7 +1051,7 @@ export function WorkspaceDashboardPage() {
                     value={dsSpatialCoverage}
                     onChange={(e) => setDsSpatialCoverage(e.target.value)}
                     placeholder="e.g. Alipur, North Delhi"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1039,7 +1061,7 @@ export function WorkspaceDashboardPage() {
                     value={dsRecordCount ?? ''}
                     onChange={(e) => setDsRecordCount(e.target.value ? Number(e.target.value) : undefined)}
                     placeholder="e.g. 1500"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1052,22 +1074,22 @@ export function WorkspaceDashboardPage() {
                   value={dsDesc}
                   onChange={(e) => setDsDesc(e.target.value)}
                   placeholder="Summary of variables, collection methods, and accuracy..."
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowDatasetModal(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingDataset}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-emerald-700 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
                 >
                   {savingDataset ? 'Registering...' : 'Register Dataset'}
                 </button>
@@ -1076,6 +1098,6 @@ export function WorkspaceDashboardPage() {
           </div>
         </div>
       )}
-    </div>
+    </AppContainer>
   );
 }

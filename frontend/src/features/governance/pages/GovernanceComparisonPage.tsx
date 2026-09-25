@@ -3,14 +3,15 @@ import { useSearchParams, Link } from 'react-router-dom';
 import {
   AlertCircle,
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
-  Info,
   Loader2,
   RefreshCw,
   Scale,
 } from 'lucide-react';
 import { ApiError } from '../../../services/apiClient';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { AdvisoryBanner } from '../../../components/layout/AdvisoryBanner';
 import {
   compareGovernanceSnapshots,
   fetchProjectSnapshots,
@@ -178,43 +179,39 @@ export function GovernanceComparisonPage() {
   const is404NotFound = compareError instanceof ApiError && compareError.status === 404;
   const is400BadRequest = compareError instanceof ApiError && compareError.status === 400;
 
+  const breadcrumbs = [
+    { label: 'Home', to: '/' },
+    { label: 'Governance', to: '/governance' },
+    ...(projectId ? [{ label: 'Project Workspace', to: `/projects/${projectId}` }] : []),
+    { label: 'Temporal Comparison' },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link to="/governance" className="hover:text-indigo-700 transition flex items-center gap-1 font-medium">
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Governance Dashboard
-        </Link>
-        <span>/</span>
-        {projectId && (
-          <>
-            <Link to={`/projects/${projectId}`} className="hover:text-indigo-700 transition font-medium">
-              Project Workspace
-            </Link>
-            <span>/</span>
-          </>
-        )}
-        <span className="font-semibold text-slate-800">Temporal Governance Audit Comparison</span>
-      </div>
+    <AppContainer>
+      {/* Sovereign Page Header */}
+      <PageHeader
+        breadcrumbs={breadcrumbs}
+        badge={{
+          text: 'Temporal Variance Engine',
+          icon: Scale,
+          variant: 'indigo',
+        }}
+        title="Temporal Governance Audit Comparison"
+        description="Evaluate deterministic mathematical variances between verified, immutable point-in-time calculation snapshots and the active cadastral state."
+      />
 
       {/* Mandatory Statutory & Descriptive Notice Banner */}
-      <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 shadow-2xs">
-        <div className="flex items-start gap-3.5">
-          <Info className="h-5 w-5 text-indigo-700 shrink-0 mt-0.5" />
-          <div className="space-y-1 text-xs text-indigo-950 leading-relaxed">
-            <h4 className="font-bold text-sm text-indigo-950">
-              Descriptive Governance Audit Notice
-            </h4>
-            <p className="font-medium text-indigo-900">
-              The Temporal Governance Audit Comparison Engine evaluates deterministic mathematical variances between verified, immutable point-in-time calculation snapshots and the active cadastral state.
-            </p>
-            <p className="text-indigo-800/90 text-[11px]">
-              This engine is purely descriptive: it does not rank administrative authorities, evaluate governance health, recommend policy choices, or predict future cadastral outcomes. Missing distribution categories remain distinct from zero (<span className="font-mono">&mdash;</span>), and indicator directionality is strictly non-evaluative (<span className="font-mono">NOT_DEFINED</span>).
-            </p>
-          </div>
-        </div>
-      </div>
+      <AdvisoryBanner
+        variant="audit"
+        title="Descriptive Governance Audit Notice"
+      >
+        <p className="font-medium text-slate-900">
+          The Temporal Governance Audit Comparison Engine evaluates deterministic mathematical variances between verified, immutable point-in-time calculation snapshots and the active cadastral state.
+        </p>
+        <p className="text-slate-600 text-[11px] pt-1">
+          This engine is purely descriptive: it does not rank administrative authorities, evaluate governance health, recommend policy choices, or predict future cadastral outcomes. Missing distribution categories remain distinct from zero (<span className="font-mono">&mdash;</span>), and indicator directionality is strictly non-evaluative (<span className="font-mono">NOT_DEFINED</span>).
+        </p>
+      </AdvisoryBanner>
 
       {/* Snapshot Loading Error Notice */}
       {snapshotLoadError && (
@@ -329,6 +326,6 @@ export function GovernanceComparisonPage() {
       {!isComparing && !compareError && comparison && (
         <GovernanceComparisonView comparison={comparison} />
       )}
-    </div>
+    </AppContainer>
   );
 }

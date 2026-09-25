@@ -11,12 +11,12 @@ interface AuthCardProps {
 /** Centred card shell shared by the login, registration and callback pages. */
 export function AuthCard({ title, subtitle, children, footer }: AuthCardProps) {
   return (
-    <div className="flex flex-1 items-start justify-center pt-2">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-        <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+    <div className="flex flex-1 items-center justify-center py-12 sm:py-16 px-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-8 sm:p-10 shadow-sm">
+        <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">{subtitle}</p>
         <div className="mt-6 space-y-5">{children}</div>
-        {footer ? <div className="mt-6 border-t border-slate-100 pt-4 text-center text-sm text-slate-600">{footer}</div> : null}
+        {footer ? <div className="mt-6 border-t border-slate-100 pt-4 text-center text-xs sm:text-sm text-slate-600">{footer}</div> : null}
       </div>
     </div>
   );
@@ -31,19 +31,19 @@ interface FormFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
 export function FormField({ label, error, id, ...inputProps }: FormFieldProps) {
   const inputId = id ?? inputProps.name;
   return (
-    <div>
-      <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
+    <div className="space-y-1.5">
+      <label htmlFor={inputId} className="block text-xs font-bold uppercase tracking-wider text-slate-700">
         {label}
       </label>
       <input
         id={inputId}
         {...inputProps}
         aria-invalid={error ? true : undefined}
-        className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 ${
-          error ? 'border-rose-400' : 'border-slate-300 focus:border-emerald-600'
+        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-700/20 transition ${
+          error ? 'border-rose-400 focus:border-rose-600' : 'border-slate-300 focus:border-emerald-700'
         }`}
       />
-      {error ? <p className="mt-1 text-xs text-rose-600">{error}</p> : null}
+      {error ? <p className="mt-1 text-xs font-medium text-rose-600">{error}</p> : null}
     </div>
   );
 }
@@ -52,7 +52,7 @@ export function FormField({ label, error, id, ...inputProps }: FormFieldProps) {
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <p role="alert" className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+    <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50/80 px-3.5 py-2.5 text-xs font-medium text-rose-800">
       {message}
     </p>
   );
@@ -71,7 +71,7 @@ export function SubmitButton({ busy, busyLabel, children, disabled = false }: Su
     <button
       type="submit"
       disabled={busy || disabled}
-      className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/40 disabled:cursor-not-allowed disabled:opacity-60"
+      className="w-full rounded-xl bg-emerald-800 px-4 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-emerald-900 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 active:scale-98"
     >
       {busy ? busyLabel : children}
     </button>
@@ -99,7 +99,7 @@ export function GoogleButton({ onClick }: GoogleButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400/40"
+      className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400/50"
     >
       <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
         <path

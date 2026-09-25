@@ -12,6 +12,8 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import { EvidenceCard } from '../components/EvidenceCard';
 import { EvidenceDetailsModal } from '../components/EvidenceDetailsModal';
 import { searchKnowledge } from '../services/knowledgeService';
@@ -73,25 +75,36 @@ export function KnowledgeSearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-16">
-      {/* Top Banner / Header */}
-      <div className="border-b border-slate-200 bg-white py-10 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 border border-teal-200 mb-3">
-            <Sparkles className="h-3.5 w-3.5" />
-            AI Knowledge & Evidence Layer
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Semantic Land Intelligence Search
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 max-w-2xl mx-auto">
-            Retrieve verified, evidence-grounded excerpts from research papers,
-            policy circulars, and survey manuals with deterministic vector
-            similarity and full provenance.
-          </p>
+    <AppContainer>
+      {/* Sovereign Page Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Explore', to: '/explore' },
+          { label: 'Knowledge Search' },
+        ]}
+        badge={{
+          text: 'Semantic Evidence Layer',
+          icon: Sparkles,
+          variant: 'teal',
+        }}
+        title="Semantic Land Intelligence Search"
+        description="Retrieve verified, evidence-grounded excerpts from published research papers, statutory codes, policy circulars, and survey manuals with deterministic vector similarity and full provenance."
+        actions={
+          <Link
+            to="/assistant"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-teal-900 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700"
+          >
+            <Bot className="h-4 w-4 text-teal-700" aria-hidden="true" />
+            <span>Consult AI Assistant</span>
+          </Link>
+        }
+      />
 
-          {/* Search Input Bar */}
-          <div className="mt-6 flex flex-col sm:flex-row items-center gap-2 max-w-3xl mx-auto">
+      {/* Main Search Panel */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-6">
+        {/* Search Input Bar */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
                 <Search className="h-5 w-5 text-slate-400" />
@@ -106,10 +119,12 @@ export function KnowledgeSearchPage() {
               />
               {query && (
                 <button
+                  type="button"
+                  aria-label="Clear search input"
                   onClick={() => setQuery('')}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-hidden"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -201,10 +216,9 @@ export function KnowledgeSearchPage() {
             </Link>
           </div>
         </div>
-      </div>
 
       {/* Main Content Area */}
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mt-8">
+      <div className="space-y-6">
         {/* Error Alert */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-start gap-3 mb-6">
@@ -327,6 +341,6 @@ export function KnowledgeSearchPage() {
         evidence={selectedEvidence}
         onClose={() => setSelectedEvidence(null)}
       />
-    </div>
+    </AppContainer>
   );
 }

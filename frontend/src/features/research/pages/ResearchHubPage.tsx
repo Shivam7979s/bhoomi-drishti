@@ -11,6 +11,8 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import { ResearchDocumentCard } from '../components/ResearchDocumentCard';
 import { ResearchDocumentDetailsModal } from '../components/ResearchDocumentDetailsModal';
 import { ResearchDocumentFormModal } from '../components/ResearchDocumentFormModal';
@@ -210,37 +212,34 @@ export function ResearchHubPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      {/* Header Banner */}
-      <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 text-white shadow-xl sm:p-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider backdrop-blur-md">
-              <BookOpen className="h-3.5 w-3.5 text-emerald-400" />
-              Evidence & Knowledge Base
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-white">
-              Research Hub
-            </h1>
-            <p className="text-sm text-slate-300">
-              Repository for land-governance research papers, official policy circulars,
-              cadastral evaluations, academic publications, and empirical evidence linked
-              to real land parcels.
-            </p>
-          </div>
-
-          {canCreate && (
+    <AppContainer>
+      {/* Sovereign Page Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Explore', to: '/explore' },
+          { label: 'Research Hub' },
+        ]}
+        badge={{
+          text: 'Statutory Research Corpus',
+          icon: BookOpen,
+          variant: 'emerald',
+        }}
+        title="Statutory & Legal Research Hub"
+        description="Repository for state revenue acts, policy circulars, cadastral evaluations, academic publications, and empirical evidence linked to verified land parcels."
+        actions={
+          canCreate ? (
             <button
               type="button"
               onClick={handleOpenCreate}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-95"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-2xs hover:bg-emerald-900 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700"
             >
-              <Plus className="h-5 w-5" />
-              New Research Document
+              <Plus className="h-4 w-4" />
+              <span>New Research Document</span>
             </button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* Search & Filter Controls */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
@@ -272,10 +271,10 @@ export function ResearchHubPage() {
             <button
               type="button"
               onClick={handleClearFilters}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
             >
-              <X className="h-4 w-4" />
-              Clear
+              <X className="h-4 w-4" aria-hidden="true" />
+              <span>Clear</span>
             </button>
           )}
         </form>
@@ -451,6 +450,6 @@ export function ResearchHubPage() {
         initialData={editingDoc}
         mode={formMode}
       />
-    </div>
+    </AppContainer>
   );
 }

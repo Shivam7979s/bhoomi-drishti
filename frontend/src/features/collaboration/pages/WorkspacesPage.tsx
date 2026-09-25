@@ -9,9 +9,10 @@ import {
   Plus,
   ArrowRight,
   Shield,
-  Layers,
 } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
 import { listWorkspaces, createWorkspace } from '../services/collaborationService';
 import type { Workspace, WorkspaceVisibility } from '../types';
 
@@ -78,37 +79,36 @@ export function WorkspacesPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600">
-            <Layers className="h-4 w-4" />
-            Collaboration & Research
-          </div>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
-            Research Workspaces
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Shared environments for collaborative land governance research, GIS parcel intelligence,
-            and shared datasets.
-          </p>
-        </div>
-
-        {isAuthenticated && (
-          <button
-            type="button"
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-          >
-            <Plus className="h-4 w-4" />
-            New Workspace
-          </button>
-        )}
-      </div>
+    <AppContainer>
+      {/* Sovereign Page Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Workspaces' },
+        ]}
+        badge={{
+          text: 'Collaborative Environment',
+          icon: FolderKanban,
+          variant: 'emerald',
+        }}
+        title="Research Workspaces"
+        description="Shared institutional environments for collaborative land governance research, GIS parcel intelligence, policy scenario modeling, and shared datasets."
+        actions={
+          isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-2xs hover:bg-emerald-900 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              <span>New Workspace</span>
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200">
+      <div className="flex items-center gap-2 border-b border-slate-200/80">
         <button
           type="button"
           onClick={() => setTab('all')}
@@ -328,6 +328,6 @@ export function WorkspacesPage() {
           </div>
         </div>
       )}
-    </div>
+    </AppContainer>
   );
 }

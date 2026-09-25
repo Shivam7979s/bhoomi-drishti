@@ -7,7 +7,6 @@ import {
   Trash2,
   Scale,
   Clock,
-  AlertCircle,
   FileText,
   Loader2,
   Calendar,
@@ -22,6 +21,10 @@ import { ScenarioGisTab } from '../components/ScenarioGisTab';
 import { ScenarioEvidenceTab } from '../components/ScenarioEvidenceTab';
 import { ScenarioBuilderModal } from '../components/ScenarioBuilderModal';
 import type { PolicyScenario, ScenarioResult } from '../types/policy';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { EmptyState } from '../../../components/layout/EmptyState';
+import { ErrorState } from '../../../components/layout/ErrorState';
 
 export function ScenarioWorkspacePage() {
   const { projectId, scenarioId } = useParams<{ projectId: string; scenarioId: string }>();
@@ -99,27 +102,31 @@ export function ScenarioWorkspacePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-        <p className="mt-3 text-sm text-slate-500">Loading policy scenario workspace...</p>
-      </div>
+      <AppContainer>
+        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          <p className="text-xs font-medium text-slate-500">Loading policy scenario workspace...</p>
+        </div>
+      </AppContainer>
     );
   }
 
   if (error || !scenario) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-        <AlertCircle className="mx-auto h-10 w-10 text-rose-500 mb-2" />
-        <h3 className="text-base font-bold">Scenario Not Found or Inaccessible</h3>
-        <p className="mt-1 text-xs">{error || 'You do not have permission to view this scenario.'}</p>
-        <Link
-          to={projectId ? `/projects/${projectId}` : '/workspaces'}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 border border-slate-300 shadow-sm hover:bg-slate-50"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Project
-        </Link>
-      </div>
+      <AppContainer>
+        <ErrorState
+          title="Scenario Not Found or Inaccessible"
+          description={error || 'You do not have permission to view this scenario.'}
+          action={
+            <Link
+              to={projectId ? `/projects/${projectId}` : '/workspaces'}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Project
+            </Link>
+          }
+        />
+      </AppContainer>
     );
   }
 
@@ -130,76 +137,46 @@ export function ScenarioWorkspacePage() {
   const p = scenario.parameters || {};
 
   return (
-    <div className="space-y-6">
-      {/* Navigation Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link to={`/projects/${projectId}`} className="hover:text-emerald-700 transition flex items-center gap-1">
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Project Workspace
-        </Link>
-        <span>/</span>
-        <span>Scenarios</span>
-        <span>/</span>
-        <span className="font-semibold text-slate-800 truncate max-w-xs">{scenario.name}</span>
-      </div>
-
-      {/* Scenario Header Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <ScenarioTypeBadge type={scenario.scenarioType} />
-              <ScenarioStatusBadge status={scenario.status} />
-              {scenario.evidenceCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 border border-teal-200">
-                  <FileText className="h-3.5 w-3.5" />
-                  {scenario.evidenceCount} evidence links
-                </span>
-              )}
-            </div>
-
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {scenario.name}
-            </h1>
-
-            {scenario.description && (
-              <p className="text-sm text-slate-600 leading-relaxed">
-                {scenario.description}
-              </p>
-            )}
-
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
-              <span className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5 text-slate-400" />
-                Created by: <strong className="text-slate-700 font-medium">{scenario.createdByName || 'Researcher'}</strong>
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                Updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            </div>
-          </div>
-
-          {/* Action Toolbar */}
+    <AppContainer>
+      {/* Institutional Page Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Workspaces', to: '/workspaces' },
+          { label: 'Project', to: `/projects/${projectId}` },
+          { label: 'Policy Scenarios' },
+          { label: scenario.name },
+        ]}
+        badge={{
+          text: `Policy Simulation · ${scenario.scenarioType}`,
+          icon: Scale,
+          variant: 'indigo',
+        }}
+        title={scenario.name}
+        description={scenario.description || 'Deterministic PostGIS land policy simulation and counterfactual modeling.'}
+        actions={
           <div className="flex flex-wrap items-center gap-2">
+            <ScenarioStatusBadge status={scenario.status} />
+            <ScenarioTypeBadge type={scenario.scenarioType} />
+
             {!isArchived && (
               <button
                 type="button"
                 onClick={() => setShowEditModal(true)}
                 disabled={isRunning}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 disabled:opacity-50 transition"
               >
                 <Edit2 className="h-3.5 w-3.5" />
-                Edit Parameters
+                <span>Edit Parameters</span>
               </button>
             )}
 
             <Link
               to={`/projects/${projectId}/scenarios/compare?scenarioIds=${scenario.id}`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 px-3.5 py-1.5 text-xs font-semibold text-indigo-800 shadow-2xs hover:bg-indigo-100 transition"
             >
               <Scale className="h-3.5 w-3.5 text-indigo-600" />
-              Compare
+              <span>Compare</span>
             </Link>
 
             {isDraft && !hasResults && (
@@ -207,10 +184,10 @@ export function ScenarioWorkspacePage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-2xs hover:bg-rose-50 transition"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Delete
+                <span>Delete</span>
               </button>
             )}
 
@@ -219,34 +196,55 @@ export function ScenarioWorkspacePage() {
                 type="button"
                 onClick={handleRun}
                 disabled={isRunning}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 disabled:opacity-50 transition"
               >
                 {isRunning ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Executing Simulation...
+                    <span>Executing Simulation...</span>
                   </>
                 ) : (
                   <>
                     <Play className="h-4 w-4" />
-                    {hasResults ? 'Re-run Simulation' : 'Run Simulation'}
+                    <span>{hasResults ? 'Re-run Simulation' : 'Run Simulation'}</span>
                   </>
                 )}
               </button>
             )}
           </div>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5 text-slate-400" />
+            <span>Author:</span>
+            <strong className="text-slate-700 font-semibold">{scenario.createdByName || 'Researcher'}</strong>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+            <span>Updated:</span>
+            <span className="text-slate-700 font-medium">
+              {new Date(scenario.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+          </span>
+          {scenario.evidenceCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-800 border border-teal-200/70">
+              <FileText className="h-3.5 w-3.5 text-teal-600" />
+              <span>{scenario.evidenceCount} evidence citations</span>
+            </span>
+          )}
         </div>
-      </div>
+      </PageHeader>
 
       {/* Tabs Navigation */}
-      <div className="flex border-b border-slate-200 text-sm font-medium">
+      <div className="flex border-b border-slate-200/80 text-xs sm:text-sm font-semibold gap-1">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
           className={`border-b-2 px-5 py-3 transition ${
             activeTab === 'overview'
-              ? 'border-emerald-600 text-emerald-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           Overview
@@ -257,8 +255,8 @@ export function ScenarioWorkspacePage() {
           onClick={() => setActiveTab('parameters')}
           className={`border-b-2 px-5 py-3 transition ${
             activeTab === 'parameters'
-              ? 'border-emerald-600 text-emerald-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           Parameters
@@ -269,8 +267,8 @@ export function ScenarioWorkspacePage() {
           onClick={() => setActiveTab('results')}
           className={`border-b-2 px-5 py-3 transition ${
             activeTab === 'results'
-              ? 'border-emerald-600 text-emerald-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           Simulation Results {resultsHistory.length > 0 && `(${resultsHistory.length})`}
@@ -281,8 +279,8 @@ export function ScenarioWorkspacePage() {
           onClick={() => setActiveTab('gis')}
           className={`border-b-2 px-5 py-3 transition ${
             activeTab === 'gis'
-              ? 'border-emerald-600 text-emerald-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           GIS Spatial View
@@ -293,8 +291,8 @@ export function ScenarioWorkspacePage() {
           onClick={() => setActiveTab('evidence')}
           className={`border-b-2 px-5 py-3 transition ${
             activeTab === 'evidence'
-              ? 'border-emerald-600 text-emerald-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
           }`}
         >
           Evidence &amp; Provenance {scenario.evidenceCount > 0 && `(${scenario.evidenceCount})`}
@@ -313,28 +311,28 @@ export function ScenarioWorkspacePage() {
               <ScenarioKpiCards result={selectedResult} compact={true} />
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-              <Clock className="mx-auto h-8 w-8 text-slate-400" />
-              <h4 className="mt-2 text-sm font-bold text-slate-800">Scenario Simulation Pending</h4>
-              <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-                Execute the deterministic PostGIS simulation engine to compute parcel-level impact metrics and distributions.
-              </p>
-              {!isArchived && (
-                <button
-                  type="button"
-                  onClick={handleRun}
-                  disabled={isRunning}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
-                >
-                  <Play className="h-3.5 w-3.5" />
-                  Run Now
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={Clock}
+              title="Scenario Simulation Pending"
+              description="Execute the deterministic PostGIS simulation engine to compute parcel-level impact metrics and spatial distributions."
+              action={
+                !isArchived ? (
+                  <button
+                    type="button"
+                    onClick={handleRun}
+                    disabled={isRunning}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                    <span>Run Simulation Now</span>
+                  </button>
+                ) : undefined
+              }
+            />
           )}
 
           {/* Parameter Summary Grid */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs space-y-3">
             <h3 className="text-sm font-bold text-slate-800">Configuration Highlights</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
               <div>
@@ -360,30 +358,30 @@ export function ScenarioWorkspacePage() {
 
           {/* Historical Run Log */}
           {resultsHistory.length > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs space-y-3">
               <h3 className="text-sm font-bold text-slate-800">Persisted Snapshot History</h3>
-              <div className="overflow-hidden rounded-lg border border-slate-200 text-xs">
+              <div className="overflow-hidden rounded-xl border border-slate-200/80 text-xs">
                 <table className="w-full text-left text-slate-700">
-                  <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                  <thead className="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-200/80 text-[11px] uppercase tracking-wider">
                     <tr>
-                      <th className="px-4 py-2.5">Snapshot Time</th>
-                      <th className="px-4 py-2.5">Evaluated</th>
-                      <th className="px-4 py-2.5">Affected</th>
-                      <th className="px-4 py-2.5">Area Affected</th>
-                      <th className="px-4 py-2.5">Disputed Exposure</th>
-                      <th className="px-4 py-2.5 text-right">Action</th>
+                      <th className="px-4 py-3">Snapshot Time</th>
+                      <th className="px-4 py-3">Evaluated</th>
+                      <th className="px-4 py-3">Affected</th>
+                      <th className="px-4 py-3">Area Affected</th>
+                      <th className="px-4 py-3">Disputed Exposure</th>
+                      <th className="px-4 py-3 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {resultsHistory.map((r, idx) => (
-                      <tr key={r.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 font-medium text-slate-900">
+                      <tr key={r.id} className="hover:bg-slate-50/50 transition">
+                        <td className="px-4 py-3 font-semibold text-slate-900">
                           {new Date(r.executedAt).toLocaleString('en-IN')}
-                          {idx === 0 && <span className="ml-2 rounded bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-800 font-semibold border border-teal-200">Latest</span>}
+                          {idx === 0 && <span className="ml-2 rounded-md bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-800 font-bold border border-teal-200/70">Latest</span>}
                         </td>
                         <td className="px-4 py-3">{r.totalParcelsEvaluated.toLocaleString()}</td>
                         <td className="px-4 py-3 font-bold text-blue-700">{r.totalParcelsAffected.toLocaleString()}</td>
-                        <td className="px-4 py-3 font-bold text-emerald-700">{(r.totalAreaAffectedSqm / 10000).toFixed(2)} ha</td>
+                        <td className="px-4 py-3 font-bold text-emerald-800">{(r.totalAreaAffectedSqm / 10000).toFixed(2)} ha</td>
                         <td className="px-4 py-3 text-rose-700">{r.disputedParcelsCount} parcels</td>
                         <td className="px-4 py-3 text-right">
                           <button
@@ -392,7 +390,7 @@ export function ScenarioWorkspacePage() {
                               setSelectedResult(r);
                               setActiveTab('results');
                             }}
-                            className="text-xs font-semibold text-emerald-700 hover:underline"
+                            className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 underline transition"
                           >
                             View Metrics
                           </button>
@@ -410,7 +408,7 @@ export function ScenarioWorkspacePage() {
       {/* 2. PARAMETERS */}
       {activeTab === 'parameters' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div>
               <h3 className="text-sm font-bold text-slate-800">Configured Parameters</h3>
               <p className="text-xs text-slate-500">
@@ -421,21 +419,21 @@ export function ScenarioWorkspacePage() {
               <button
                 type="button"
                 onClick={() => setShowEditModal(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
               >
                 <Edit2 className="h-3.5 w-3.5" />
-                Edit Parameters
+                <span>Edit Parameters</span>
               </button>
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6 text-xs">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs space-y-6 text-xs">
             {/* Geographic Targeting */}
             <div>
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-3">
                 Geographic Scope
               </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg bg-slate-50 p-4 border border-slate-100">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-xl bg-slate-50/80 p-4 border border-slate-200/60">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-semibold">State</span>
                   <span className="font-semibold text-slate-800">{p.targetState || 'None'}</span>
@@ -460,7 +458,7 @@ export function ScenarioWorkspacePage() {
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-3">
                 Simulation Transformation Rules
               </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg bg-slate-50 p-4 border border-slate-100">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-xl bg-slate-50/80 p-4 border border-slate-200/60">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-semibold">Source Land Use</span>
                   <span className="font-semibold text-slate-800">{p.sourceLandUse || 'N/A'}</span>
@@ -490,7 +488,7 @@ export function ScenarioWorkspacePage() {
                 <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2">
                   Intervention Geometry (SRID 4326)
                 </h4>
-                <div className="rounded-lg bg-slate-900 text-slate-200 p-3 font-mono text-[11px] overflow-x-auto">
+                <div className="rounded-xl bg-slate-900 text-slate-200 p-4 font-mono text-[11px] overflow-x-auto shadow-inner">
                   {p.interventionGeometryWkt}
                 </div>
               </div>
@@ -504,10 +502,10 @@ export function ScenarioWorkspacePage() {
         <div className="space-y-6">
           {/* Snapshot selector if multiple runs exist */}
           {resultsHistory.length > 1 && (
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs text-xs">
               <span className="font-semibold text-slate-700 flex items-center gap-2">
                 <History className="h-4 w-4 text-emerald-600" />
-                Showing Result Snapshot:
+                <span>Showing Result Snapshot:</span>
               </span>
               <select
                 value={selectedResult?.id || ''}
@@ -515,7 +513,7 @@ export function ScenarioWorkspacePage() {
                   const found = resultsHistory.find((r) => r.id === e.target.value);
                   if (found) setSelectedResult(found);
                 }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:outline-none"
+                className="rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:border-emerald-600 focus:outline-none"
               >
                 {resultsHistory.map((r, i) => (
                   <option key={r.id} value={r.id}>
@@ -547,33 +545,33 @@ export function ScenarioWorkspacePage() {
 
               {/* Spatial Summary Box */}
               {selectedResult.spatialSummaryJson && (
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-2">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs space-y-2">
                   <h4 className="text-sm font-bold text-slate-900">Spatial Extents &amp; Summary</h4>
-                  <pre className="rounded-lg bg-slate-50 p-3 text-[11px] font-mono text-slate-700 overflow-x-auto border border-slate-100">
+                  <pre className="rounded-xl bg-slate-50/80 p-3.5 text-[11px] font-mono text-slate-700 overflow-x-auto border border-slate-100">
                     {JSON.stringify(JSON.parse(selectedResult.spatialSummaryJson), null, 2)}
                   </pre>
                 </div>
               )}
             </>
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
-              <Clock className="mx-auto h-10 w-10 text-slate-400" />
-              <h3 className="mt-3 text-sm font-bold text-slate-800">No Simulation Results Available</h3>
-              <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-                Execute the scenario simulation to calculate impact metrics, distributions, and spatial extents.
-              </p>
-              {!isArchived && (
-                <button
-                  type="button"
-                  onClick={handleRun}
-                  disabled={isRunning}
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
-                >
-                  <Play className="h-3.5 w-3.5" />
-                  Execute Simulation
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={Clock}
+              title="No Simulation Results Available"
+              description="Execute the scenario simulation to calculate impact metrics, distributions, and spatial extents."
+              action={
+                !isArchived ? (
+                  <button
+                    type="button"
+                    onClick={handleRun}
+                    disabled={isRunning}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-emerald-800 transition"
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                    <span>Execute Simulation</span>
+                  </button>
+                ) : undefined
+              }
+            />
           )}
         </div>
       )}
@@ -601,6 +599,6 @@ export function ScenarioWorkspacePage() {
         }}
         scenarioToEdit={scenario}
       />
-    </div>
+    </AppContainer>
   );
 }

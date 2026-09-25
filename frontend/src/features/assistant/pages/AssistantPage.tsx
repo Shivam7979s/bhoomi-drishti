@@ -1,6 +1,9 @@
-import { AlertCircle, Bot, Link2, RotateCcw, ShieldCheck, X } from 'lucide-react';
+import { AlertCircle, Bot, Link2, RotateCcw, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { AppContainer } from '../../../components/layout/AppContainer';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { AdvisoryBanner } from '../../../components/layout/AdvisoryBanner';
 import { EvidenceDetailsModal } from '../../knowledge/components/EvidenceDetailsModal';
 import type { EvidenceItem } from '../../knowledge/types/knowledge';
 import { AssistantAnswerCard } from '../components/AssistantAnswerCard';
@@ -130,33 +133,34 @@ export function AssistantPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Page Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 text-teal-700">
-            <Bot className="h-4 w-4" aria-hidden="true" />
-          </span>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Evidence-Grounded Statutory AI Assistant
-          </h1>
-        </div>
-        <p className="text-xs text-slate-600 sm:text-sm">
-          Interactive assistance grounded strictly in verified statutory circulars, policy manuals,
-          and cadastral research documents.
-        </p>
-      </div>
+    <AppContainer>
+      {/* Sovereign Page Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Home', to: '/' },
+          { label: 'Explore', to: '/explore' },
+          { label: 'AI Assistant' },
+        ]}
+        badge={{
+          text: 'Statutory AI Synthesis',
+          icon: Bot,
+          variant: 'teal',
+        }}
+        title="Evidence-Grounded Statutory AI Assistant"
+        description="Interactive legal synthesis grounded strictly in verified statutory circulars, policy manuals, and cadastral research documents with pre-retrieval role checks and evidence sufficiency safeguards."
+      />
 
-      {/* Advisory Banner */}
-      <div className="rounded-xl border border-teal-200 bg-teal-50/70 p-3.5 text-xs text-teal-900 flex items-start gap-2.5">
-        <ShieldCheck className="h-4 w-4 text-teal-700 shrink-0 mt-0.5" aria-hidden="true" />
-        <p className="leading-relaxed">
-          <strong className="font-semibold text-teal-950">Statutory Notice: </strong>
+      {/* Standardized Advisory Banner */}
+      <AdvisoryBanner
+        variant="statutory"
+        title="Statutory Research Notice"
+      >
+        <p className="font-medium text-teal-950">
           BHOOMI-DRISHTI provides evidence-backed synthesis based exclusively on authorized documents in
           the knowledge repository. It does not replace certified legal counsel or official revenue
           authority rulings.
         </p>
-      </div>
+      </AdvisoryBanner>
 
       {/* Active Statutory Context Banner */}
       {activeContext && (
@@ -260,6 +264,6 @@ export function AssistantPage() {
         evidence={selectedEvidence}
         onClose={() => setSelectedEvidence(null)}
       />
-    </div>
+    </AppContainer>
   );
 }
