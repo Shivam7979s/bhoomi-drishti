@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertCircle,
+  ArrowRight,
   BookOpen,
+  Bot,
   Filter,
   Layers,
   Loader2,
@@ -176,6 +179,26 @@ export function KnowledgeSearchPage() {
                 {sq}
               </button>
             ))}
+          </div>
+
+          {/* Statutory Assistant Cross-Link Banner */}
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50/80 px-4 py-3 text-xs text-teal-900 max-w-3xl mx-auto shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-600 text-white shrink-0">
+                <Bot className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="text-left">
+                <span className="font-semibold text-teal-950 block">Need an evidence-grounded synthesis?</span>
+                <span className="text-teal-700">Ask the Statutory AI Assistant to reason across verified circulars & policies.</span>
+              </div>
+            </div>
+            <Link
+              to={query.trim() ? `/assistant?q=${encodeURIComponent(query.trim())}` : '/assistant'}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 font-semibold text-teal-800 border border-teal-300 hover:bg-teal-100 hover:text-teal-900 transition shadow-2xs shrink-0"
+            >
+              <span>Ask Statutory AI Assistant</span>
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </div>

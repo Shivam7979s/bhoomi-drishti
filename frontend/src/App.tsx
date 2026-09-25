@@ -8,6 +8,7 @@ import { RegisterPage } from './features/auth/pages/RegisterPage';
 import { LandRecordsPage } from './features/land-records/pages/LandRecordsPage';
 import { ResearchHubPage } from './features/research/pages/ResearchHubPage';
 import { KnowledgeSearchPage } from './features/knowledge/pages/KnowledgeSearchPage';
+import { AssistantPage } from './features/assistant/pages/AssistantPage';
 import { GisDashboardPage } from './features/gis/pages/GisDashboardPage';
 import { WorkspacesPage } from './features/collaboration/pages/WorkspacesPage';
 import { WorkspaceDashboardPage } from './features/collaboration/pages/WorkspaceDashboardPage';
@@ -57,6 +58,7 @@ export default function App() {
               }
             />
             <Route path="/research" element={<ResearchHubPage />} />
+            <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/knowledge" element={<KnowledgeSearchPage />} />
             <Route
               path="/profile"
