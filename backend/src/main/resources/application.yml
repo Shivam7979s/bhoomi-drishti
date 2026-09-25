@@ -33,6 +33,9 @@ spring:
     # migration runs; baselining lets V1 apply cleanly even on an existing database.
     baseline-on-migrate: true
     baseline-version: 0
+    # Automatically repair the schema history table (removes failed migration entries)
+    # before each migration run - avoids needing manual psql to clean up.
+    repair-on-migrate: true
 
   jpa:
     hibernate:
