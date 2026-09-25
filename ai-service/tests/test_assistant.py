@@ -112,6 +112,44 @@ def test_extract_concise_quote():
     assert quote == "First sentence is clear and concise."
 
 
+def test_citation_validator_all_formats_and_malformed_edge_cases():
+    """
+    Hardening Test: Comprehensive check across citation formats:
+    [1], [2], [99], [0], [-1], [abc], [], [1][2].
+    Valid citations must map to authoritative metadata;
+    phantom/invalid citations must not crash or invent fake sources.
+    """
+    chunks = [
+        make_dummy_chunk(1, "Valid Doc 1", "Content of doc 1."),
+        make_dummy_chunk(2, "Valid Doc 2", "Content of doc 2."),
+    ]
+
+    test_input = (
+        "Valid points [1] and [2]. "
+        "Phantom point [99] and zero [0]. "
+        "Malformed cases [-1] and [abc] and empty []. "
+        "Adjacent brackets [1][2]."
+    )
+
+    cleaned_answer, citations = reconcile_citations(test_input, chunks)
+
+    # Valid citations [1] and [2] are preserved
+    assert "[1]" in cleaned_answer
+    assert "[2]" in cleaned_answer
+    # Phantom [99] and zero [0] are stripped
+    assert "[99]" not in cleaned_answer
+    assert "[0]" not in cleaned_answer
+    # Non-digit cases [-1], [abc], [] are unparsed text and cause no crashes
+    assert "[-1]" in cleaned_answer
+    assert "[abc]" in cleaned_answer
+    assert "[]" in cleaned_answer
+    # Only chunks 1 and 2 exist in the citation list
+    assert len(citations) == 2
+    assert [c.citation_index for c in citations] == [1, 2]
+    assert citations[0].document_title == "Valid Doc 1"
+    assert citations[1].document_title == "Valid Doc 2"
+
+
 # ---------------------------------------------------------------------------
 # 3. Extractive Fallback Provider Tests
 # ---------------------------------------------------------------------------
@@ -416,3 +454,70 @@ def test_assistant_endpoint_configurable_thresholds(mock_search, mock_embed):
             assert resp.status_code == 200
             assert resp.json()["grounding_status"] == GroundingStatus.GROUNDED.value
 
+
+def test_build_synthesis_prompt_with_authorized_context():
+    """Verify build_synthesis_prompt embeds AuthorizedContext cleanly in prompt."""
+    from app.assistant.models import AuthorizedContext
+    from app.assistant.prompt import build_synthesis_prompt
+
+    chunk = EvidenceChunk(
+        citation_index=1,
+        chunk_id="00000000-0000-0000-0000-000000000001",
+        document_id="11111111-1111-1111-1111-111111111111",
+        document_title="Forest Conservation Act 1980",
+        document_type="STATUTORY_ACT",
+        text="Section 2 mandates prior approval of Central Government.",
+        similarity=0.88,
+        formatted_citation="Forest Conservation Act 1980",
+    )
+    ctx = AuthorizedContext(
+        context_type="GOVERNANCE_INDICATOR",
+        title="Forest Land Conversion Compliance",
+        summary="Metric: 82.5% compliance across surveyed parcels.",
+        metadata={"category": "LAND_RECORD_INTEGRITY"},
+    )
+
+    sys_prompt, user_prompt = build_synthesis_prompt("Is approval required?", [chunk], context=ctx)
+    assert "AUTHORIZED STRUCTURED CONTEXT:" in user_prompt
+    assert "[Context Type: GOVERNANCE_INDICATOR]" in user_prompt
+    assert "[Subject: Forest Land Conversion Compliance]" in user_prompt
+    assert "82.5% compliance" in user_prompt
+    assert "USER QUESTION:\nIs approval required?" in user_prompt
+    assert "Section 2 mandates prior approval" in user_prompt
+
+
+@patch("app.api.assistant.local_embedding_provider.embed_query")
+@patch("app.api.assistant.search_similar_chunks")
+def test_assistant_query_with_authorized_context(mock_search, mock_embed):
+    """Verify endpoint receives authorized context, augments search query, and includes in response."""
+    mock_embed.return_value = [0.1] * 384
+    mock_search.return_value = [
+        {
+            "chunk_id": "00000000-0000-0000-0000-000000000001",
+            "document_id": "11111111-1111-1111-1111-111111111111",
+            "document_title": "MP Land Revenue Code 1959",
+            "document_type": "STATUTE",
+            "text": "Diversion of agricultural land requires Sub-Divisional Officer permission.",
+            "similarity": 0.75,
+        }
+    ]
+
+    payload = {
+        "query": "What permissions are required?",
+        "force_extractive": True,
+        "context": {
+            "context_type": "GOVERNANCE_INDICATOR",
+            "title": "Agricultural Diversion Ratio",
+            "summary": "Indicator Code: AGR_DIV_RATIO. Current value: 14.2%.",
+        },
+    }
+
+    resp = client.post("/internal/assistant/query", json=payload, headers=AUTH_HEADERS)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    # Verify query embedding was augmented with context title for better retrieval
+    mock_embed.assert_called_once_with("What permissions are required? Agricultural Diversion Ratio")
+    assert "[Active Statutory Context: Agricultural Diversion Ratio (GOVERNANCE_INDICATOR)]" in data["answer"]
+    assert "[1] MP Land Revenue Code 1959" in data["answer"]
+    assert len(data["citations"]) == 1

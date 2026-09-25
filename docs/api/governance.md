@@ -421,3 +421,21 @@ The Temporal Governance Comparison API enables deterministic, purely descriptive
 | `404 Not Found` | Internal snapshot (Unauthorized) | Anonymous or non-official caller accessing `INTERNAL` snapshot |
 | `404 Not Found` | Private project (Unauthorized) | Caller is not an authorized member of the project (IDOR protection) |
 | `404 Not Found` | Cross-project (Unauthorized) | Caller cannot access Project B (Project B existence is concealed) |
+
+---
+
+## 9. Statutory AI Assistant Context Linking (Phase 10.4)
+
+Phase 10.4 connects BHOOMI-DRISHTI's Governance system with the Evidence-Grounded Statutory AI Assistant:
+
+1. **Indicator Context Integration**:
+   - The frontend links to `/assistant?contextType=GOVERNANCE_INDICATOR&indicatorCode=...`.
+   - The backend resolves the active definition, assembling authoritative metrics, calculation rules, and descriptions into server-authorized context.
+
+2. **Snapshot Audit Grounding**:
+   - The frontend links to `/assistant?contextType=GOVERNANCE_SNAPSHOT&snapshotId=...`.
+   - The backend authorizes the caller (enforcing 404 concealment for private or internal snapshots), retrieves evaluated values and linked evidence items, and constrains retrieval to target documents.
+
+3. **Temporal Comparison Explanation**:
+   - The frontend links to `/assistant?contextType=GOVERNANCE_COMPARISON&comparisonBaseSnapshotId=...&comparisonTargetSnapshotId=...`.
+   - The assistant evaluates quantitative deltas, common/added/removed evidence, and elapsed duration, explicitly enforcing that correlation between snapshots does not establish legal causality without authoritative statutory evidence.

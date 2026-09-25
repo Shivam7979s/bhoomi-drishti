@@ -40,7 +40,11 @@ Executes evidence-grounded statutory query, quality gate evaluation, pluggable s
   "query": "What are the restrictions on transferring agricultural land belonging to scheduled tribes in Madhya Pradesh?",
   "topK": 5,
   "documentType": "LEGAL_DOCUMENT",
-  "organization": "Revenue Department"
+  "organization": "Revenue Department",
+  "context": {
+    "contextType": "GOVERNANCE_INDICATOR",
+    "indicatorCode": "IND-001"
+  }
 }
 ```
 
@@ -51,6 +55,19 @@ Executes evidence-grounded statutory query, quality gate evaluation, pluggable s
 | `topK` | integer | No | Min 1, Max 20 (default: 5) | Maximum number of evidence chunks to retrieve. |
 | `documentType` | string | No | Valid `DocumentType` enum | Filter by document category (e.g. `LEGAL_DOCUMENT`, `POLICY_DOCUMENT`). |
 | `organization` | string | No | String | Case-insensitive filter on publishing organization. |
+| `context` | object | No | `AssistantContextRequestDTO` | Optional lightweight platform context reference (governance indicator, snapshot, comparison, research doc, or parcel). |
+
+#### Context Object Fields (`AssistantContextRequestDTO`)
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `contextType` | string | Optional descriptor (`GOVERNANCE_INDICATOR`, `GOVERNANCE_SNAPSHOT`, `GOVERNANCE_COMPARISON`, `RESEARCH_DOCUMENT`, `LAND_RECORD`). |
+| `indicatorCode` | string | Indicator code (e.g. `IND-001`) for definition-level statutory context. |
+| `snapshotId` | UUID | Governance snapshot UUID. Enforces project RBAC; unauthorized access yields 404. |
+| `comparisonBaseSnapshotId` | UUID | Baseline snapshot UUID for temporal comparison explanation. |
+| `comparisonTargetSnapshotId` | UUID | Target snapshot UUID for temporal comparison explanation. |
+| `documentId` | UUID | Research document UUID. Constrains or prioritizes retrieval to this document. |
+| `landRecordId` | UUID | Land record / parcel UUID. Grounding on parcel zoning and rules (PII excluded). |
+| `projectId` | UUID | Optional project scope. |
 
 ---
 

@@ -1,4 +1,5 @@
-from app.assistant.models import EvidenceChunk
+from typing import Optional
+from app.assistant.models import EvidenceChunk, AuthorizedContext
 
 SYSTEM_PROMPT = """You are the BHOOMI-DRISHTI Statutory AI Assistant for land governance and research.
 Your duty is to assist users by explaining statutory provisions, land records concepts, and research findings strictly grounded in the supplied authoritative evidence.
@@ -13,10 +14,14 @@ CRITICAL INSTRUCTIONS:
 7. NON-AUTHORITATIVE ADVISORY: You do not provide personal legal representation, judicial rulings, land title certification, or predictive land valuations. Present findings factually and objectively."""
 
 
-def build_synthesis_prompt(query: str, evidence: list[EvidenceChunk]) -> tuple[str, str]:
+def build_synthesis_prompt(
+    query: str,
+    evidence: list[EvidenceChunk],
+    context: Optional[AuthorizedContext] = None,
+) -> tuple[str, str]:
     """
     Constructs the system prompt and the user content with strict delimiters
-    for prompt-injection defense.
+    for prompt-injection defense. Includes authorized platform context when present.
     """
     evidence_blocks = []
     for chunk in evidence:
@@ -26,16 +31,25 @@ def build_synthesis_prompt(query: str, evidence: list[EvidenceChunk]) -> tuple[s
             header_parts.append(f'page="{chunk.page_number}"')
         if chunk.section_title:
             header_parts.append(f'section="{chunk.section_title}"')
-        
+
         header = " ".join(header_parts)
         block = f"<evidence_chunk {header}>\n{chunk.text}\n</evidence_chunk>"
         evidence_blocks.append(block)
 
     formatted_evidence = "\n\n".join(evidence_blocks)
 
+    context_section = ""
+    if context:
+        context_section = f"""
+AUTHORIZED STRUCTURED CONTEXT:
+[Context Type: {context.context_type}]
+[Subject: {context.title}]
+{context.summary}
+"""
+
     user_content = f"""USER QUESTION:
 {query}
-
+{context_section}
 RETRIEVED EVIDENCE:
 --- UNTRUSTED EVIDENCE START ---
 {formatted_evidence}

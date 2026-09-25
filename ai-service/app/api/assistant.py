@@ -32,7 +32,10 @@ async def query_assistant(request: AssistantQueryRequest):
     start_time = time.perf_counter()
 
     # 1. Generate 384-dimensional unit vector embedding for query
-    query_vector = local_embedding_provider.embed_query(request.query)
+    retrieval_query = request.query
+    if request.context and request.context.title:
+        retrieval_query = f"{request.query} {request.context.title}"
+    query_vector = local_embedding_provider.embed_query(retrieval_query)
 
     # 2. Query vector store in PostgreSQL
     rows = await search_similar_chunks(
@@ -130,7 +133,9 @@ async def query_assistant(request: AssistantQueryRequest):
         # to extrapolate unsupported legal/statutory conclusions. Instead, prefer deterministic
         # authoritative excerpts with explicit insufficiency cautionary language.
         fallback_provider = ExtractiveFallbackProvider()
-        excerpts_answer, _, provider_used = await fallback_provider.synthesize(request.query, evidence_items)
+        excerpts_answer, _, provider_used = await fallback_provider.synthesize(
+            request.query, evidence_items, context=request.context
+        )
         raw_answer = (
             "Caution: The retrieved evidence is only partially or weakly relevant to this query. "
             "To prevent unsupported statutory interpretations, relevant excerpts are provided below:\n\n"
@@ -139,11 +144,15 @@ async def query_assistant(request: AssistantQueryRequest):
     else:
         provider = get_synthesis_provider(force_extractive=request.force_extractive)
         try:
-            raw_answer, _, provider_used = await provider.synthesize(request.query, evidence_items)
+            raw_answer, _, provider_used = await provider.synthesize(
+                request.query, evidence_items, context=request.context
+            )
         except (SynthesisProviderError, Exception):
             # Fall back gracefully to ExtractiveFallbackProvider
             fallback_provider = ExtractiveFallbackProvider()
-            raw_answer, _, provider_used = await fallback_provider.synthesize(request.query, evidence_items)
+            raw_answer, _, provider_used = await fallback_provider.synthesize(
+                request.query, evidence_items, context=request.context
+            )
             grounding_status = GroundingStatus.FALLBACK
 
     synthesis_duration_ms = int((time.perf_counter() - synth_start) * 1000)

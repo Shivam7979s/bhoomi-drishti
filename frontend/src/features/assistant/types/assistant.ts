@@ -11,6 +11,22 @@ export type GroundingStatus =
   | 'FALLBACK';
 
 /**
+ * Lightweight reference to platform context sent to POST /api/ai/assistant/query.
+ * Spring Boot resolves and authorizes these references server-side.
+ */
+export interface AssistantContextRequestDTO {
+  contextType?: string;
+  indicatorCode?: string;
+  snapshotId?: string;
+  comparisonBaseSnapshotId?: string;
+  comparisonTargetSnapshotId?: string;
+  documentId?: string;
+  landRecordId?: string;
+  projectId?: string;
+  contextTitle?: string;
+}
+
+/**
  * Request payload sent to POST /api/ai/assistant/query.
  * Clients cannot select model, provider, prompts, or similarity thresholds.
  */
@@ -19,6 +35,7 @@ export interface AssistantQueryRequestDTO {
   topK?: number;
   documentType?: string;
   organization?: string;
+  context?: AssistantContextRequestDTO;
 }
 
 /**

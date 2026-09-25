@@ -32,15 +32,17 @@ The system is deliberately designed **NOT as an unconstrained chatbot or ChatGPT
 * **Header Nav (`MainLayout.tsx`):** Added `Assistant` with the `Bot` icon located logically between `Research Hub` (`/research`) and `Knowledge` (`/knowledge`).
 * Available to both unauthenticated and authenticated users.
 
-### Contextual Entry Points
-* **`KnowledgeSearchPage.tsx` Cross-Link:** Users querying semantic document search can transition to the assistant with one click.
-* Supports URL query prefill:
-  ```text
-  /assistant?q=<encoded-query>
-  ```
-* Prefills the input field without auto-submitting, leaving full control to the user.
+### Contextual Entry Points (Phase 10.4)
+* **`KnowledgeSearchPage.tsx` Cross-Link:** Users querying semantic document search can transition to the assistant with one click (`/assistant?q=<encoded-query>`).
+* **Governance Indicator Detail Drawer (`GovernanceIndicatorDetailDrawer.tsx`):** "Ask Assistant about Indicator" or "Ask Assistant about Snapshot" links to `/assistant?contextType=GOVERNANCE_INDICATOR&indicatorCode=...` or `contextType=GOVERNANCE_SNAPSHOT&snapshotId=...`.
+* **Governance Comparison View (`GovernanceComparisonView.tsx`):** "Explain Variance with Assistant" links to `/assistant?contextType=GOVERNANCE_COMPARISON&comparisonBaseSnapshotId=...&comparisonTargetSnapshotId=...`.
+* **Research Document Details Modal (`ResearchDocumentDetailsModal.tsx`):** "Ask Assistant" links to `/assistant?contextType=RESEARCH_DOCUMENT&documentId=...`.
+* **GIS Parcel Details Drawer (`ParcelDetailsDrawer.tsx`):** "Statutory Regulations for this Parcel" links to `/assistant?contextType=LAND_RECORD&landRecordId=...`.
 
----
+### Active Statutory Context UI
+* When arriving via a contextual link, an **Active Statutory Context Banner** is rendered above the query form, indicating the resource to which retrieval and synthesis are constrained.
+* An intuitive **Clear Context** button allows the user to dismiss the contextual constraint at any time to query the general statutory repository.
+* Default contextual queries are automatically pre-filled into the query input when arriving from platform modules without overwriting manual inputs.
 
 ## 4. State Machine & Visual Language
 

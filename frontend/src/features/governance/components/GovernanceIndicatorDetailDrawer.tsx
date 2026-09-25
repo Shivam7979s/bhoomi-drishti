@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   AlertCircle,
   BookOpen,
+  Bot,
   Calendar,
   CheckCircle2,
   ExternalLink,
@@ -418,9 +419,18 @@ export function GovernanceIndicatorDetailDrawer({
 
           {/* Drawer Footer */}
           <div className="border-t border-slate-200 px-6 py-4 bg-slate-50 flex items-center justify-between">
-            <span className="text-xs text-slate-500">
-              Indicator Definition Authority: <strong className="text-slate-700">V7 Cadastral Schema</strong>
-            </span>
+            <Link
+              to={
+                selectedSnapshotId
+                  ? `/assistant?contextType=GOVERNANCE_SNAPSHOT&snapshotId=${encodeURIComponent(selectedSnapshotId)}&indicatorCode=${encodeURIComponent(indicator.indicatorCode)}&contextTitle=${encodeURIComponent(indicator.indicatorName)}`
+                  : `/assistant?contextType=GOVERNANCE_INDICATOR&indicatorCode=${encodeURIComponent(indicator.indicatorCode)}&contextTitle=${encodeURIComponent(indicator.indicatorName)}`
+              }
+              aria-label={selectedSnapshotId ? `Ask Assistant about snapshot for ${indicator.indicatorName}` : `Ask Assistant about indicator ${indicator.indicatorName}`}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs transition focus:outline-hidden focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+            >
+              <Bot className="h-4 w-4" aria-hidden="true" />
+              <span>{selectedSnapshotId ? 'Ask Assistant about Snapshot' : 'Ask Assistant about Indicator'}</span>
+            </Link>
             <button
               type="button"
               onClick={onClose}

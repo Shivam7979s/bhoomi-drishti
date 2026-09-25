@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   AlertTriangle,
   BarChart3,
+  Bot,
   Calendar,
   Clock,
   FileText,
@@ -9,6 +10,7 @@ import {
   Radio,
   Scale,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
   Bar,
   BarChart,
@@ -139,7 +141,19 @@ export function GovernanceComparisonView({ comparison }: GovernanceComparisonVie
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs flex-wrap">
+            <Link
+              to={
+                baseline.snapshotId && target.snapshotId
+                  ? `/assistant?contextType=GOVERNANCE_COMPARISON&comparisonBaseSnapshotId=${encodeURIComponent(baseline.snapshotId)}&comparisonTargetSnapshotId=${encodeURIComponent(target.snapshotId)}&indicatorCode=${encodeURIComponent(indicatorCode)}&contextTitle=${encodeURIComponent(`Comparison: ${indicatorName}`)}`
+                  : `/assistant?contextType=GOVERNANCE_INDICATOR&indicatorCode=${encodeURIComponent(indicatorCode)}&contextTitle=${encodeURIComponent(indicatorName)}`
+              }
+              aria-label={`Explain variance for indicator ${indicatorName} with AI Assistant`}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 px-3 py-1 font-semibold text-white shadow-2xs transition focus:outline-hidden focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+            >
+              <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Explain Variance with Assistant</span>
+            </Link>
             {elapsedDays !== null && (
               <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700">
                 <Clock className="h-3.5 w-3.5 text-slate-400" />

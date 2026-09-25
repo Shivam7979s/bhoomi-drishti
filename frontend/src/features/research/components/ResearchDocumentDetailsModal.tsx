@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   AlertCircle,
   Bookmark,
+  Bot,
   CheckCircle2,
   Edit2,
   ExternalLink,
@@ -15,6 +16,7 @@ import {
   Unlink,
   X,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
   getLinkedLandRecords,
   linkLandRecord,
@@ -594,6 +596,16 @@ export function ResearchDocumentDetailsModal({
                 <FolderPlus className="h-3.5 w-3.5" />
                 Link to Project
               </button>
+
+              <Link
+                to={`/assistant?contextType=RESEARCH_DOCUMENT&documentId=${encodeURIComponent(doc.id)}&contextTitle=${encodeURIComponent(doc.title)}`}
+                aria-label={`Ask Assistant about research document: ${doc.title}`}
+                className="flex items-center gap-1.5 rounded-lg border border-teal-300 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-800 shadow-xs hover:bg-teal-100 transition focus:outline-hidden focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                title="Inquire Statutory AI Assistant about this document"
+              >
+                <Bot className="h-3.5 w-3.5 text-teal-700" aria-hidden="true" />
+                Ask Assistant
+              </Link>
 
               {canEdit && onEdit && (
                 <button

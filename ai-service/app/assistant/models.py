@@ -57,6 +57,17 @@ class Citation(BaseModel):
     quote: str = Field(..., description="Verbatim excerpt from the chunk supporting the citation")
 
 
+class AuthorizedContext(BaseModel):
+    """
+    Server-authorized platform context (governance indicator, snapshot, comparison,
+    research document, or land record).
+    """
+    context_type: str = Field(..., description="Classification of context e.g. GOVERNANCE_INDICATOR")
+    title: str = Field(..., description="Human-readable title or subject of the context")
+    summary: str = Field(..., description="Server-assembled factual summary and metrics")
+    metadata: Optional[dict] = Field(None, description="Structured non-sensitive attributes")
+
+
 class AssistantQueryRequest(BaseModel):
     """
     Internal request payload for assistant retrieval and synthesis.
@@ -68,6 +79,7 @@ class AssistantQueryRequest(BaseModel):
     document_type: Optional[str] = Field(None, description="Optional document type filter")
     organization: Optional[str] = Field(None, description="Optional organization filter")
     force_extractive: bool = Field(False, description="Force deterministic extractive fallback without LLM")
+    context: Optional[AuthorizedContext] = Field(None, description="Server-authorized platform context")
 
 
 class AssistantQueryResponse(BaseModel):

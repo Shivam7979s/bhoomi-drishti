@@ -14,6 +14,7 @@ import {
   Search,
   BookOpen,
   FolderKanban,
+  Bot,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { GeoJsonFeature } from '../types/gis';
@@ -391,6 +392,19 @@ export function ParcelDetailsDrawer({
                   Center
                 </button>
               )}
+            </div>
+
+            {/* Contextual Statutory Assistant Action */}
+            <div className="pt-1">
+              <Link
+                to={`/assistant?contextType=LAND_RECORD&landRecordId=${encodeURIComponent(feature.id)}&contextTitle=${encodeURIComponent(`Parcel ${props.parcelNumber} (${props.village})`)}`}
+                aria-label={`Ask Assistant about statutory regulations for parcel ${props.parcelNumber}`}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-800 shadow-2xs hover:bg-teal-100 transition focus:outline-hidden focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                title="Inquire Statutory AI Assistant about regulations for this parcel"
+              >
+                <Bot className="h-4 w-4 text-teal-700" aria-hidden="true" />
+                <span>Statutory Regulations for this Parcel</span>
+              </Link>
             </div>
           </>
         )}

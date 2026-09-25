@@ -1,4 +1,5 @@
-from app.assistant.models import EvidenceChunk
+from typing import Optional
+from app.assistant.models import EvidenceChunk, AuthorizedContext
 
 
 class ExtractiveFallbackProvider:
@@ -12,6 +13,7 @@ class ExtractiveFallbackProvider:
         self,
         query: str,
         evidence: list[EvidenceChunk],
+        context: Optional[AuthorizedContext] = None,
     ) -> tuple[str, list[int], str]:
         """
         Generates an extractive response citing all supplied chunks in order.
@@ -25,10 +27,12 @@ class ExtractiveFallbackProvider:
                 "extractive_fallback",
             )
 
-        lines = [
-            "Based on the indexed statutory and research documents, the following authoritative evidence was retrieved:",
-            "",
-        ]
+        lines = []
+        if context:
+            lines.append(f"[Active Statutory Context: {context.title} ({context.context_type})]")
+            lines.append("")
+        lines.append("Based on the indexed statutory and research documents, the following authoritative evidence was retrieved:")
+        lines.append("")
 
         cited_indices = []
         for chunk in evidence:

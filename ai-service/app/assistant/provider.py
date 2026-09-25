@@ -1,8 +1,8 @@
 import logging
-from typing import Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable, Optional
 import httpx
 from app.config import settings
-from app.assistant.models import EvidenceChunk
+from app.assistant.models import EvidenceChunk, AuthorizedContext
 from app.assistant.prompt import build_synthesis_prompt
 from app.assistant.extractive import ExtractiveFallbackProvider
 
@@ -25,6 +25,7 @@ class SynthesisProvider(Protocol):
         self,
         query: str,
         evidence: list[EvidenceChunk],
+        context: Optional[AuthorizedContext] = None,
     ) -> tuple[str, list[int], str]:
         ...
 
@@ -51,8 +52,9 @@ class OpenAICompatibleProvider:
         self,
         query: str,
         evidence: list[EvidenceChunk],
+        context: Optional[AuthorizedContext] = None,
     ) -> tuple[str, list[int], str]:
-        system_prompt, user_content = build_synthesis_prompt(query, evidence)
+        system_prompt, user_content = build_synthesis_prompt(query, evidence, context=context)
 
         headers = {"Content-Type": "application/json"}
         if self.api_key:

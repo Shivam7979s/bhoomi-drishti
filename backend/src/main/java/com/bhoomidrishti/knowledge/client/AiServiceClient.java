@@ -192,6 +192,14 @@ public class AiServiceClient {
             com.bhoomidrishti.assistant.dto.AssistantQueryRequestDTO request,
             boolean onlyPublished,
             List<UUID> allowedDocIds) {
+        return queryAssistant(request, null, onlyPublished, allowedDocIds);
+    }
+
+    public com.bhoomidrishti.assistant.dto.AssistantQueryResponseDTO queryAssistant(
+            com.bhoomidrishti.assistant.dto.AssistantQueryRequestDTO request,
+            com.bhoomidrishti.assistant.dto.AuthorizedAssistantContextDTO context,
+            boolean onlyPublished,
+            List<UUID> allowedDocIds) {
         try {
             Map<String, Object> body = new HashMap<>();
             body.put("query", request.query());
@@ -205,6 +213,16 @@ public class AiServiceClient {
             }
             if (request.organization() != null && !request.organization().isBlank()) {
                 body.put("organization", request.organization().trim());
+            }
+            if (context != null) {
+                Map<String, Object> contextMap = new HashMap<>();
+                contextMap.put("context_type", context.contextType());
+                contextMap.put("title", context.title());
+                contextMap.put("summary", context.summary());
+                if (context.metadata() != null) {
+                    contextMap.put("metadata", context.metadata());
+                }
+                body.put("context", contextMap);
             }
 
             Map<?, ?> response = restClient.post()
@@ -310,6 +328,10 @@ public class AiServiceClient {
                 metadata.put("providerUsed", response.get("provider_used"));
             }
             metadata.put("citationCount", citations.size());
+            if (context != null) {
+                metadata.put("contextType", context.contextType());
+                metadata.put("contextTitle", context.title());
+            }
 
             return new com.bhoomidrishti.assistant.dto.AssistantQueryResponseDTO(
                     request.query(),

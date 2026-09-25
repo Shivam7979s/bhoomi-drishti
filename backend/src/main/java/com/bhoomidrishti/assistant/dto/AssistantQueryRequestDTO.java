@@ -17,8 +17,14 @@ public record AssistantQueryRequestDTO(
 
         DocumentType documentType,
 
-        String organization
+        String organization,
+
+        AssistantContextRequestDTO context
 ) {
+    public AssistantQueryRequestDTO(String query, Integer topK, DocumentType documentType, String organization) {
+        this(query, topK, documentType, organization, null);
+    }
+
     public int resolvedTopK() {
         if (topK == null || topK < 1) {
             return 5;
