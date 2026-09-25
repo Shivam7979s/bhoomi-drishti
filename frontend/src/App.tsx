@@ -20,6 +20,7 @@ import { GovernanceDashboardPage } from './features/governance/pages/GovernanceD
 import { GovernanceComparisonPage } from './features/governance/pages/GovernanceComparisonPage';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
+import { ExplorePage } from './pages/ExplorePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
         <Routes>
           <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="/explore" element={<ExplorePage />} />
             <Route path="/governance" element={<GovernanceDashboardPage />} />
             <Route path="/governance/compare" element={<GovernanceComparisonPage />} />
             <Route path="/gis" element={<GisDashboardPage />} />

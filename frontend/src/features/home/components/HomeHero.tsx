@@ -64,7 +64,7 @@ export function HomeHero({ backendStatus, onRefreshHealth }: HomeHeroProps) {
             {/* Primary Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
-                to="/governance"
+                to="/explore"
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-900 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 active:scale-98"
               >
                 <span>Explore Platform</span>

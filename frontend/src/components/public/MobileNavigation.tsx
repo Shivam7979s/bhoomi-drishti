@@ -4,6 +4,7 @@ import {
   BookOpen,
   Bookmark,
   Bot,
+  Compass,
   FolderKanban,
   Landmark,
   LogIn,
@@ -26,9 +27,10 @@ interface MobileNavigationProps {
 }
 
 const PUBLIC_NAV_LINKS = [
-  { to: '/governance', label: 'Governance', icon: Landmark, description: 'Live district KPI metrics & benchmarks' },
+  { to: '/explore', label: 'Explore', icon: Compass, description: 'Public search, domain & geographic discovery' },
+  { to: '/governance', label: 'Governance', icon: Landmark, description: 'District KPI metrics & benchmarks' },
   { to: '/gis', label: 'GIS Map', icon: Map, description: 'Spatial cadastral parcel polygons' },
-  { to: '/research', label: 'Research Hub', icon: BookOpen, description: 'Official acts, policy circulars & papers' },
+  { to: '/research', label: 'Research Hub', icon: BookOpen, description: 'Published acts, circulars & research' },
   { to: '/assistant', label: 'AI Assistant', icon: Bot, badge: 'Statutory', description: 'Evidence-grounded statutory Q&A' },
   { to: '/knowledge', label: 'Knowledge Search', icon: Sparkles, description: 'Semantic vector evidence search' },
 ];

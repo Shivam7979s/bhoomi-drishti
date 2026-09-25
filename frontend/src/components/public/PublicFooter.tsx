@@ -28,6 +28,11 @@ export function PublicFooter() {
             </h3>
             <ul className="space-y-2 text-xs">
               <li>
+                <Link to="/explore" className="hover:text-emerald-700 transition">
+                  Public Explore & Discovery
+                </Link>
+              </li>
+              <li>
                 <Link to="/governance" className="hover:text-emerald-700 transition">
                   Governance Dashboard
                 </Link>

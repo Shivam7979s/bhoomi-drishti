@@ -1,4 +1,5 @@
-import { Landmark, Map, BookOpen, Bot } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Landmark, Map, BookOpen, Bot, ArrowRight, Compass } from 'lucide-react';
 import { PlatformPillarCard } from './PlatformPillarCard';
 
 export function ExplorePlatform() {
@@ -60,6 +61,18 @@ export function ExplorePlatform() {
             ctaText="Consult Statutory Assistant"
             colorScheme="teal"
           />
+        </div>
+
+        {/* Link to Unified Public Discovery Portal */}
+        <div className="mt-10 text-center">
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-emerald-900 hover:border-emerald-300 transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700"
+          >
+            <Compass className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+            <span>Open Public Explore & Discovery Portal</span>
+            <ArrowRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </section>

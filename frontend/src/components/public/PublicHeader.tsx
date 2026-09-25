@@ -4,6 +4,7 @@ import {
   Bookmark,
   Bot,
   ChevronDown,
+  Compass,
   FolderKanban,
   Landmark,
   LogIn,
@@ -18,6 +19,7 @@ import { BrandLogo } from './BrandLogo';
 import { MobileNavigation } from './MobileNavigation';
 
 const NAV_ITEMS = [
+  { to: '/explore', label: 'Explore', icon: Compass },
   { to: '/governance', label: 'Governance', icon: Landmark },
   { to: '/gis', label: 'GIS Map', icon: Map },
   { to: '/research', label: 'Research Hub', icon: null },

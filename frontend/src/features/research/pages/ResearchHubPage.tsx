@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   BookOpen,
@@ -16,6 +17,7 @@ import { ResearchDocumentFormModal } from '../components/ResearchDocumentFormMod
 import {
   createResearchDocument,
   deleteResearchDocument,
+  getResearchDocumentById,
   listResearchDocuments,
   updateResearchDocument,
 } from '../services/researchService';
@@ -75,6 +77,35 @@ export function ResearchHubPage() {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [editingDoc, setEditingDoc] = useState<ResearchDocument | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlDocId = searchParams.get('docId');
+
+  // Deep-link: Open requested document if docId query parameter is present
+  useEffect(() => {
+    if (!urlDocId) return;
+    let isCurrent = true;
+    getResearchDocumentById(urlDocId)
+      .then((doc) => {
+        if (isCurrent && doc) {
+          setSelectedDoc(doc);
+          setIsDetailsOpen(true);
+        }
+      })
+      .catch((err: unknown) => {
+        if (isCurrent) {
+          setError(
+            err instanceof Error
+              ? `Unable to open requested document: ${err.message}`
+              : 'The requested document is not accessible or does not exist.',
+          );
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [urlDocId]);
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true);
@@ -392,6 +423,11 @@ export function ResearchHubPage() {
         onClose={() => {
           setIsDetailsOpen(false);
           setSelectedDoc(null);
+          if (searchParams.has('docId')) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('docId');
+            setSearchParams(next, { replace: true });
+          }
         }}
         onEdit={handleOpenEdit}
         onDelete={handleDeleteDocument}
