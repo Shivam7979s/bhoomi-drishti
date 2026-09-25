@@ -5,9 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record AddWorkspaceMemberRequest(
-        @NotNull(message = "userId is required")
-        UUID userId,
+                @NotNull(message = "userId is required") UUID userId,
 
-        @NotNull(message = "role is required")
-        WorkspaceRole role
-) {}
+                @NotNull(message = "role is required") WorkspaceRole role) {
+}

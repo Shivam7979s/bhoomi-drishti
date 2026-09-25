@@ -31,15 +31,78 @@ export default function App() {
           <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="/explore" element={<ExplorePage />} />
-            <Route path="/governance" element={<GovernanceDashboardPage />} />
-            <Route path="/governance/compare" element={<GovernanceComparisonPage />} />
-            <Route path="/gis" element={<GisDashboardPage />} />
-            <Route path="/workspaces" element={<WorkspacesPage />} />
-            <Route path="/workspaces/:idOrSlug" element={<WorkspaceDashboardPage />} />
-            <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
-            <Route path="/projects/:projectId/scenarios/:scenarioId" element={<ScenarioWorkspacePage />} />
-            <Route path="/projects/:projectId/scenarios/compare" element={<ScenarioComparisonPage />} />
-            <Route path="/scenarios/compare" element={<ScenarioComparisonPage />} />
+            <Route
+              path="/governance"
+              element={
+                <ProtectedRoute>
+                  <GovernanceDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/governance/compare"
+              element={
+                <ProtectedRoute>
+                  <GovernanceComparisonPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gis"
+              element={
+                <ProtectedRoute>
+                  <GisDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspaces"
+              element={
+                <ProtectedRoute>
+                  <WorkspacesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspaces/:idOrSlug"
+              element={
+                <ProtectedRoute>
+                  <WorkspaceDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId"
+              element={
+                <ProtectedRoute>
+                  <ProjectDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId/scenarios/:scenarioId"
+              element={
+                <ProtectedRoute>
+                  <ScenarioWorkspacePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId/scenarios/compare"
+              element={
+                <ProtectedRoute>
+                  <ScenarioComparisonPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scenarios/compare"
+              element={
+                <ProtectedRoute>
+                  <ScenarioComparisonPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/saved-research"
               element={
@@ -59,9 +122,30 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/research" element={<ResearchHubPage />} />
-            <Route path="/assistant" element={<AssistantPage />} />
-            <Route path="/knowledge" element={<KnowledgeSearchPage />} />
+            <Route
+              path="/research"
+              element={
+                <ProtectedRoute>
+                  <ResearchHubPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assistant"
+              element={
+                <ProtectedRoute>
+                  <AssistantPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/knowledge"
+              element={
+                <ProtectedRoute>
+                  <KnowledgeSearchPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile"
               element={

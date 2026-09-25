@@ -45,9 +45,9 @@ export function HomeHero({ backendStatus, onRefreshHealth }: HomeHeroProps) {
             {/* Context Badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-3.5 py-1 text-xs font-semibold text-emerald-900 shadow-2xs">
               <span className="flex h-2 w-2 rounded-full bg-emerald-600" />
-              <span>Smart India Hackathon PS26019 Prototype</span>
+              <span>National Land Governance Platform</span>
               <span className="text-emerald-300">·</span>
-              <span className="text-emerald-800">Public Digital Platform</span>
+              <span className="text-emerald-800">Public Digital Infrastructure</span>
             </div>
 
             {/* Platform Title */}

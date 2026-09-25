@@ -17,7 +17,7 @@ export function PublicFooter() {
             </p>
             <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-[11px] font-semibold text-emerald-900">
               <ShieldCheck className="h-4 w-4 text-emerald-700 shrink-0" aria-hidden="true" />
-              <span>Evidence-Grounded · Smart India Hackathon PS26019</span>
+              <span>Evidence-Grounded · National Land Governance Platform</span>
             </div>
           </div>
 
@@ -119,8 +119,8 @@ export function PublicFooter() {
       <div className="border-t border-slate-200/80 bg-slate-50/70 py-6">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 text-center sm:flex-row sm:px-6 sm:text-left lg:px-8">
           <p className="text-[11px] text-slate-500 max-w-2xl">
-            <strong>BHOOMI-DRISHTI</strong> is an evidence-grounded land governance prototype developed for
-            Smart India Hackathon PS26019. Not an official government service. All statutory interpretations require formal revenue authority confirmation.
+            <strong>BHOOMI-DRISHTI</strong> is an evidence-grounded sovereign land governance and spatial intelligence platform.
+            All statutory interpretations require formal revenue authority confirmation.
           </p>
           <div className="flex items-center gap-3 text-[11px] text-slate-500 shrink-0">
             <span>PostGIS 3.5 Spatial Cadastre</span>

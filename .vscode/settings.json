@@ -1,0 +1,15 @@
+{
+    "cSpell.words": [
+        "BHOOMI",
+        "DRISHTI"
+    ],
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "python.defaultInterpreterPath": "${workspaceFolder}/ai-service/.venv/Scripts/python.exe",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/ai-service"
+    ],
+    "python.analysis.venvPath": "${workspaceFolder}/ai-service",
+    "python.venvPath": "${workspaceFolder}/ai-service",
+    "python.analysis.autoSearchPaths": true
+}

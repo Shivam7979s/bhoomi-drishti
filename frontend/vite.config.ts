@@ -14,14 +14,18 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     envDir: '..',
     server: {
+      host: '0.0.0.0',
       port,
       // Fail loudly instead of silently moving to another port, otherwise the browser
       // origin would no longer match the backend CORS configuration.
       strictPort: true,
+      allowedHosts: true,
     },
     preview: {
+      host: '0.0.0.0',
       port,
       strictPort: true,
+      allowedHosts: true,
     },
   };
 });

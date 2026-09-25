@@ -162,7 +162,8 @@ public class CollaborationSecurityService {
             return true;
         }
         Optional<WorkspaceMember> wsMember = findWorkspaceMember(project.getWorkspace(), user);
-        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
+        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER
+                || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
             return true;
         }
         return findProjectMember(project, user).isPresent();
@@ -183,7 +184,8 @@ public class CollaborationSecurityService {
         }
         // Workspace OWNER/ADMIN has management over all projects
         Optional<WorkspaceMember> wsMember = findWorkspaceMember(project.getWorkspace(), user);
-        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
+        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER
+                || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
             return;
         }
         // Project LEAD
@@ -202,22 +204,26 @@ public class CollaborationSecurityService {
             return;
         }
         Optional<WorkspaceMember> wsMember = findWorkspaceMember(project.getWorkspace(), user);
-        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
+        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER
+                || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
             return;
         }
         Optional<ProjectMember> pm = findProjectMember(project, user);
-        if (pm.isPresent() && (pm.get().getRole() == ProjectRole.LEAD || pm.get().getRole() == ProjectRole.CONTRIBUTOR)) {
+        if (pm.isPresent()
+                && (pm.get().getRole() == ProjectRole.LEAD || pm.get().getRole() == ProjectRole.CONTRIBUTOR)) {
             return;
         }
         // If workspace member and project is workspace inherited:
-        if (project.getVisibility() == ProjectVisibility.WORKSPACE_INHERITED && wsMember.isPresent() && wsMember.get().getRole() == WorkspaceRole.MEMBER) {
+        if (project.getVisibility() == ProjectVisibility.WORKSPACE_INHERITED && wsMember.isPresent()
+                && wsMember.get().getRole() == WorkspaceRole.MEMBER) {
             return;
         }
         throw new AccessDeniedException("Contributor or Lead permissions required for this project");
     }
 
     public void checkCanCommentOnProject(Project project, User user) {
-        // Any member of the project or workspace member (for inherited) or workspace admin/owner can comment
+        // Any member of the project or workspace member (for inherited) or workspace
+        // admin/owner can comment
         checkCanContributeToProject(project, user);
     }
 
@@ -241,7 +247,8 @@ public class CollaborationSecurityService {
             return;
         }
         Optional<WorkspaceMember> wsMember = findWorkspaceMember(comment.getProject().getWorkspace(), user);
-        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
+        if (wsMember.isPresent() && (wsMember.get().getRole() == WorkspaceRole.OWNER
+                || wsMember.get().getRole() == WorkspaceRole.ADMIN)) {
             return;
         }
         Optional<ProjectMember> pm = findProjectMember(comment.getProject(), user);

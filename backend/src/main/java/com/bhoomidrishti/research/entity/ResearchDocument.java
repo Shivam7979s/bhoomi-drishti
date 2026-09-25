@@ -81,11 +81,7 @@ public class ResearchDocument {
     private Instant updatedAt;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "research_document_land_records",
-            joinColumns = @JoinColumn(name = "research_document_id"),
-            inverseJoinColumns = @JoinColumn(name = "land_record_id")
-    )
+    @JoinTable(name = "research_document_land_records", joinColumns = @JoinColumn(name = "research_document_id"), inverseJoinColumns = @JoinColumn(name = "land_record_id"))
     private Set<LandRecord> linkedLandRecords = new HashSet<>();
 
     protected ResearchDocument() {
@@ -104,6 +100,7 @@ public class ResearchDocument {
             String keywords,
             String abstractText,
             ResearchDocumentStatus status,
+
             User createdBy) {
         this.title = title;
         this.description = description;
