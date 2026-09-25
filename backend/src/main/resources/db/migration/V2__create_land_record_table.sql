@@ -9,6 +9,10 @@
 -- 4326, the CHECK constraints restrict shapes to POLYGON/MULTIPOLYGON.
 -- ---------------------------------------------------------------------------
 
+-- Enable PostGIS and uuid-ossp extensions (idempotent - safe to run multiple times).
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE land_records
 (
     id                  UUID            NOT NULL,
