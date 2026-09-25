@@ -1,6 +1,43 @@
 /* Tailwind CSS v4: the framework is loaded through the Vite plugin (see vite.config.ts). */
 @import 'tailwindcss';
 
+@theme {
+  --color-forest-900: #143526;
+  --color-forest-800: #1C4532;
+  --color-forest-700: #245740;
+  --color-forest-600: #2C6E51;
+
+  --color-leaf-600: #38A169;
+  --color-leaf-500: #48BB78;
+  --color-leaf-400: #68D391;
+
+  --color-earth-800: #7B341E;
+  --color-earth-700: #8C4A2F;
+  --color-earth-600: #A0522D;
+  --color-earth-500: #C05621;
+
+  --color-dawn-600: #D69E2E;
+  --color-dawn-500: #EAA023;
+  --color-dawn-400: #F6BC42;
+
+  --color-river-700: #2B6CB0;
+  --color-river-600: #3182CE;
+  --color-river-500: #4299E1;
+
+  --color-mountain-800: #234E52;
+  --color-mountain-700: #285E61;
+  --color-mountain-600: #319795;
+}
+
+:root {
+  --brand-forest: #1C4532;
+  --brand-leaf: #38A169;
+  --brand-earth: #8C4A2F;
+  --brand-gold: #D69E2E;
+  --brand-river: #3182CE;
+  --brand-mountain: #285E61;
+}
+
 html,
 body,
 #root {
@@ -14,4 +51,15 @@ body {
   font-family:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
