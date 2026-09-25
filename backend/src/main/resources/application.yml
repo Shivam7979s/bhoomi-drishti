@@ -9,7 +9,8 @@
 # ---------------------------------------------------------------------------
 
 server:
-  port: ${BACKEND_PORT:8080}
+  port: ${PORT:${BACKEND_PORT:8080}}
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:framework}
 
 spring:
   application:
@@ -21,9 +22,9 @@ spring:
     import: optional:file:../.env[.properties]
 
   datasource:
-    url: jdbc:postgresql://localhost:${DATABASE_PORT:5432}/${DATABASE_NAME:bhoomi_drishti}
-    username: ${DATABASE_USER:bhoomi}
-    password: ${DATABASE_PASSWORD:change_me}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:bhoomi_drishti}}
+    username: ${DATABASE_USER:${SPRING_DATASOURCE_USERNAME:bhoomi}}
+    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:change_me}}
 
   # Schema is managed by Flyway migrations in src/main/resources/db/migration.
   flyway:
@@ -89,7 +90,7 @@ app:
     cookie-secure: ${COOKIE_SECURE:false}
     cookie-same-site: ${COOKIE_SAMESITE:Lax}
     # Where the Google callback sends the browser after sign-in.
-    frontend-base-url: http://localhost:${FRONTEND_PORT:5173}
+    frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:${FRONTEND_PORT:5173}}
 
   # Phase 5: Internal AI service connection settings
   ai-service:
