@@ -14,6 +14,7 @@ import type {
   GisFilterParams,
 } from '../types/gis';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useAuth } from '../../auth/hooks/useAuth';
 import {
   AlertCircle,
   Filter,
@@ -24,12 +25,15 @@ import {
   Layers,
   Eye,
   ShieldCheck,
+  ShieldAlert,
   RotateCcw,
   Navigation,
 } from 'lucide-react';
 
 export function GisDashboardPage() {
   const { t } = useLanguage();
+  const { activeRole } = useAuth();
+  const isOfficial = activeRole === 'GOVERNMENT_OFFICIAL' || activeRole === 'ADMIN';
 
   // Map and layer states
   const [features, setFeatures] = useState<GeoJsonFeature[]>([]);
@@ -230,6 +234,20 @@ export function GisDashboardPage() {
             <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 shadow-2xs">
               <span>DILRMP Cadastre</span>
             </span>
+            {isOfficial ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 shadow-2xs">
+                <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+                <span>Official Mode: Full Title Deeds</span>
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800 shadow-2xs"
+                title="Owner PII is redacted for public citizens per DPDP Act 2023"
+              >
+                <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
+                <span>Citizen View: PII Redacted</span>
+              </span>
+            )}
           </div>
           <p className="mt-1 text-sm text-slate-600 max-w-3xl">
             {t.gisPage.pageSubtitle}

@@ -11,19 +11,68 @@ import {
   ExternalLink,
   ChevronDown,
   Info,
-  Globe2,
+  BookOpen,
+  Landmark,
+  ShieldCheck,
+  User as UserIcon,
+  GraduationCap,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useAuth } from '../../auth/hooks/useAuth';
+import type { Role } from '../../auth/types/auth';
 
 interface AuthenticatedSidebarProps {
   isMobileOpen: boolean;
   onCloseMobile: () => void;
 }
 
+const ROLE_BADGE_INFO: Record<
+  Role,
+  { title: string; subtitle: string; icon: typeof UserIcon; badgeColor: string }
+> = {
+  PUBLIC: {
+    title: 'Citizen Portal',
+    subtitle: 'Public Land Services & Deeds',
+    icon: UserIcon,
+    badgeColor: 'bg-emerald-50 text-emerald-900 border-emerald-200/80',
+  },
+  RESEARCHER: {
+    title: 'Research Portal',
+    subtitle: 'Policy Sandboxes & Literature',
+    icon: Briefcase,
+    badgeColor: 'bg-purple-50 text-purple-900 border-purple-200/80',
+  },
+  ACADEMIA: {
+    title: 'Academic Portal',
+    subtitle: 'Scholarly Workspaces & Datasets',
+    icon: GraduationCap,
+    badgeColor: 'bg-indigo-50 text-indigo-900 border-indigo-200/80',
+  },
+  GOVERNMENT_OFFICIAL: {
+    title: 'Revenue Portal',
+    subtitle: 'Cadastre Admin & Governance',
+    icon: Landmark,
+    badgeColor: 'bg-blue-50 text-blue-900 border-blue-200/80',
+  },
+  ADMIN: {
+    title: 'Admin Console',
+    subtitle: 'Sovereign Platform Management',
+    icon: ShieldCheck,
+    badgeColor: 'bg-amber-50 text-amber-900 border-amber-200/80',
+  },
+};
+
 export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: AuthenticatedSidebarProps) {
   const [servicesExpanded, setServicesExpanded] = useState(true);
   const { t } = useLanguage();
+  const { activeRole } = useAuth();
+
+  const isCitizen = activeRole === 'PUBLIC';
+  const isOfficial = activeRole === 'GOVERNMENT_OFFICIAL' || activeRole === 'ADMIN';
+
+  const roleInfo = ROLE_BADGE_INFO[activeRole] || ROLE_BADGE_INFO.PUBLIC;
+  const RoleIcon = roleInfo.icon;
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-semibold transition-all duration-150 ${
@@ -43,6 +92,19 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
     <div className="flex flex-col h-full justify-between py-5 px-3">
       {/* Primary Navigation List */}
       <nav className="space-y-1.5" aria-label="Authenticated Sidebar Navigation">
+        {/* Active Role Portal Header Badge */}
+        <div className={`p-3 mb-2 rounded-xl border flex items-center gap-2.5 ${roleInfo.badgeColor}`}>
+          <div className="p-1.5 rounded-lg bg-white/90 shadow-2xs">
+            <RoleIcon className="h-4 w-4 text-slate-800" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-bold text-slate-900 truncate">{roleInfo.title}</span>
+            <span className="text-[10.5px] text-slate-600 truncate leading-none mt-0.5">
+              {roleInfo.subtitle}
+            </span>
+          </div>
+        </div>
+
         {/* Home */}
         <NavLink to="/dashboard" end className={navLinkClasses} onClick={onCloseMobile}>
           <Home className="h-5 w-5 shrink-0 text-slate-500 group-hover:text-emerald-700" />
@@ -52,7 +114,7 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
         {/* Issued Documents (My Land Records) */}
         <NavLink to="/land-records" className={navLinkClasses} onClick={onCloseMobile}>
           <Award className="h-5 w-5 shrink-0 text-slate-500 group-hover:text-emerald-700" />
-          <span>{t.sidebar.myLandRecords}</span>
+          <span>{isOfficial ? 'Land Registry & Titles' : t.sidebar.myLandRecords}</span>
         </NavLink>
 
         {/* Search Documents (Cadastre & Registry Search) */}
@@ -61,10 +123,25 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
           <span>{t.sidebar.registrySearch}</span>
         </NavLink>
 
-        {/* Drive (Sovereign Vault & Workspaces) */}
+        {/* Research Hub & Literature (for Researchers, Academia & Officials) */}
+        {!isCitizen && (
+          <NavLink to="/research" className={navLinkClasses} onClick={onCloseMobile}>
+            <BookOpen className="h-5 w-5 shrink-0 text-slate-500 group-hover:text-emerald-700" />
+            <span>Research Hub & Papers</span>
+          </NavLink>
+        )}
+
+        {/* Collaborative Workspaces & Vault */}
         <NavLink to="/workspaces" className={navLinkClasses} onClick={onCloseMobile}>
           <FolderOpen className="h-5 w-5 shrink-0 text-slate-500 group-hover:text-emerald-700" />
-          <span>{t.sidebar.workspacesVault}</span>
+          <div className="flex items-center justify-between flex-1">
+            <span>{t.sidebar.workspacesVault}</span>
+            {isCitizen && (
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded">
+                Collab
+              </span>
+            )}
+          </div>
         </NavLink>
 
         {/* Land Governance Services / Platform Services */}
@@ -89,7 +166,14 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
             <div className="space-y-1 mt-1 animate-in fade-in duration-150">
               <NavLink to="/gis" className={subNavLinkClasses} onClick={onCloseMobile}>
                 <Compass className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span>{t.sidebar.gisCadastreMap}</span>
+                <div className="flex items-center justify-between flex-1">
+                  <span>{t.sidebar.gisCadastreMap}</span>
+                  {isOfficial && (
+                    <span className="text-[9.5px] font-bold text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded">
+                      Unmasked
+                    </span>
+                  )}
+                </div>
               </NavLink>
 
               <NavLink to="/governance" className={subNavLinkClasses} onClick={onCloseMobile}>
@@ -112,7 +196,7 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
         </NavLink>
       </nav>
 
-      {/* Bottom Auxiliary Link: Bhuvan ISRO Geo-Portal (Access UMANG removed as requested) */}
+      {/* Bottom Auxiliary Link: Bhuvan ISRO Geo-Portal */}
       <div className="pt-4 border-t border-slate-200/80 space-y-2">
         <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Sovereign Spatial Registry
@@ -145,39 +229,27 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
 
   return (
     <>
-      {/* Desktop Sticky Sidebar (Width: w-72 for generous, comfortable readability) */}
-      <aside className="hidden lg:block w-72 shrink-0 bg-white border-r border-slate-200/90 min-h-[calc(100vh-4.25rem)] shadow-xs">
-        <div className="sticky top-[4.25rem] h-[calc(100vh-4.25rem)] overflow-y-auto">
+      {/* Desktop Fixed Width Sidebar */}
+      <aside
+        className="hidden lg:block w-72 shrink-0 border-r border-slate-200/90 bg-white min-h-[calc(100vh-68px)]"
+        aria-label="Desktop Sidebar Navigation"
+      >
+        <div className="sticky top-17 h-[calc(100vh-68px)] overflow-y-auto">
           {sidebarContent}
         </div>
       </aside>
 
-      {/* Mobile Backdrop & Drawer */}
+      {/* Mobile Off-Canvas Drawer */}
       {isMobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden flex" role="dialog" aria-modal="true">
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
             onClick={onCloseMobile}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-200">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <Globe2 className="h-5 w-5 text-emerald-700" />
-                <span className="text-sm font-bold text-slate-900">BHOOMI-DRISHTI Menu</span>
-              </div>
-              <button
-                type="button"
-                onClick={onCloseMobile}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {sidebarContent}
-            </div>
-          </div>
+          <aside className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl z-10">
+            {sidebarContent}
+          </aside>
         </div>
       )}
     </>

@@ -37,7 +37,7 @@ export default function App() {
             <Route
               path="/projects/:projectId/scenarios/:scenarioId"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
                   <ScenarioWorkspacePage />
                 </ProtectedRoute>
               }
@@ -45,7 +45,7 @@ export default function App() {
             <Route
               path="/projects/:projectId/scenarios/compare"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
                   <ScenarioComparisonPage />
                 </ProtectedRoute>
               }
@@ -53,7 +53,7 @@ export default function App() {
             <Route
               path="/scenarios/compare"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
                   <ScenarioComparisonPage />
                 </ProtectedRoute>
               }
@@ -64,7 +64,7 @@ export default function App() {
             <Route
               path="/research"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
                   <ResearchHubPage />
                 </ProtectedRoute>
               }
@@ -72,7 +72,7 @@ export default function App() {
             <Route
               path="/knowledge"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
                   <KnowledgeSearchPage />
                 </ProtectedRoute>
               }
@@ -92,13 +92,55 @@ export default function App() {
             <Route path="/land-records" element={<LandRecordsPage />} />
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/gis" element={<GisDashboardPage />} />
-            <Route path="/governance" element={<GovernanceDashboardPage />} />
-            <Route path="/governance/compare" element={<GovernanceComparisonPage />} />
+            <Route
+              path="/governance"
+              element={
+                <ProtectedRoute allowedRoles={['GOVERNMENT_OFFICIAL', 'RESEARCHER', 'ACADEMIA', 'ADMIN']}>
+                  <GovernanceDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/governance/compare"
+              element={
+                <ProtectedRoute allowedRoles={['GOVERNMENT_OFFICIAL', 'RESEARCHER', 'ACADEMIA', 'ADMIN']}>
+                  <GovernanceComparisonPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/assistant" element={<AssistantPage />} />
-            <Route path="/workspaces" element={<WorkspacesPage />} />
-            <Route path="/workspaces/:idOrSlug" element={<WorkspaceDashboardPage />} />
-            <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
-            <Route path="/saved-research" element={<SavedResearchPage />} />
+            <Route
+              path="/workspaces"
+              element={
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
+                  <WorkspacesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspaces/:idOrSlug"
+              element={
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
+                  <WorkspaceDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId"
+              element={
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
+                  <ProjectDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/saved-research"
+              element={
+                <ProtectedRoute allowedRoles={['RESEARCHER', 'ACADEMIA', 'GOVERNMENT_OFFICIAL', 'ADMIN']}>
+                  <SavedResearchPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
 
