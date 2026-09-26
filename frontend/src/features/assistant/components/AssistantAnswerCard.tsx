@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useLanguage } from '../../../context/LanguageContext';
 import type {
   AssistantQueryResponseDTO,
   CitationDTO,
@@ -27,6 +28,7 @@ export function AssistantAnswerCard({
   response,
   onSelectCitation,
 }: AssistantAnswerCardProps) {
+  const { t } = useLanguage();
   const [showMetadata, setShowMetadata] = useState(false);
 
   const { query, answer, groundingStatus, citations, disclaimer, retrievalMetadata } =
@@ -84,23 +86,23 @@ export function AssistantAnswerCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
         <div className="flex items-center gap-2 flex-wrap">
           <GroundingStatusBadge status={groundingStatus} />
           {citations && citations.length > 0 && (
-            <span className="text-xs text-slate-400 font-medium">
-              • {citations.length} verified {citations.length === 1 ? 'citation' : 'citations'}
+            <span className="text-xs text-slate-500 font-medium">
+              • {citations.length} {t.assistantPage.verifiedCitationsCount}
             </span>
           )}
         </div>
       </div>
 
       {/* Query Echo Banner */}
-      <div className="mb-5 rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3 text-xs text-slate-600">
-        <span className="font-semibold text-slate-700">Question: </span>
-        <span className="italic font-medium text-slate-900 break-words">"{query}"</span>
+      <div className="mb-5 rounded-xl border border-slate-200/70 bg-slate-50/70 px-4 py-3 text-xs text-slate-700">
+        <span className="font-bold text-slate-800">{t.assistantPage.queryEchoPrefix} </span>
+        <span className="italic font-semibold text-slate-900 break-words">"{query}"</span>
       </div>
 
       {/* Specific Status Alert Context */}
@@ -150,10 +152,10 @@ export function AssistantAnswerCard({
       )}
 
       {/* Answer Body */}
-      <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-5">
-        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-800 mb-3">
-          <Sparkles className="h-3.5 w-3.5 text-teal-600" aria-hidden="true" />
-          <span>Statutory Assistant Response</span>
+      <div className="rounded-xl border border-emerald-100 bg-emerald-50/20 p-5">
+        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-900 mb-3">
+          <Sparkles className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
+          <span>{t.assistantPage.assistantResponseHeading}</span>
         </div>
         {renderFormattedAnswer(answer)}
       </div>
@@ -167,7 +169,7 @@ export function AssistantAnswerCard({
             className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition"
           >
             <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Audit & Retrieval Diagnostics</span>
+            <span>{t.assistantPage.auditDiagnostics}</span>
             {showMetadata ? (
               <ChevronUp className="h-3.5 w-3.5" />
             ) : (

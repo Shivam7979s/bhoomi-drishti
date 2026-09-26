@@ -24,6 +24,7 @@ import { searchKnowledge } from '../../knowledge/services/knowledgeService';
 import { linkLandRecord } from '../../collaboration/services/collaborationService';
 import type { ResearchDocument } from '../../research/types/research';
 import type { EvidenceItem } from '../../knowledge/types/knowledge';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface ParcelDetailsDrawerProps {
   feature: GeoJsonFeature | null;
@@ -36,6 +37,7 @@ export function ParcelDetailsDrawer({
   onClose,
   onZoomToParcel,
 }: ParcelDetailsDrawerProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'details' | 'research' | 'evidence'>('details');
   const [copied, setCopied] = useState(false);
 
@@ -185,7 +187,7 @@ export function ParcelDetailsDrawer({
           }`}
         >
           <Layers className="h-3.5 w-3.5" />
-          Parcel Info
+          <span>{t.gisPage.tabSpatialDetails}</span>
         </button>
 
         <button
@@ -198,9 +200,9 @@ export function ParcelDetailsDrawer({
           }`}
         >
           <BookOpen className="h-3.5 w-3.5" />
-          Research Hub
+          <span>{t.gisPage.tabLinkedResearch}</span>
           {researchDocs.length > 0 && (
-            <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
+            <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
               {researchDocs.length}
             </span>
           )}
@@ -219,7 +221,7 @@ export function ParcelDetailsDrawer({
           }`}
         >
           <Sparkles className="h-3.5 w-3.5 text-purple-600" />
-          AI Evidence
+          <span>{t.gisPage.tabAiEvidence}</span>
         </button>
       </div>
 
@@ -372,12 +374,12 @@ export function ParcelDetailsDrawer({
                 {copied ? (
                   <>
                     <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    Copied GeoJSON
+                    <span>Copied GeoJSON</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy Geometry
+                    <Copy className="h-3.5 w-3.5 text-slate-500" />
+                    <span>{t.gisPage.btnCopyGeoJson}</span>
                   </>
                 )}
               </button>
@@ -389,7 +391,7 @@ export function ParcelDetailsDrawer({
                   className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition"
                 >
                   <MapPin className="h-3.5 w-3.5" />
-                  Center
+                  <span>{t.gisPage.btnZoomParcel}</span>
                 </button>
               )}
             </div>

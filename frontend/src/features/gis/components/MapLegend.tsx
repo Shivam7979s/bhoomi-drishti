@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Layers, ChevronDown, ChevronUp } from 'lucide-react';
 import { LAND_USE_CONFIG } from '../utils/landUseStyles';
 import type { LandUseType } from '../types/gis';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface MapLegendProps {
   activeLandUses?: Set<LandUseType>;
@@ -10,32 +11,51 @@ interface MapLegendProps {
 
 export function MapLegend({ activeLandUses, onToggleLandUse }: MapLegendProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const { t } = useLanguage();
+
+  const getTranslatedLabel = (type: LandUseType, defaultLabel: string) => {
+    switch (type) {
+      case 'AGRICULTURAL':
+        return t.gisPage.layerAgricultural;
+      case 'RESIDENTIAL':
+        return t.gisPage.layerResidential;
+      case 'COMMERCIAL':
+        return t.gisPage.layerCommercial;
+      case 'INDUSTRIAL':
+        return t.gisPage.layerIndustrial;
+      case 'FOREST':
+        return t.gisPage.layerForest;
+      default:
+        return defaultLabel;
+    }
+  };
 
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white/95 p-3 shadow-lg backdrop-blur-md transition-all">
+    <div className="rounded-xl border border-slate-200/90 bg-white/95 p-3.5 shadow-lg backdrop-blur-md transition-all">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between gap-2 text-xs font-semibold text-slate-800 hover:text-slate-900"
+        className="flex w-full items-center justify-between gap-2 text-xs font-bold text-slate-800 hover:text-emerald-800 transition"
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <Layers className="h-4 w-4 text-emerald-600" />
-          <span>Cadastral Legend</span>
+          <span>{t.gisPage.legendTitle}</span>
         </div>
         {isOpen ? <ChevronUp className="h-3.5 w-3.5 text-slate-400" /> : <ChevronDown className="h-3.5 w-3.5 text-slate-400" />}
       </button>
 
       {isOpen && (
-        <div className="mt-2.5 space-y-1.5 pt-2 border-t border-slate-100">
+        <div className="mt-2.5 space-y-2 pt-2 border-t border-slate-100">
           {(Object.keys(LAND_USE_CONFIG) as LandUseType[]).map((type) => {
             const cfg = LAND_USE_CONFIG[type];
             const isInteractive = Boolean(activeLandUses && onToggleLandUse);
             const isVisible = activeLandUses ? activeLandUses.has(type) : true;
+            const displayLabel = getTranslatedLabel(type, cfg.label);
 
             return (
               <label
                 key={type}
-                className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 hover:text-slate-900 select-none py-0.5"
+                className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 hover:text-slate-950 select-none py-0.5"
               >
                 {isInteractive && onToggleLandUse && (
                   <input
@@ -46,10 +66,10 @@ export function MapLegend({ activeLandUses, onToggleLandUse }: MapLegendProps) {
                   />
                 )}
                 <span
-                  className="h-3 w-3 rounded-xs border shrink-0"
+                  className="h-3.5 w-3.5 rounded-xs border shrink-0 shadow-2xs"
                   style={{ backgroundColor: cfg.fillColor, borderColor: cfg.borderColor }}
                 />
-                <span className="truncate">{cfg.label}</span>
+                <span className="truncate font-medium">{displayLabel}</span>
               </label>
             );
           })}

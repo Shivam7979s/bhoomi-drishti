@@ -4,13 +4,12 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
+  ChevronRight,
   Loader2,
   RefreshCw,
   Scale,
 } from 'lucide-react';
 import { ApiError } from '../../../services/apiClient';
-import { AppContainer } from '../../../components/layout/AppContainer';
-import { PageHeader } from '../../../components/layout/PageHeader';
 import { AdvisoryBanner } from '../../../components/layout/AdvisoryBanner';
 import {
   compareGovernanceSnapshots,
@@ -179,26 +178,34 @@ export function GovernanceComparisonPage() {
   const is404NotFound = compareError instanceof ApiError && compareError.status === 404;
   const is400BadRequest = compareError instanceof ApiError && compareError.status === 400;
 
-  const breadcrumbs = [
-    { label: 'Home', to: '/' },
-    { label: 'Governance', to: '/governance' },
-    ...(projectId ? [{ label: 'Project Workspace', to: `/projects/${projectId}` }] : []),
-    { label: 'Temporal Comparison' },
-  ];
-
   return (
-    <AppContainer>
-      {/* Sovereign Page Header */}
-      <PageHeader
-        breadcrumbs={breadcrumbs}
-        badge={{
-          text: 'Temporal Variance Engine',
-          icon: Scale,
-          variant: 'indigo',
-        }}
-        title="Temporal Governance Audit Comparison"
-        description="Evaluate deterministic mathematical variances between verified, immutable point-in-time calculation snapshots and the active cadastral state."
-      />
+    <div className="space-y-6 pb-12 animate-in fade-in duration-200">
+      {/* Sovereign Breadcrumbs & Header Bar */}
+      <div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1.5">
+          <Link to="/dashboard" className="flex items-center gap-1 hover:text-emerald-700 transition">
+            <span>Home</span>
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          <Link to="/governance" className="hover:text-emerald-700 transition">
+            <span>Revenue Governance Radar</span>
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          <span className="text-emerald-900 font-bold">Temporal Audit Comparison</span>
+        </div>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Temporal Governance Audit Comparison
+          </h1>
+          <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold text-indigo-800 shadow-2xs">
+            <Scale className="h-3.5 w-3.5 text-indigo-600" />
+            <span>Temporal Variance Engine</span>
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-slate-600 max-w-3xl">
+          Evaluate deterministic mathematical variances between verified, immutable point-in-time calculation snapshots and the active cadastral state.
+        </p>
+      </div>
 
       {/* Mandatory Statutory & Descriptive Notice Banner */}
       <AdvisoryBanner
@@ -326,6 +333,6 @@ export function GovernanceComparisonPage() {
       {!isComparing && !compareError && comparison && (
         <GovernanceComparisonView comparison={comparison} />
       )}
-    </AppContainer>
+    </div>
   );
 }

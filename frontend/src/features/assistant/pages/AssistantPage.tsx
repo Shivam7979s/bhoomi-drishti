@@ -1,9 +1,18 @@
-import { AlertCircle, Bot, Link2, RotateCcw, X } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronRight,
+  Link2,
+  RotateCcw,
+  Scale,
+  ShieldCheck,
+  Sparkles,
+  X,
+  Zap,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { AppContainer } from '../../../components/layout/AppContainer';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { AdvisoryBanner } from '../../../components/layout/AdvisoryBanner';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 import { EvidenceDetailsModal } from '../../knowledge/components/EvidenceDetailsModal';
 import type { EvidenceItem } from '../../knowledge/types/knowledge';
 import { AssistantAnswerCard } from '../components/AssistantAnswerCard';
@@ -19,6 +28,7 @@ import {
 } from '../types/assistant';
 
 export function AssistantPage() {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [prefilledQuery, setPrefilledQuery] = useState('');
   const [selectedEvidence, setSelectedEvidence] = useState<EvidenceItem | null>(null);
@@ -133,36 +143,115 @@ export function AssistantPage() {
   };
 
   return (
-    <AppContainer>
-      {/* Sovereign Page Header */}
-      <PageHeader
-        breadcrumbs={[
-          { label: 'Home', to: '/' },
-          { label: 'Explore', to: '/explore' },
-          { label: 'AI Assistant' },
-        ]}
-        badge={{
-          text: 'Statutory AI Synthesis',
-          icon: Bot,
-          variant: 'teal',
-        }}
-        title="Evidence-Grounded Statutory AI Assistant"
-        description="Interactive legal synthesis grounded strictly in verified statutory circulars, policy manuals, and cadastral research documents with pre-retrieval role checks and evidence sufficiency safeguards."
-      />
+    <div className="space-y-6 pb-12 animate-in fade-in duration-200">
+      {/* ── 1. Sovereign Breadcrumb & Header ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/90 pb-5">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1.5">
+            <Link to="/dashboard" className="flex items-center gap-1 hover:text-emerald-700 transition">
+              <span>{t.assistantPage.breadcrumbHome}</span>
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            <span className="text-emerald-900 font-bold">{t.assistantPage.breadcrumbCurrent}</span>
+          </div>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              {t.assistantPage.pageTitle}
+            </h1>
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 shadow-2xs">
+              <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+              <span>{t.assistantPage.badgeAiSynthesis}</span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 shadow-2xs">
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+              <span>PostGIS & DLRMP Grounded</span>
+            </span>
+          </div>
+          <p className="mt-1 text-xs sm:text-sm text-slate-600 max-w-3xl font-medium">
+            {t.assistantPage.pageSubtitle}
+          </p>
+        </div>
+      </div>
 
-      {/* Standardized Advisory Banner */}
-      <AdvisoryBanner
-        variant="statutory"
-        title="Statutory Research Notice"
-      >
-        <p className="font-medium text-teal-950">
-          BHOOMI-DRISHTI provides evidence-backed synthesis based exclusively on authorized documents in
-          the knowledge repository. It does not replace certified legal counsel or official revenue
-          authority rulings.
-        </p>
-      </AdvisoryBanner>
+      {/* ── 2. Sovereign AI Metric Chips ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metric 1: Statutes Indexed */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-xs flex items-center gap-4">
+          <div className="h-11 w-11 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200/60 shadow-2xs">
+            <Scale className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 truncate">
+              {t.assistantPage.metricStatutesIndexedTitle}
+            </p>
+            <p className="text-[11px] font-medium text-slate-500 mt-0.5 truncate">
+              {t.assistantPage.metricStatutesIndexedSub}
+            </p>
+          </div>
+        </div>
 
-      {/* Active Statutory Context Banner */}
+        {/* Metric 2: Gating Threshold */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-xs flex items-center gap-4">
+          <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center shrink-0 border border-blue-200/60 shadow-2xs">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 truncate">
+              {t.assistantPage.metricGroundingThresholdTitle}
+            </p>
+            <p className="text-[11px] font-medium text-slate-500 mt-0.5 truncate">
+              {t.assistantPage.metricGroundingThresholdSub}
+            </p>
+          </div>
+        </div>
+
+        {/* Metric 3: Response Velocity */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-xs flex items-center gap-4">
+          <div className="h-11 w-11 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200/60 shadow-2xs">
+            <Zap className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 truncate">
+              {t.assistantPage.metricAvgLatencyTitle}
+            </p>
+            <p className="text-[11px] font-medium text-slate-500 mt-0.5 truncate">
+              {t.assistantPage.metricAvgLatencySub}
+            </p>
+          </div>
+        </div>
+
+        {/* Metric 4: Statutory Provenance */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-xs flex items-center gap-4">
+          <div className="h-11 w-11 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center shrink-0 border border-teal-200/60 shadow-2xs">
+            <CheckCircle2 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 truncate">
+              {t.assistantPage.metricZeroHallucinationTitle}
+            </p>
+            <p className="text-[11px] font-medium text-slate-500 mt-0.5 truncate">
+              {t.assistantPage.metricZeroHallucinationSub}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. Sovereign Advisory Notice ── */}
+      <div className="rounded-2xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white p-4 shadow-2xs">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="h-5 w-5 text-emerald-700 shrink-0 mt-0.5" />
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+              {t.assistantPage.advisoryNotice}
+            </h2>
+            <p className="text-xs text-slate-700 mt-0.5 leading-relaxed font-medium">
+              {t.assistantPage.advisoryDisclaimer}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 4. Active Statutory Context Banner (when applicable) ── */}
       {activeContext && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-900 flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -172,7 +261,7 @@ export function AssistantPage() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-blue-950 uppercase tracking-wider text-[11px]">
-                  Active Statutory Context:
+                  {t.assistantPage.activeContextLabel}
                 </span>
                 <span className="rounded bg-blue-200/70 px-1.5 py-0.5 font-medium text-blue-900 truncate">
                   {activeContext.contextTitle ||
@@ -184,7 +273,7 @@ export function AssistantPage() {
                 </span>
               </div>
               <p className="mt-0.5 text-blue-700 text-[11px] truncate">
-                Retrieval and statutory synthesis will be grounded in and restricted to this platform resource.
+                {t.assistantPage.activeContextDesc}
               </p>
             </div>
           </div>
@@ -196,19 +285,19 @@ export function AssistantPage() {
             title="Clear context to query entire statutory repository"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Clear Context</span>
+            <span>{t.assistantPage.btnClearContext}</span>
           </button>
         </div>
       )}
 
-      {/* Main Query Form */}
+      {/* ── 5. Main Query Form ── */}
       <AssistantQueryForm
         initialQuery={prefilledQuery}
         isLoading={isLoading}
         onSubmit={handleSubmit}
       />
 
-      {/* Error Alert with Retry */}
+      {/* ── 6. Error Alert with Retry ── */}
       {error && (
         <div
           role="alert"
@@ -227,7 +316,7 @@ export function AssistantPage() {
             <button
               type="button"
               onClick={handleRetry}
-              className="inline-flex items-center gap-1 rounded-lg bg-red-100 hover:bg-red-200 px-3 py-1.5 text-xs font-semibold text-red-900 transition"
+              className="inline-flex items-center gap-1 rounded-lg bg-red-100 hover:bg-red-200 px-3 py-1.5 text-xs font-semibold text-red-900 transition cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Retry</span>
@@ -235,7 +324,7 @@ export function AssistantPage() {
             <button
               type="button"
               onClick={reset}
-              className="rounded-lg border border-red-200 bg-white hover:bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-800 transition"
+              className="rounded-lg border border-red-200 bg-white hover:bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-800 transition cursor-pointer"
             >
               Dismiss
             </button>
@@ -243,10 +332,10 @@ export function AssistantPage() {
         </div>
       )}
 
-      {/* Loading State */}
+      {/* ── 7. Loading State ── */}
       {isLoading && <AssistantLoadingSkeleton />}
 
-      {/* Answer Display */}
+      {/* ── 8. Answer Display ── */}
       {!isLoading && data && (
         <AssistantAnswerCard
           response={data}
@@ -254,16 +343,16 @@ export function AssistantPage() {
         />
       )}
 
-      {/* Initial Empty State */}
+      {/* ── 9. Initial Empty State with Suggested Queries ── */}
       {!isLoading && !data && !error && (
         <AssistantEmptyState onSelectQuery={handleSelectExample} />
       )}
 
-      {/* Citation Provenance Inspection Modal (Reused from Knowledge feature) */}
+      {/* ── 10. Citation Provenance Inspection Modal ── */}
       <EvidenceDetailsModal
         evidence={selectedEvidence}
         onClose={() => setSelectedEvidence(null)}
       />
-    </AppContainer>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './features/auth/context/AuthContext';
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
 import { AuthCallbackPage } from './features/auth/pages/AuthCallbackPage';
@@ -19,66 +20,20 @@ import { ScenarioComparisonPage } from './features/policy/pages/ScenarioComparis
 import { GovernanceDashboardPage } from './features/governance/pages/GovernanceDashboardPage';
 import { GovernanceComparisonPage } from './features/governance/pages/GovernanceComparisonPage';
 import { MainLayout } from './layouts/MainLayout';
+import { AuthenticatedLayout } from './layouts/AuthenticatedLayout';
 import { HomePage } from './pages/HomePage';
 import { ExplorePage } from './pages/ExplorePage';
+import { DashboardHomePage } from './features/dashboard/pages/DashboardHomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+      <LanguageProvider>
+        <AuthProvider>
+          <Routes>
           <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
-            <Route path="/explore" element={<ExplorePage />} />
-            <Route
-              path="/governance"
-              element={
-                <ProtectedRoute>
-                  <GovernanceDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/governance/compare"
-              element={
-                <ProtectedRoute>
-                  <GovernanceComparisonPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/gis"
-              element={
-                <ProtectedRoute>
-                  <GisDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workspaces"
-              element={
-                <ProtectedRoute>
-                  <WorkspacesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workspaces/:idOrSlug"
-              element={
-                <ProtectedRoute>
-                  <WorkspaceDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/projects/:projectId"
-              element={
-                <ProtectedRoute>
-                  <ProjectDetailsPage />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/projects/:projectId/scenarios/:scenarioId"
               element={
@@ -103,38 +58,14 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/saved-research"
-              element={
-                <ProtectedRoute>
-                  <SavedResearchPage />
-                </ProtectedRoute>
-              }
-            />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route
-              path="/land-records"
-              element={
-                <ProtectedRoute>
-                  <LandRecordsPage />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/research"
               element={
                 <ProtectedRoute>
                   <ResearchHubPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/assistant"
-              element={
-                <ProtectedRoute>
-                  <AssistantPage />
                 </ProtectedRoute>
               }
             />
@@ -146,19 +77,35 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
-            <Route path="*" element={<NotFoundPage />} />
           </Route>
+
+          {/* ── DigiLocker-Inspired Authenticated App Shell ── */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <AuthenticatedLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<DashboardHomePage />} />
+            <Route path="/web/home" element={<DashboardHomePage />} />
+            <Route path="/land-records" element={<LandRecordsPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/gis" element={<GisDashboardPage />} />
+            <Route path="/governance" element={<GovernanceDashboardPage />} />
+            <Route path="/governance/compare" element={<GovernanceComparisonPage />} />
+            <Route path="/assistant" element={<AssistantPage />} />
+            <Route path="/workspaces" element={<WorkspacesPage />} />
+            <Route path="/workspaces/:idOrSlug" element={<WorkspaceDashboardPage />} />
+            <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+            <Route path="/saved-research" element={<SavedResearchPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
-    </BrowserRouter>
+    </LanguageProvider>
+  </BrowserRouter>
   );
 }

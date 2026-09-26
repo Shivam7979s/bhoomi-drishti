@@ -45,7 +45,11 @@ interface RequestOptions {
 async function apiRequest<T>(path: string, options: RequestOptions): Promise<T> {
   const { method, body, timeoutMs = DEFAULT_TIMEOUT_MS, signal } = options;
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  let timedOut = false;
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
 
   if (signal) {
     if (signal.aborted) {
@@ -75,7 +79,10 @@ async function apiRequest<T>(path: string, options: RequestOptions): Promise<T> 
     return (text ? JSON.parse(text) : undefined) as T;
   } catch (cause: unknown) {
     if (cause instanceof DOMException && cause.name === 'AbortError') {
-      throw new ApiError(`${method} ${path} timed out after ${timeoutMs} ms`, null);
+      if (timedOut) {
+        throw new ApiError(`${method} ${path} timed out after ${timeoutMs} ms`, null);
+      }
+      throw cause;
     }
     if (cause instanceof ApiError) throw cause;
     if (cause instanceof SyntaxError) {

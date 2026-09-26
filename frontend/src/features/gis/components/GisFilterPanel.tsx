@@ -1,5 +1,6 @@
 import { Filter, RotateCcw, X } from 'lucide-react';
 import type { GisFilterOptions, GisFilterParams } from '../types/gis';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export interface GisFilterPanelProps {
   filterOptions: GisFilterOptions | null;
@@ -18,6 +19,8 @@ export function GisFilterPanel({
   isLoading,
   onClose,
 }: GisFilterPanelProps) {
+  const { t } = useLanguage();
+
   const hasActiveFilters = Boolean(
     filters.state ||
     filters.district ||
@@ -29,11 +32,11 @@ export function GisFilterPanel({
   );
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur-md space-y-4 max-h-[85vh] overflow-y-auto">
+    <div className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur-md space-y-4 max-h-[85vh] overflow-y-auto">
       <div className="flex items-center justify-between pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-emerald-600" />
-          <h2 className="text-sm font-semibold text-slate-900">Spatial Filters</h2>
+          <h2 className="text-sm font-bold text-slate-900">{t.gisPage.filterBtn}</h2>
         </div>
         <div className="flex items-center gap-2">
           {hasActiveFilters && (
@@ -41,17 +44,17 @@ export function GisFilterPanel({
               type="button"
               onClick={onResetFilters}
               disabled={isLoading}
-              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-900 disabled:opacity-50 transition"
             >
               <RotateCcw className="h-3 w-3" />
-              <span>Reset</span>
+              <span>{t.explorePage.resetFiltersBtn}</span>
             </button>
           )}
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
             >
               <X className="h-4 w-4" />
             </button>

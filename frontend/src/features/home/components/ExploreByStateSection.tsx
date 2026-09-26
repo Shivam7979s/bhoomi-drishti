@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronRight } from 'lucide-react';
+import { useLanguage, type SupportedLanguage } from '../../../context/LanguageContext';
 
 const STATES = [
   {
@@ -76,7 +77,38 @@ const STATES = [
   },
 ];
 
+
+const STATE_HEADINGS: Record<SupportedLanguage, { tag: string; title: string; subtitle: string; viewAll: string }> = {
+  en: {
+    tag: 'Geographic Coverage',
+    title: 'Explore Land Records by State',
+    subtitle: 'Access state revenue codes, cadastral boundaries, and district mutation indices tailored to state-specific statutory frameworks.',
+    viewAll: 'View All States & UTs',
+  },
+  hi: {
+    tag: 'भौगोलिक कवरेज',
+    title: 'राज्य अनुसार भू-अभिलेख देखें',
+    subtitle: 'राज्य-विशिष्ट वैधानिक ढांचे के अनुरूप राज्य राजस्व संहिताओं, भूकर सीमाओं और जिला नामांतरण सूचकांकों तक पहुँचें।',
+    viewAll: 'सभी राज्य एवं केंद्रशासित प्रदेश देखें',
+  },
+  mr: {
+    tag: 'भौगोलिक व्याप्ती',
+    title: 'राज्यानुसार जमीन अभिलेख पहा',
+    subtitle: 'राज्य-विशिष्ट वैधानिक नियमांनुसार राज्य महसूल संहिता, भूकर सीमा आणि जिल्हा फेरफार निर्देशांक तपासा.',
+    viewAll: 'सर्व राज्ये आणि केंद्रशासित प्रदेश पहा',
+  },
+  te: {
+    tag: 'భౌగోళిక విస్తృతి',
+    title: 'రాష్ట్రాల వారీగా భూ రికార్డులను అన్వేషించండి',
+    subtitle: 'రాష్ట్ర-నిర్దిష్ట చట్టబద్ధమైన చట్రాలకు అనుగుణంగా రాష్ట్ర రెవెన్యూ కోడ్‌లు, సరిహద్దులు మరియు జిల్లా మ్యుటేషన్ సూచికలను యాక్సెస్ చేయండి.',
+    viewAll: 'అన్ని రాష్ట్రాలు & ప్రాంతాలను వీక్షించండి',
+  },
+};
+
 export function ExploreByStateSection() {
+  const { language } = useLanguage();
+  const info = STATE_HEADINGS[language] || STATE_HEADINGS.en;
+
   return (
     <section aria-labelledby="state-explore-heading" className="py-16 sm:py-20 bg-white border-b border-slate-200/80">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -84,22 +116,22 @@ export function ExploreByStateSection() {
         {/* Header (DigiLocker Style: Explore Documents by State) */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-10">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 block mb-1">
-              Geographic Coverage
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+              {info.tag}
             </span>
             <h2 id="state-explore-heading" className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-              Explore Land Records by State
+              {info.title}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
-              Access state revenue codes, cadastral boundaries, and district mutation indices tailored to state-specific statutory frameworks.
+              {info.subtitle}
             </p>
           </div>
 
           <Link
             to="/explore"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-blue-600 hover:text-blue-800 transition shrink-0 group"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 hover:text-emerald-900 transition shrink-0 group"
           >
-            <span>View All States &amp; UTs</span>
+            <span>{info.viewAll}</span>
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

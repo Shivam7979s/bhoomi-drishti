@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { useLanguage } from '../../../context/LanguageContext';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    SLIDE 1: Cadastral Intelligence Visual (PostGIS Parcel Digital Twin)
@@ -288,113 +289,130 @@ function ResearchIllustration() {
 /* ─────────────────────────────────────────────────────────────────────────────
    SLIDES DEFINITION (DigiLocker Creative Aesthetics)
 ───────────────────────────────────────────────────────────────────────────── */
-const SLIDES = [
-  {
-    id: 'cadastre',
-    badge: 'National Spatial Cadastre',
-    headline: 'Every Land Parcel in India,',
-    accent: 'Digitally Mapped & Verified',
-    subtitle: 'Access PostGIS WGS-84 cadastral boundaries, khasra classifications, and registered ownership deeds with tamper-evident audit guarantees.',
-    pills: [
-      { icon: ShieldCheck, title: 'PostGIS Cadastre', subtitle: 'WGS-84 Coordinate Mapped' },
-      { icon: MapPin, title: 'Spatial Polygons', subtitle: 'Geo-Referenced Survey Numbers' },
-      { icon: Zap, title: 'Instant Verification', subtitle: 'Direct Khasra & Mutation Lookup' },
-    ],
-    bgGradient: 'from-blue-50/90 via-indigo-50/50 to-purple-50/40',
-    cardBorder: 'border-blue-100',
-    accentColor: 'text-blue-600',
-    badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
-    Visual: CadastreIllustration,
-  },
-  {
-    id: 'governance',
-    badge: 'State Revenue Intelligence',
-    headline: 'State Revenue Governance',
-    accent: 'at Real-time Scale',
-    subtitle: 'Monitor district-level KPIs, land revenue collection benchmarks, administrative mutation velocity, and compliance audit snapshots.',
-    pills: [
-      { icon: Landmark, title: '52 Districts', subtitle: 'Real-Time Revenue Index' },
-      { icon: TrendingUp, title: 'Mutation Velocity', subtitle: 'Disposal & Pendency Analytics' },
-      { icon: FileCheck, title: 'Audit Trail', subtitle: 'Temporal Snapshot Comparison' },
-    ],
-    bgGradient: 'from-teal-50/90 via-emerald-50/50 to-blue-50/40',
-    cardBorder: 'border-teal-100',
-    accentColor: 'text-teal-700',
-    badgeColor: 'bg-teal-100 text-teal-800 border-teal-200',
-    Visual: GovernanceIllustration,
-  },
-  {
-    id: 'assistant',
-    badge: 'Evidence-Grounded AI',
-    headline: 'Statutory Land Law Q&A,',
-    accent: 'Grounded in Official Acts',
-    subtitle: 'Pre-retrieval authorized AI assistant delivering verbatim citations from central land acquisition codes, tenancy rules, and revenue circulars.',
-    pills: [
-      { icon: Bot, title: 'Statutory AI', subtitle: 'FastEmbed 384-Dim Engine' },
-      { icon: Scale, title: 'Verbatim Citations', subtitle: 'Zero Generative Hallucination' },
-      { icon: Sparkles, title: 'Multi-State Coverage', subtitle: 'RFCTLARR 2013 & State Codes' },
-    ],
-    bgGradient: 'from-indigo-50/90 via-purple-50/50 to-blue-50/40',
-    cardBorder: 'border-indigo-100',
-    accentColor: 'text-indigo-600',
-    badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    Visual: AssistantIllustration,
-  },
-  {
-    id: 'research',
-    badge: 'Statutory Legal Corpus',
-    headline: 'Unified Legal Vault &',
-    accent: 'Published Evidence Hub',
-    subtitle: 'Explore 1,240+ digitized central and state land reform acts, revenue notifications, and academic research through semantic search.',
-    pills: [
-      { icon: FileText, title: '1,240+ Instruments', subtitle: 'Central & State Land Codes' },
-      { icon: Search, title: 'Vector Search', subtitle: 'Semantic Legal Discovery' },
-      { icon: CheckCircle2, title: 'Open Access', subtitle: 'Official Gazette & Circular Vault' },
-    ],
-    bgGradient: 'from-amber-50/90 via-orange-50/50 to-blue-50/40',
-    cardBorder: 'border-amber-100',
-    accentColor: 'text-amber-700',
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
-    Visual: ResearchIllustration,
-  },
-];
-
 export function SlidingHero() {
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
 
+  const slides = useMemo(
+    () => [
+      {
+        id: 'cadastre',
+        badge: t.homePage.heroBadge1,
+        headline: t.homePage.heroHeadline1,
+        accent: t.homePage.heroAccent1,
+        subtitle: t.homePage.heroSub1,
+        pills: [
+          { icon: ShieldCheck, title: t.homePage.heroPill1a, subtitle: 'WGS-84' },
+          { icon: MapPin, title: t.homePage.heroPill1b, subtitle: 'Spatial Data' },
+          { icon: Zap, title: t.homePage.heroPill1c, subtitle: 'Real-time' },
+        ],
+        bgGradient: 'from-blue-50/90 via-indigo-50/50 to-purple-50/40',
+        cardBorder: 'border-blue-100',
+        accentColor: 'text-blue-600',
+        badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
+        Visual: CadastreIllustration,
+      },
+      {
+        id: 'governance',
+        badge: t.homePage.heroBadge2,
+        headline: t.homePage.heroHeadline2,
+        accent: t.homePage.heroAccent2,
+        subtitle: t.homePage.heroSub2,
+        pills: [
+          { icon: Landmark, title: t.homePage.heroPill2a, subtitle: 'KPIs' },
+          { icon: TrendingUp, title: t.homePage.heroPill2b, subtitle: 'Workflow' },
+          { icon: FileCheck, title: t.homePage.heroPill2c, subtitle: 'Audit Log' },
+        ],
+        bgGradient: 'from-teal-50/90 via-emerald-50/50 to-blue-50/40',
+        cardBorder: 'border-teal-100',
+        accentColor: 'text-teal-700',
+        badgeColor: 'bg-teal-100 text-teal-800 border-teal-200',
+        Visual: GovernanceIllustration,
+      },
+      {
+        id: 'assistant',
+        badge: t.homePage.heroBadge3,
+        headline: t.homePage.heroHeadline3,
+        accent: t.homePage.heroAccent3,
+        subtitle: t.homePage.heroSub3,
+        pills: [
+          { icon: Bot, title: t.homePage.heroPill3a, subtitle: 'Statutory' },
+          { icon: Scale, title: t.homePage.heroPill3b, subtitle: 'Grounded' },
+          { icon: Sparkles, title: t.homePage.heroPill3c, subtitle: 'Precedents' },
+        ],
+        bgGradient: 'from-indigo-50/90 via-purple-50/50 to-blue-50/40',
+        cardBorder: 'border-indigo-100',
+        accentColor: 'text-indigo-600',
+        badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+        Visual: AssistantIllustration,
+      },
+      {
+        id: 'research',
+        badge: t.homePage.heroBadge4,
+        headline: t.homePage.heroHeadline4,
+        accent: t.homePage.heroAccent4,
+        subtitle: t.homePage.heroSub4,
+        pills: [
+          { icon: FileText, title: t.homePage.heroPill4a, subtitle: 'Central & State' },
+          { icon: Search, title: t.homePage.heroPill4b, subtitle: 'Discovery' },
+          { icon: CheckCircle2, title: t.homePage.heroPill4c, subtitle: 'Open Access' },
+        ],
+        bgGradient: 'from-amber-50/90 via-orange-50/50 to-blue-50/40',
+        cardBorder: 'border-amber-100',
+        accentColor: 'text-amber-700',
+        badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
+        Visual: ResearchIllustration,
+      },
+    ],
+    [t]
+  );
+
   const prev = useCallback(() => {
-    setCurrent((c) => (c - 1 + SLIDES.length) % SLIDES.length);
-  }, []);
+    setCurrent((c) => (c - 1 + slides.length) % slides.length);
+  }, [slides.length]);
 
   const next = useCallback(() => {
-    setCurrent((c) => (c + 1) % SLIDES.length);
-  }, []);
+    setCurrent((c) => (c + 1) % slides.length);
+  }, [slides.length]);
 
   const togglePause = useCallback(() => {
     setPaused((p) => !p);
   }, []);
 
-  // Auto-scroll every 5 seconds unless paused
+  // Rock-solid auto-scroll: automatically advances every 4.5 seconds on both local and production deployments
   useEffect(() => {
     if (paused) return;
-    const timer = setInterval(next, 5000);
+    const timer = setInterval(() => {
+      setCurrent((c) => (c + 1) % slides.length);
+    }, 4500);
     return () => clearInterval(timer);
-  }, [next, paused]);
+  }, [paused, current, slides.length]);
 
-  const slide = SLIDES[current];
+  // Resume smoothly when switching between browser tabs
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.hidden) {
+        setPaused(true);
+      } else {
+        setPaused(false);
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  const slide = slides[current];
   const { Visual } = slide;
 
   return (
     <section aria-label="Platform Hero Banner" className="relative pt-6 pb-12 sm:pt-8 sm:pb-16 bg-gradient-to-b from-blue-50/60 via-slate-50/40 to-white overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
-        {/* ── Main DigiLocker Rounded Hero Card ── */}
+        {/* ── Main DigiLocker Rounded Hero Card (Auto-slides continuously, pause/play via button) ── */}
         <div
           className={`relative rounded-3xl lg:rounded-[32px] border ${slide.cardBorder} bg-gradient-to-br ${slide.bgGradient} shadow-xl p-6 sm:p-10 lg:p-14 overflow-hidden transition-all duration-700`}
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
         >
           {/* Subtle Grid Overlay */}
           <div
@@ -428,7 +446,7 @@ export function SlidingHero() {
 
               {/* 3 Value Pillars (DigiLocker Style: Secure, Easy Access, Paperless) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                {slide.pills.map((pill) => {
+                {slide.pills.map((pill: { icon: React.ElementType; title: string; subtitle: string }) => {
                   const Icon = pill.icon;
                   return (
                     <div
@@ -483,7 +501,7 @@ export function SlidingHero() {
                     }
                     className="inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-700 px-7 py-3.5 text-sm font-bold text-white shadow-md hover:shadow-lg transition active:scale-95"
                   >
-                    <span>Launch {slide.badge}</span>
+                    <span>{t.homePage.heroBtnDashboard}</span>
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 )}
@@ -529,7 +547,7 @@ export function SlidingHero() {
 
         {/* ── Slide Navigation Dots Below ── */}
         <div className="mt-6 flex items-center justify-center gap-2" role="tablist" aria-label="Slide selector">
-          {SLIDES.map((s, i) => (
+          {slides.map((s, i) => (
             <button
               key={s.id}
               type="button"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { LeafletMap } from '../components/LeafletMap';
 import { GisFilterPanel } from '../components/GisFilterPanel';
 import { MapLegend } from '../components/MapLegend';
@@ -12,13 +13,29 @@ import type {
   GisFilterOptions,
   GisFilterParams,
 } from '../types/gis';
-import { AlertCircle, Filter, RefreshCw } from 'lucide-react';
+import { useLanguage } from '../../../context/LanguageContext';
+import {
+  AlertCircle,
+  Filter,
+  RefreshCw,
+  Compass,
+  ChevronRight,
+  MapPin,
+  Layers,
+  Eye,
+  ShieldCheck,
+  RotateCcw,
+  Navigation,
+} from 'lucide-react';
 
 export function GisDashboardPage() {
+  const { t } = useLanguage();
+
   // Map and layer states
   const [features, setFeatures] = useState<GeoJsonFeature[]>([]);
   const [selectedFeature, setSelectedFeature] = useState<GeoJsonFeature | null>(null);
   const [focusFeature, setFocusFeature] = useState<GeoJsonFeature | null>(null);
+  const [targetFlyTo, setTargetFlyTo] = useState<{ center: [number, number]; zoom: number; id: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +64,33 @@ export function GisDashboardPage() {
 
   // Abort controller ref for in-flight cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cadastral preset locations
+  const CADASTRE_PRESETS = [
+    {
+      id: 'bhopal',
+      label: t.gisPage.locBhopal,
+      center: [23.2599, 77.4126] as [number, number],
+      zoom: 14,
+      district: 'Bhopal',
+      tehsil: 'Huzur',
+    },
+    {
+      id: 'indore',
+      label: t.gisPage.locIndore,
+      center: [22.7196, 75.8577] as [number, number],
+      zoom: 14,
+      district: 'Indore',
+      tehsil: 'Rau',
+    },
+    {
+      id: 'sehore',
+      label: t.gisPage.locSehore,
+      center: [23.2030, 77.0844] as [number, number],
+      zoom: 13,
+      district: 'Sehore',
+    },
+  ];
 
   // Fetch filter dropdown options on mount
   useEffect(() => {
@@ -98,7 +142,6 @@ export function GisDashboardPage() {
         setTruncated(Boolean(data.truncated));
       } catch (err: any) {
         if (err.name === 'AbortError' || err.message?.includes('aborted')) {
-          // Request was cancelled by map movement - benign
           return;
         }
         console.error('Failed to load cadastral parcels for viewport:', err);
@@ -138,86 +181,264 @@ export function GisDashboardPage() {
     setFocusFeature(feature);
   };
 
+  const handleSelectPreset = (preset: (typeof CADASTRE_PRESETS)[0]) => {
+    setTargetFlyTo({
+      center: preset.center,
+      zoom: preset.zoom,
+      id: `${preset.id}-${Date.now()}`,
+    });
+    if (preset.district) {
+      setActiveFilters((prev) => ({
+        ...prev,
+        district: preset.district,
+        tehsil: preset.tehsil || undefined,
+      }));
+    }
+  };
+
+  const handleResetToOverview = () => {
+    setActiveFilters({});
+    setTargetFlyTo({
+      center: [23.2599, 77.4126],
+      zoom: 13,
+      id: `reset-${Date.now()}`,
+    });
+  };
+
   const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
 
   return (
-    <div className="relative flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-900">
-      {/* Interactive Map Canvas */}
-      <div className="relative flex-1 h-full w-full">
-        <LeafletMap
-          features={features}
-          selectedFeature={selectedFeature}
-          onSelectFeature={handleSelectFeature}
-          onViewportChange={handleViewportChange}
-          loading={loading}
-          truncated={truncated}
-          totalCount={totalCount}
-          returnedCount={returnedCount}
-          zoomThresholdMet={zoomThresholdMet}
-          focusFeature={focusFeature}
-        />
+    <div className="space-y-4 pb-8 animate-in fade-in duration-200">
+      {/* ── Breadcrumb & Sovereign Header Bar ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1.5">
+            <Link to="/dashboard" className="flex items-center gap-1 hover:text-emerald-700 transition">
+              <span>{t.gisPage.breadcrumbHome}</span>
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            <span className="text-emerald-900 font-bold">{t.gisPage.breadcrumbCurrent}</span>
+          </div>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              {t.gisPage.pageTitle}
+            </h1>
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 shadow-2xs">
+              <Compass className="h-3.5 w-3.5 text-emerald-600" />
+              <span>PostGIS EPSG:4326</span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 shadow-2xs">
+              <span>DILRMP Cadastre</span>
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-slate-600 max-w-3xl">
+            {t.gisPage.pageSubtitle}
+          </p>
+        </div>
 
-        {/* Floating Filter Toggle Button (Top-Left) */}
-        <div className="absolute top-4 left-4 z-20">
+        {/* Header Action Buttons */}
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold shadow-md transition backdrop-blur-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-700 ${
+            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold shadow-xs transition ${
               isFilterOpen || activeFilterCount > 0
                 ? 'border-emerald-700 bg-emerald-800 text-white hover:bg-emerald-900'
-                : 'border-slate-200 bg-white/95 text-slate-800 hover:bg-slate-50'
+                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <Filter className="h-4 w-4" aria-hidden="true" />
-            <span>GIS Filters</span>
+            <Filter className="h-3.5 w-3.5" />
+            <span>{t.gisPage.filterBtn}</span>
             {activeFilterCount > 0 && (
-              <span className="ml-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+              <span className="ml-1 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
                 {activeFilterCount}
               </span>
             )}
           </button>
-        </div>
 
-        {/* Collapsible Filter Panel Floating on Left */}
-        {isFilterOpen && (
-          <div className="absolute top-16 left-4 z-20 w-80 sm:w-88 max-h-[calc(100%-5rem)] shadow-xl rounded-2xl">
-            <GisFilterPanel
-              filters={activeFilters}
-              filterOptions={filterOptions}
-              onFilterChange={(newFilters) => handleFilterChange({ ...activeFilters, ...newFilters })}
-              onResetFilters={handleResetFilters}
-              isLoading={loading}
-              onClose={() => setIsFilterOpen(false)}
-            />
+          <button
+            type="button"
+            onClick={handleResetToOverview}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-slate-900 transition"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
+            <span>{t.gisPage.resetViewBtn}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => currentBbox && loadParcels(currentBbox, currentZoom, activeFilters)}
+            title="Refresh Viewport Data"
+            disabled={loading}
+            className="inline-flex items-center justify-center h-8.5 w-8.5 rounded-xl border border-slate-300 bg-white text-slate-600 shadow-xs hover:bg-slate-50 hover:text-emerald-700 transition disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── 4 Sovereign Cadastral Spatial Metric Chips ── */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* Metric 1 */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">{t.gisPage.metricLoadedParcels}</span>
+            <div className="rounded-lg bg-emerald-50 p-1.5 text-emerald-700 border border-emerald-100">
+              <MapPin className="h-4 w-4" />
+            </div>
           </div>
-        )}
-
-        {/* Floating Map Legend (Bottom-Right) */}
-        <div className="absolute bottom-6 right-4 z-20 shadow-md rounded-2xl">
-          <MapLegend />
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="text-xl font-bold text-slate-900">{features.length}</span>
+            {totalCount > features.length && (
+              <span className="text-xs font-medium text-slate-500">/ {totalCount} total</span>
+            )}
+          </div>
+          <div className="mt-1 text-[11px] font-medium text-emerald-700 truncate">
+            {truncated ? t.gisPage.truncatedWarning : 'All bounding box parcels mapped'}
+          </div>
         </div>
 
-        {/* Error Notification Banner */}
-        {error && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/95 px-4 py-2.5 text-xs font-medium text-rose-900 shadow-xl backdrop-blur-xs">
-            <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" aria-hidden="true" />
-            <span>{error}</span>
-            <button
-              type="button"
-              onClick={() => currentBbox && loadParcels(currentBbox, currentZoom, activeFilters)}
-              className="ml-2 inline-flex items-center gap-1 font-bold text-rose-800 hover:text-rose-950 underline"
+        {/* Metric 2 */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">{t.gisPage.metricSpatialEngine}</span>
+            <div className="rounded-lg bg-blue-50 p-1.5 text-blue-700 border border-blue-100">
+              <Layers className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-1">
+            <span className="text-base font-bold text-slate-900">PostGIS 3.5</span>
+            <span className="text-xs text-blue-600 font-semibold">(SRID 4326)</span>
+          </div>
+          <div className="mt-1 text-[11px] font-medium text-slate-500 truncate">
+            WGS84 Ellipsoidal Spatial Cadastre
+          </div>
+        </div>
+
+        {/* Metric 3 */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">{t.gisPage.metricZoomStatus}</span>
+            <div
+              className={`rounded-lg p-1.5 border ${
+                currentZoom >= 12
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                  : 'bg-amber-50 text-amber-700 border-amber-100'
+              }`}
             >
-              <RefreshCw className="h-3 w-3" aria-hidden="true" /> Retry
-            </button>
+              <Eye className="h-4 w-4" />
+            </div>
           </div>
-        )}
+          <div className="mt-1.5 flex items-center gap-2">
+            <span className="text-xl font-bold text-slate-900">Level {currentZoom}</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                currentZoom >= 12 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {currentZoom >= 12 ? 'Cadastre Active' : 'Overview'}
+            </span>
+          </div>
+          <div className="mt-1 text-[11px] font-medium text-slate-500 truncate">
+            {currentZoom >= 12 ? 'Polygon boundary resolution active' : t.gisPage.zoomWarning}
+          </div>
+        </div>
 
-        {/* Selected Parcel Details Drawer (Right Slide-over) */}
-        <ParcelDetailsDrawer
-          feature={selectedFeature}
-          onClose={() => setSelectedFeature(null)}
-          onZoomToParcel={handleZoomToParcel}
-        />
+        {/* Metric 4 */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">{t.gisPage.metricSurveyStandard}</span>
+            <div className="rounded-lg bg-purple-50 p-1.5 text-purple-700 border border-purple-100">
+              <ShieldCheck className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-1.5 flex items-baseline gap-1">
+            <span className="text-base font-bold text-slate-900">SOI / DILRMP</span>
+            <span className="text-xs text-purple-600 font-bold">100%</span>
+          </div>
+          <div className="mt-1 text-[11px] font-medium text-slate-500 truncate">
+            NIC Land Records Cadastral Standard
+          </div>
+        </div>
+      </div>
+
+      {/* ── Cadastral Presets Bar ── */}
+      <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs">
+        <span className="font-bold text-slate-600 shrink-0 flex items-center gap-1.5 mr-1">
+          <Navigation className="h-3.5 w-3.5 text-emerald-600" />
+          <span>{t.gisPage.quickLocations}</span>
+        </span>
+        {CADASTRE_PRESETS.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={() => handleSelectPreset(preset)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-700 shadow-2xs hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-900 transition shrink-0"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span>{preset.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Main Map Canvas Container ── */}
+      <div className="relative h-[calc(100vh-21rem)] min-h-[580px] w-full rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden bg-slate-900">
+        <div className="relative flex-1 h-full w-full">
+          <LeafletMap
+            features={features}
+            selectedFeature={selectedFeature}
+            onSelectFeature={handleSelectFeature}
+            onViewportChange={handleViewportChange}
+            loading={loading}
+            truncated={truncated}
+            totalCount={totalCount}
+            returnedCount={returnedCount}
+            zoomThresholdMet={zoomThresholdMet}
+            focusFeature={focusFeature}
+            targetFlyTo={targetFlyTo}
+          />
+
+          {/* Floating Collapsible Filter Panel Floating on Left */}
+          {isFilterOpen && (
+            <div className="absolute top-4 left-4 z-20 w-80 sm:w-88 max-h-[calc(100%-2rem)] shadow-2xl rounded-2xl">
+              <GisFilterPanel
+                filters={activeFilters}
+                filterOptions={filterOptions}
+                onFilterChange={(newFilters) => handleFilterChange({ ...activeFilters, ...newFilters })}
+                onResetFilters={handleResetFilters}
+                isLoading={loading}
+                onClose={() => setIsFilterOpen(false)}
+              />
+            </div>
+          )}
+
+          {/* Floating Map Legend (Bottom-Right) */}
+          <div className="absolute bottom-6 right-4 z-20 shadow-md rounded-2xl">
+            <MapLegend />
+          </div>
+
+          {/* Error Notification Banner */}
+          {error && (
+            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/95 px-4 py-2.5 text-xs font-medium text-rose-900 shadow-xl backdrop-blur-xs">
+              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" aria-hidden="true" />
+              <span>{error}</span>
+              <button
+                type="button"
+                onClick={() => currentBbox && loadParcels(currentBbox, currentZoom, activeFilters)}
+                className="ml-2 inline-flex items-center gap-1 font-bold text-rose-800 hover:text-rose-950 underline"
+              >
+                <RefreshCw className="h-3 w-3" aria-hidden="true" /> Retry
+              </button>
+            </div>
+          )}
+
+          {/* Selected Parcel Details Drawer (Right Slide-over) */}
+          <ParcelDetailsDrawer
+            feature={selectedFeature}
+            onClose={() => setSelectedFeature(null)}
+            onZoomToParcel={handleZoomToParcel}
+          />
+        </div>
       </div>
     </div>
   );

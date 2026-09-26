@@ -16,7 +16,7 @@ export function LoginPage() {
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
-  const nextPath = searchParams.get('next') || '/';
+  const nextPath = searchParams.get('next') || '/dashboard';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

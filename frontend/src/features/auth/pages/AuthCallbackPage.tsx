@@ -25,7 +25,7 @@ export function AuthCallbackPage() {
     refreshUser()
       .then((user) => {
         if (!active) return;
-        navigate(user ? '/profile' : '/login?error=login_failed', { replace: true });
+        navigate(user ? '/dashboard' : '/login?error=login_failed', { replace: true });
       })
       .catch(() => {
         if (active) navigate('/login?error=login_failed', { replace: true });

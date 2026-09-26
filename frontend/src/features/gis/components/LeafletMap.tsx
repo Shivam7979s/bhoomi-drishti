@@ -35,6 +35,7 @@ interface LeafletMapProps {
   returnedCount: number;
   zoomThresholdMet: boolean;
   focusFeature?: GeoJsonFeature | null;
+  targetFlyTo?: { center: [number, number]; zoom: number; id: string } | null;
 }
 
 export function LeafletMap({
@@ -48,6 +49,7 @@ export function LeafletMap({
   returnedCount,
   zoomThresholdMet,
   focusFeature,
+  targetFlyTo,
 }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -133,7 +135,7 @@ export function LeafletMap({
         style: (feature: any) => {
           const isSelected = selectedFeature?.id === feature?.id;
           const isHovered = hoveredFeatureIdRef.current === feature?.id;
-          return getParcelPathStyle(feature, isSelected, isHovered);
+          return getParcelPathStyle(feature, isHovered, isSelected);
         },
         onEachFeature: (feature: any, layer: L.Layer) => {
           const props = feature.properties || {};
@@ -161,14 +163,14 @@ export function LeafletMap({
               hoveredFeatureIdRef.current = feature.id;
               const target = e.target as L.Path;
               const isSelected = selectedFeature?.id === feature.id;
-              target.setStyle(getParcelPathStyle(feature, isSelected, true));
+              target.setStyle(getParcelPathStyle(feature, true, isSelected));
               target.bringToFront();
             },
             mouseout: (e) => {
               hoveredFeatureIdRef.current = null;
               const target = e.target as L.Path;
               const isSelected = selectedFeature?.id === feature.id;
-              target.setStyle(getParcelPathStyle(feature, isSelected, false));
+              target.setStyle(getParcelPathStyle(feature, false, isSelected));
             },
             click: (e) => {
               L.DomEvent.stopPropagation(e);
@@ -200,6 +202,18 @@ export function LeafletMap({
       console.error('Failed to focus on parcel bounds:', err);
     }
   }, [focusFeature]);
+
+  // Fly to target coordinate preset when requested
+  useEffect(() => {
+    if (!targetFlyTo || !mapInstanceRef.current) return;
+    try {
+      mapInstanceRef.current.flyTo(targetFlyTo.center, targetFlyTo.zoom, {
+        duration: 1.2,
+      });
+    } catch (err) {
+      console.error('Failed to fly to target location:', err);
+    }
+  }, [targetFlyTo]);
 
   const handleResetView = useCallback(() => {
     if (!mapInstanceRef.current) return;

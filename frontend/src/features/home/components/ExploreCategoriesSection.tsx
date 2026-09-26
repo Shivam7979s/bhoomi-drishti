@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useLanguage, type SupportedLanguage } from '../../../context/LanguageContext';
 import {
   ArrowRight,
   Bot,
@@ -95,21 +96,48 @@ const CATEGORIES = [
   },
 ];
 
+
+const HEADINGS: Record<SupportedLanguage, { tag: string; title: string; subtitle: string }> = {
+  en: {
+    tag: 'National Land Repository',
+    title: 'Explore Land Governance by Categories',
+    subtitle: 'Discover digitized land records, spatial boundaries, and statutory instruments organized across key administrative domains.',
+  },
+  hi: {
+    tag: 'राष्ट्रीय भूमि संग्रह',
+    title: 'श्रेणियों द्वारा भूमि शासन का अन्वेषण करें',
+    subtitle: 'प्रमुख प्रशासनिक क्षेत्रों में आयोजित डिजिटलीकृत भू-अभिलेख, स्थानिक सीमाएं और वैधानिक दस्तावेज देखें।',
+  },
+  mr: {
+    tag: 'राष्ट्रीय जमीन भांडार',
+    title: 'श्रेणीनुसार जमीन प्रशासनाचा शोध घ्या',
+    subtitle: 'महत्वाच्या प्रशासकीय विभागांनुसार आयोजित संगणकीकृत जमीन अभिलेख, भौगोलिक सीमा आणि कायदे शोधा.',
+  },
+  te: {
+    tag: 'జాతీయ భూ భాండాగారం',
+    title: 'వర్గాల వారీగా భూ పరిపాలనను అన్వేషించండి',
+    subtitle: 'కీలక పరిపాలనా విభాగాలలో నిర్వహించబడిన డిజిటలైజ్డ్ భూ రికార్డులు, సరిహద్దులు మరియు చట్టబద్ధమైన పత్రాలను కనుగొనండి.',
+  },
+};
+
 export function ExploreCategoriesSection() {
+  const { language } = useLanguage();
+  const info = HEADINGS[language] || HEADINGS.en;
+
   return (
     <section aria-labelledby="categories-heading" className="py-16 sm:py-20 bg-slate-50/70 border-b border-slate-200/80">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
         {/* Section Heading (DigiLocker Style) */}
         <div className="text-center max-w-3xl mx-auto space-y-2 mb-12">
-          <span className="text-xs font-bold uppercase tracking-widest text-blue-600 block">
-            National Land Repository
+          <span className="text-xs font-bold uppercase tracking-widest text-emerald-700 block">
+            {info.tag}
           </span>
           <h2 id="categories-heading" className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
-            Explore Land Governance by Categories
+            {info.title}
           </h2>
           <p className="text-sm text-slate-500 leading-relaxed max-w-xl mx-auto">
-            Discover digitized land records, spatial boundaries, and statutory instruments organized across key administrative domains.
+            {info.subtitle}
           </p>
         </div>
 

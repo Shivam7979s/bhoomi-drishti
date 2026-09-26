@@ -37,7 +37,7 @@ export function RegisterPage() {
     setSubmitting(true);
     try {
       await register({ name: name.trim(), email: email.trim(), password });
-      navigate(next && next.startsWith('/') ? next : '/profile', { replace: true });
+      navigate(next && next.startsWith('/') ? next : '/dashboard', { replace: true });
     } catch (cause) {
       setFormError(messageForError(cause));
     } finally {

@@ -1,5 +1,6 @@
 import { Filter, Loader2, Sparkles, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { useLanguage } from '../../../context/LanguageContext';
 import type { AssistantQueryRequestDTO } from '../types/assistant';
 
 interface AssistantQueryFormProps {
@@ -8,23 +9,24 @@ interface AssistantQueryFormProps {
   onSubmit: (request: AssistantQueryRequestDTO) => void;
 }
 
-const DOCUMENT_TYPE_OPTIONS = [
-  { value: '', label: 'All Document Types' },
-  { value: 'RESEARCH_PAPER', label: 'Research Paper' },
-  { value: 'POLICY_DOCUMENT', label: 'Policy Document' },
-  { value: 'GOVERNMENT_REPORT', label: 'Government Report' },
-  { value: 'ACADEMIC_PUBLICATION', label: 'Academic Publication' },
-  { value: 'LEGAL_DOCUMENT', label: 'Legal Document' },
-];
-
 export function AssistantQueryForm({
   initialQuery = '',
   isLoading,
   onSubmit,
 }: AssistantQueryFormProps) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState(initialQuery);
   const [documentType, setDocumentType] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
+
+  const documentTypeOptions = [
+    { value: '', label: t.assistantPage.optAllDocTypes },
+    { value: 'RESEARCH_PAPER', label: t.assistantPage.optResearchPaper },
+    { value: 'POLICY_DOCUMENT', label: t.assistantPage.optPolicyDocument },
+    { value: 'GOVERNMENT_REPORT', label: t.assistantPage.optGovReport },
+    { value: 'ACADEMIC_PUBLICATION', label: t.assistantPage.optAcademicPub },
+    { value: 'LEGAL_DOCUMENT', label: t.assistantPage.optLegalDoc },
+  ];
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -66,11 +68,11 @@ export function AssistantQueryForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition focus-within:border-teal-400 focus-within:shadow-sm"
+      className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10"
     >
       <div className="relative">
         <label htmlFor="assistant-query-input" className="sr-only">
-          Ask a statutory or land governance question
+          {t.assistantPage.pageTitle}
         </label>
         <textarea
           id="assistant-query-input"
@@ -81,8 +83,8 @@ export function AssistantQueryForm({
           disabled={isLoading}
           rows={3}
           maxLength={500}
-          placeholder="Ask a question about statutory regulations, cadastral standards, or land governance provisions..."
-          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500/20 disabled:bg-slate-100 disabled:opacity-60 transition leading-relaxed"
+          placeholder={t.assistantPage.queryInputPlaceholder}
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:opacity-60 transition leading-relaxed font-medium"
         />
 
         {query && !isLoading && (
@@ -105,16 +107,16 @@ export function AssistantQueryForm({
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
               showFilters || documentType
-                ? 'border-teal-300 bg-teal-50 text-teal-800'
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
                 : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Filter className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Scope Filter</span>
+            <Filter className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
+            <span>{t.assistantPage.btnScopeFilter}</span>
             {documentType && (
-              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
             )}
           </button>
 
@@ -125,7 +127,7 @@ export function AssistantQueryForm({
                 ? 'font-bold text-red-600'
                 : query.length > 450
                 ? 'text-amber-600'
-                : 'text-slate-400'
+                : 'text-slate-400 font-medium'
             }`}
           >
             {query.length}/500
@@ -136,17 +138,17 @@ export function AssistantQueryForm({
         <button
           type="submit"
           disabled={!isValid || isLoading}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-xs font-semibold text-white shadow-2xs hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-800 hover:to-teal-900 px-5 py-2.5 text-xs font-bold text-white shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
         >
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              <span>Synthesizing...</span>
+              <span>{t.assistantPage.btnSynthesizing}</span>
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              <span>Ask Assistant</span>
+              <Sparkles className="h-4 w-4 text-emerald-200" aria-hidden="true" />
+              <span>{t.assistantPage.btnAskAssistant}</span>
             </>
           )}
         </button>
@@ -154,17 +156,17 @@ export function AssistantQueryForm({
 
       {/* Collapsible Filter Bar */}
       {showFilters && (
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 flex flex-wrap items-center gap-3 text-xs">
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 flex flex-wrap items-center gap-3 text-xs">
           <label htmlFor="assistant-doc-type" className="font-semibold text-slate-700">
-            Target Document Type:
+            {t.assistantPage.filterTargetDocType}
           </label>
           <select
             id="assistant-doc-type"
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700 shadow-2xs focus:border-teal-500 focus:outline-hidden"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-2xs focus:border-emerald-600 focus:outline-hidden"
           >
-            {DOCUMENT_TYPE_OPTIONS.map((opt) => (
+            {documentTypeOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -174,7 +176,7 @@ export function AssistantQueryForm({
             <button
               type="button"
               onClick={() => setDocumentType('')}
-              className="text-xs text-slate-500 hover:text-slate-700 underline"
+              className="text-xs text-emerald-700 hover:text-emerald-900 font-medium underline"
             >
               Reset filter
             </button>

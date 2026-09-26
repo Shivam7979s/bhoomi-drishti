@@ -61,10 +61,15 @@ export const LAND_USE_CONFIG: Record<LandUseType, LandUseStyleConfig> = {
 };
 
 export function getParcelPathStyle(
-  landUseType: LandUseType,
+  landUseOrFeature: LandUseType | any,
   isHovered: boolean = false,
   isSelected: boolean = false
 ) {
+  const landUseType: LandUseType =
+    typeof landUseOrFeature === 'string'
+      ? landUseOrFeature
+      : landUseOrFeature?.properties?.landUseType || 'OTHER';
+
   const cfg = LAND_USE_CONFIG[landUseType] || LAND_USE_CONFIG.OTHER;
 
   if (isSelected) {

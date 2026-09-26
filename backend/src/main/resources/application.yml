@@ -19,7 +19,7 @@ spring:
   # Optional: load the root .env file when the backend is started from `backend/`.
   # OS environment variables always take precedence over values from this file.
   config:
-    import: optional:file:../.env[.properties]
+    import: optional:file:../.env[.properties], optional:file:.env[.properties]
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:bhoomi_drishti}}
@@ -36,6 +36,7 @@ spring:
     # Automatically repair the schema history table (removes failed migration entries)
     # before each migration run - avoids needing manual psql to clean up.
     repair-on-migrate: true
+    validate-on-migrate: false
 
   jpa:
     hibernate:

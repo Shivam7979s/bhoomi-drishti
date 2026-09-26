@@ -1,51 +1,58 @@
+import { useMemo } from 'react';
 import { MapPin, Landmark, FileText, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const STATS = [
-  {
-    icon: MapPin,
-    value: '4,280+',
-    label: 'Cadastral Parcels',
-    sublabel: 'WGS-84 PostGIS Spatial Polygons',
-    color: 'emerald',
-    badge: 'Live GIS',
-    to: '/explore?domain=cadastral',
-  },
-  {
-    icon: Landmark,
-    value: '52',
-    label: 'Revenue Districts',
-    sublabel: 'Monitored via State Governance Index',
-    color: 'teal',
-    badge: 'State KPIs',
-    to: '/explore?domain=governance',
-  },
-  {
-    icon: FileText,
-    value: '1,240+',
-    label: 'Statutory Instruments',
-    sublabel: 'Acts, Revenue Circulars & Orders',
-    color: 'amber',
-    badge: 'Verified',
-    to: '/explore?domain=statutory',
-  },
-  {
-    icon: ShieldCheck,
-    value: '99.4%',
-    label: 'Evidence Precision',
-    sublabel: 'Zero-Hallucination Retrieval Grounding',
-    color: 'indigo',
-    badge: 'Audit Grade',
-    to: '/explore',
-  },
-];
+import { useLanguage } from '../../../context/LanguageContext';
 
 export function NationalStatsStrip() {
+  const { t } = useLanguage();
+
+  const stats = useMemo(
+    () => [
+      {
+        icon: MapPin,
+        value: t.homePage.statParcelsVal,
+        label: t.homePage.statParcelsLbl,
+        sublabel: t.homePage.statParcelsSub,
+        color: 'emerald',
+        badge: 'Live GIS',
+        to: '/explore?domain=cadastral',
+      },
+      {
+        icon: Landmark,
+        value: t.homePage.statDistrictsVal,
+        label: t.homePage.statDistrictsLbl,
+        sublabel: t.homePage.statDistrictsSub,
+        color: 'teal',
+        badge: 'State KPIs',
+        to: '/explore?domain=governance',
+      },
+      {
+        icon: FileText,
+        value: t.homePage.statInstrumentsVal,
+        label: t.homePage.statInstrumentsLbl,
+        sublabel: t.homePage.statInstrumentsSub,
+        color: 'amber',
+        badge: 'Verified',
+        to: '/explore?domain=statutory',
+      },
+      {
+        icon: ShieldCheck,
+        value: t.homePage.statPrecisionVal,
+        label: t.homePage.statPrecisionLbl,
+        sublabel: t.homePage.statPrecisionSub,
+        color: 'indigo',
+        badge: 'Audit Grade',
+        to: '/explore',
+      },
+    ],
+    [t]
+  );
+
   return (
     <section aria-label="National Land Infrastructure Statistics" className="relative z-10 -mt-6 sm:-mt-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="rounded-2xl border border-slate-200/90 bg-white/95 p-4 sm:p-6 shadow-xl backdrop-blur-md">
         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4 lg:divide-x lg:divide-slate-100">
-          {STATS.map((stat, i) => {
+          {stats.map((stat, i) => {
             const Icon = stat.icon;
             return (
               <Link
