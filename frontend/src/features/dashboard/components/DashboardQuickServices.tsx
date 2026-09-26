@@ -1,11 +1,61 @@
 import { Link } from 'react-router-dom';
-import { Compass, BarChart3, Bot, FolderOpen, ArrowRight } from 'lucide-react';
+import { Compass, BarChart3, Bot, FolderOpen, ArrowRight, Search, Award } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 export function DashboardQuickServices() {
   const { t } = useLanguage();
+  const { activeRole } = useAuth();
+  const isCitizen = activeRole === 'PUBLIC';
 
-  const services = [
+  const citizenServices = [
+    {
+      id: 'gis-explorer',
+      title: t.quickTools.gisTitle,
+      description: t.quickTools.gisDesc,
+      icon: Compass,
+      link: '/gis',
+      accent: 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xs',
+      badgeText: t.quickTools.gisTag,
+      border: 'hover:border-emerald-300',
+      actionColor: 'text-emerald-800 group-hover:text-emerald-950',
+    },
+    {
+      id: 'statutory-ai',
+      title: t.quickTools.aiTitle,
+      description: t.quickTools.aiDesc,
+      icon: Bot,
+      link: '/assistant',
+      accent: 'bg-gradient-to-br from-amber-600 to-amber-700 text-white shadow-xs',
+      badgeText: t.quickTools.aiTag,
+      border: 'hover:border-amber-300',
+      actionColor: 'text-amber-800 group-hover:text-amber-950',
+    },
+    {
+      id: 'registry-search',
+      title: 'Cadastre & Deed Registry',
+      description: 'Search statewide land records, survey khasra boundaries, and verified digital deeds.',
+      icon: Search,
+      link: '/explore',
+      accent: 'bg-gradient-to-br from-blue-700 to-indigo-800 text-white shadow-xs',
+      badgeText: 'Registry',
+      border: 'hover:border-blue-300',
+      actionColor: 'text-blue-800 group-hover:text-blue-950',
+    },
+    {
+      id: 'my-records',
+      title: 'My Issued Land Records',
+      description: 'Access legally verified RoR ownership certificates and digitized khasra documents.',
+      icon: Award,
+      link: '/land-records',
+      accent: 'bg-gradient-to-br from-teal-700 to-emerald-800 text-white shadow-xs',
+      badgeText: 'Ownership',
+      border: 'hover:border-teal-300',
+      actionColor: 'text-teal-800 group-hover:text-teal-950',
+    },
+  ];
+
+  const officialServices = [
     {
       id: 'gis-explorer',
       title: t.quickTools.gisTitle,
@@ -51,6 +101,9 @@ export function DashboardQuickServices() {
       actionColor: 'text-purple-800 group-hover:text-purple-950',
     },
   ];
+
+  const services = isCitizen ? citizenServices : officialServices;
+
 
   return (
     <section className="mb-6">

@@ -361,14 +361,16 @@ export function AuthenticatedHeader({
                       <span>{t.header.myLandRecords}</span>
                     </Link>
 
-                    <Link
-                      to="/workspaces"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 hover:text-emerald-900 transition"
-                    >
-                      <Shield className="h-4 w-4 text-slate-400" />
-                      <span>{t.header.workspaces}</span>
-                    </Link>
+                    {activeRole !== 'PUBLIC' && (
+                      <Link
+                        to="/workspaces"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 hover:text-emerald-900 transition"
+                      >
+                        <Shield className="h-4 w-4 text-slate-400" />
+                        <span>{t.header.workspaces}</span>
+                      </Link>
+                    )}
                   </div>
 
                   <div className="border-t border-slate-100 pt-1">

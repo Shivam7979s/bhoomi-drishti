@@ -131,18 +131,13 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
           </NavLink>
         )}
 
-        {/* Collaborative Workspaces & Vault */}
-        <NavLink to="/workspaces" className={navLinkClasses} onClick={onCloseMobile}>
-          <FolderOpen className="h-5 w-5 shrink-0 text-slate-500 group-hover:text-emerald-700" />
-          <div className="flex items-center justify-between flex-1">
+        {/* Collaborative Workspaces & Vault (Restricted to Researchers & Officials) */}
+        {!isCitizen && (
+          <NavLink to="/workspaces" className={navLinkClasses} onClick={onCloseMobile}>
+            <FolderOpen className="h-5 w-5 shrink-0 text-slate-500 group-hover:text-emerald-700" />
             <span>{t.sidebar.workspacesVault}</span>
-            {isCitizen && (
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded">
-                Collab
-              </span>
-            )}
-          </div>
-        </NavLink>
+          </NavLink>
+        )}
 
         {/* Land Governance Services / Platform Services */}
         <div className="pt-1.5">
@@ -176,10 +171,12 @@ export function AuthenticatedSidebar({ isMobileOpen, onCloseMobile }: Authentica
                 </div>
               </NavLink>
 
-              <NavLink to="/governance" className={subNavLinkClasses} onClick={onCloseMobile}>
-                <BarChart3 className="h-4 w-4 text-blue-600 shrink-0" />
-                <span>{t.sidebar.revenueGovernance}</span>
-              </NavLink>
+              {!isCitizen && (
+                <NavLink to="/governance" className={subNavLinkClasses} onClick={onCloseMobile}>
+                  <BarChart3 className="h-4 w-4 text-blue-600 shrink-0" />
+                  <span>{t.sidebar.revenueGovernance}</span>
+                </NavLink>
+              )}
 
               <NavLink to="/assistant" className={subNavLinkClasses} onClick={onCloseMobile}>
                 <Bot className="h-4 w-4 text-amber-600 shrink-0" />
