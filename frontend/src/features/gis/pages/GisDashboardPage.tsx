@@ -69,32 +69,168 @@ export function GisDashboardPage() {
   // Abort controller ref for in-flight cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Cadastral preset locations
-  const CADASTRE_PRESETS = [
+  // 5-State Nationwide Cadastre Presets (466 Total Real Polygons across 11 Districts)
+  interface CadastrePreset {
+    id: string;
+    state: string;
+    stateCode: string;
+    district: string;
+    tehsil?: string;
+    label: string;
+    center: [number, number];
+    zoom: number;
+    count: number;
+  }
+
+  const NATIONWIDE_CADASTRE_PRESETS: CadastrePreset[] = [
+    // ── Madhya Pradesh (126 Parcels) ──
     {
       id: 'bhopal',
-      label: t.gisPage.locBhopal,
-      center: [23.2599, 77.4126] as [number, number],
-      zoom: 14,
+      state: 'Madhya Pradesh',
+      stateCode: 'MP',
       district: 'Bhopal',
       tehsil: 'Huzur',
+      label: 'Bhopal (Huzur)',
+      center: [23.2292, 77.4337],
+      zoom: 13.5,
+      count: 62,
     },
     {
       id: 'indore',
-      label: t.gisPage.locIndore,
-      center: [22.7196, 75.8577] as [number, number],
-      zoom: 14,
+      state: 'Madhya Pradesh',
+      stateCode: 'MP',
       district: 'Indore',
       tehsil: 'Rau',
+      label: 'Indore (Rau)',
+      center: [22.7499, 75.8824],
+      zoom: 13.5,
+      count: 52,
     },
     {
       id: 'sehore',
-      label: t.gisPage.locSehore,
-      center: [23.2030, 77.0844] as [number, number],
-      zoom: 13,
+      state: 'Madhya Pradesh',
+      stateCode: 'MP',
       district: 'Sehore',
+      tehsil: 'Phanda',
+      label: 'Sehore (Phanda)',
+      center: [23.1949, 77.1087],
+      zoom: 13.5,
+      count: 12,
+    },
+
+    // ── Maharashtra (85 Parcels) ──
+    {
+      id: 'pune',
+      state: 'Maharashtra',
+      stateCode: 'MH',
+      district: 'Pune',
+      tehsil: 'Haveli',
+      label: 'Pune (Haveli)',
+      center: [18.5272, 73.8489],
+      zoom: 13.5,
+      count: 50,
+    },
+    {
+      id: 'nashik',
+      state: 'Maharashtra',
+      stateCode: 'MH',
+      district: 'Nashik',
+      tehsil: 'Dindori',
+      label: 'Nashik (Dindori)',
+      center: [19.9996, 73.7945],
+      zoom: 13.5,
+      count: 35,
+    },
+
+    // ── Uttar Pradesh (85 Parcels) ──
+    {
+      id: 'lucknow',
+      state: 'Uttar Pradesh',
+      stateCode: 'UP',
+      district: 'Lucknow',
+      tehsil: 'Mohanlalganj',
+      label: 'Lucknow (Mohanlalganj)',
+      center: [26.8277, 80.9372],
+      zoom: 13.5,
+      count: 50,
+    },
+    {
+      id: 'varanasi',
+      state: 'Uttar Pradesh',
+      stateCode: 'UP',
+      district: 'Varanasi',
+      tehsil: 'Pindra',
+      label: 'Varanasi (Pindra)',
+      center: [25.3315, 82.9822],
+      zoom: 13.5,
+      count: 35,
+    },
+
+    // ── Rajasthan (85 Parcels) ──
+    {
+      id: 'jaipur',
+      state: 'Rajasthan',
+      stateCode: 'RJ',
+      district: 'Jaipur',
+      tehsil: 'Sanganer',
+      label: 'Jaipur (Sanganer)',
+      center: [26.8990, 75.8007],
+      zoom: 13.5,
+      count: 50,
+    },
+    {
+      id: 'alwar',
+      state: 'Rajasthan',
+      stateCode: 'RJ',
+      district: 'Alwar',
+      tehsil: 'Ramgarh',
+      label: 'Alwar (Ramgarh)',
+      center: [27.5576, 76.6073],
+      zoom: 13.5,
+      count: 35,
+    },
+
+    // ── Karnataka (85 Parcels) ──
+    {
+      id: 'bengaluru-rural',
+      state: 'Karnataka',
+      stateCode: 'KA',
+      district: 'Bengaluru Rural',
+      tehsil: 'Devanahalli',
+      label: 'Bengaluru Rural (Devanahalli)',
+      center: [13.2184, 77.6939],
+      zoom: 13.5,
+      count: 50,
+    },
+    {
+      id: 'mysuru',
+      state: 'Karnataka',
+      stateCode: 'KA',
+      district: 'Mysuru',
+      tehsil: 'Nanjangud',
+      label: 'Mysuru (Nanjangud)',
+      center: [12.2977, 76.6624],
+      zoom: 13.5,
+      count: 35,
     },
   ];
+
+  const STATE_FILTER_TABS = [
+    { code: 'ALL', label: 'All States', count: 466 },
+    { code: 'MP', label: 'Madhya Pradesh', count: 126 },
+    { code: 'MH', label: 'Maharashtra', count: 85 },
+    { code: 'UP', label: 'Uttar Pradesh', count: 85 },
+    { code: 'RJ', label: 'Rajasthan', count: 85 },
+    { code: 'KA', label: 'Karnataka', count: 85 },
+  ];
+
+  const [selectedStateTab, setSelectedStateTab] = useState<string>('ALL');
+  const [activePresetId, setActivePresetId] = useState<string>('bhopal');
+
+  const filteredPresets = selectedStateTab === 'ALL'
+    ? NATIONWIDE_CADASTRE_PRESETS
+    : NATIONWIDE_CADASTRE_PRESETS.filter((p) => p.stateCode === selectedStateTab);
+
 
   // Fetch filter dropdown options on mount
   useEffect(() => {
@@ -185,25 +321,24 @@ export function GisDashboardPage() {
     setFocusFeature(feature);
   };
 
-  const handleSelectPreset = (preset: (typeof CADASTRE_PRESETS)[0]) => {
+  const handleSelectPreset = (preset: CadastrePreset) => {
+    setActivePresetId(preset.id);
+    setSelectedStateTab(preset.stateCode);
     setTargetFlyTo({
       center: preset.center,
       zoom: preset.zoom,
       id: `${preset.id}-${Date.now()}`,
     });
-    if (preset.district) {
-      setActiveFilters((prev) => ({
-        ...prev,
-        district: preset.district,
-        tehsil: preset.tehsil || undefined,
-      }));
-    }
+    // Clear conflicting manual filters so the full regional dataset displays
+    setActiveFilters({});
   };
 
   const handleResetToOverview = () => {
     setActiveFilters({});
+    setSelectedStateTab('ALL');
+    setActivePresetId('bhopal');
     setTargetFlyTo({
-      center: [23.2599, 77.4126],
+      center: [23.2292, 77.4337],
       zoom: 13,
       id: `reset-${Date.now()}`,
     });
@@ -380,23 +515,74 @@ export function GisDashboardPage() {
         </div>
       </div>
 
-      {/* ── Cadastral Presets Bar ── */}
-      <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs">
-        <span className="font-bold text-slate-600 shrink-0 flex items-center gap-1.5 mr-1">
-          <Navigation className="h-3.5 w-3.5 text-emerald-600" />
-          <span>{t.gisPage.quickLocations}</span>
-        </span>
-        {CADASTRE_PRESETS.map((preset) => (
-          <button
-            key={preset.id}
-            type="button"
-            onClick={() => handleSelectPreset(preset)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-700 shadow-2xs hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-900 transition shrink-0"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span>{preset.label}</span>
-          </button>
-        ))}
+      {/* ── 5-State Nationwide Cadastral Quick-Jump Bar ── */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs space-y-2.5">
+        {/* Top: State Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs">
+          <span className="font-bold text-slate-700 shrink-0 flex items-center gap-1.5 mr-2 text-[11px] uppercase tracking-wider">
+            <Navigation className="h-3.5 w-3.5 text-emerald-600" />
+            <span>National Cadastre:</span>
+          </span>
+          {STATE_FILTER_TABS.map((tab) => {
+            const isActive = selectedStateTab === tab.code;
+            return (
+              <button
+                key={tab.code}
+                type="button"
+                onClick={() => setSelectedStateTab(tab.code)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-emerald-800 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10.5px] px-1.5 py-0.5 rounded-full font-bold ${
+                    isActive ? 'bg-emerald-950 text-emerald-100' : 'bg-white text-slate-600 border border-slate-200'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Bottom: District Quick-Jump Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto pt-1 border-t border-slate-100 text-xs">
+          <span className="text-[11px] font-semibold text-slate-400 shrink-0 uppercase tracking-wider mr-1">
+            Jump to District:
+          </span>
+          {filteredPresets.map((preset) => {
+            const isSelected = activePresetId === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => handleSelectPreset(preset)}
+                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-xs font-semibold shadow-2xs transition shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'border-emerald-700 bg-emerald-700 text-white font-bold shadow-xs ring-2 ring-emerald-600/30'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:bg-emerald-50/60 hover:text-emerald-950'
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${isSelected ? 'bg-emerald-200 ring-2 ring-white/50' : 'bg-slate-400'}`}
+                />
+                <span className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded ${
+                  isSelected ? 'bg-emerald-800 text-emerald-100' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {preset.stateCode}
+                </span>
+                <span>{preset.label}</span>
+                <span className={`text-[10.5px] font-bold ${isSelected ? 'text-emerald-100' : 'text-slate-400'}`}>
+                  &bull; {preset.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Main Map Canvas Container ── */}
