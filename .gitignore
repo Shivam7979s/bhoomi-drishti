@@ -100,3 +100,4 @@ data/documents/**
 !data/documents/.gitkeep
 data/datasets/**
 !data/datasets/.gitkeep
+data/osm_cache/
