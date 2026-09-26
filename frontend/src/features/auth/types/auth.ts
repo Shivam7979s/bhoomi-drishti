@@ -15,6 +15,7 @@ export interface AuthUser {
   role: Role;
   provider: AuthProvider;
   profileImageUrl: string | null;
+  dob?: string;
 }
 
 /** Success body of POST /api/auth/register and POST /api/auth/login. */
@@ -26,6 +27,7 @@ export interface AuthResponse {
 
 export interface RegisterRequest {
   name: string;
+  dob?: string;
   email: string;
   password: string;
 }

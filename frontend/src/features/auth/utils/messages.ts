@@ -34,6 +34,7 @@ export function messageForOauthError(code: string | null): string | null {
 
 export interface RegistrationValidation {
   name?: string;
+  dob?: string;
   email?: string;
   password?: string;
   confirm?: string;
@@ -41,6 +42,7 @@ export interface RegistrationValidation {
 
 export function validateRegistration(input: {
   name: string;
+  dob?: string;
   email: string;
   password: string;
   confirm: string;
@@ -51,6 +53,25 @@ export function validateRegistration(input: {
 
   if (!name) errors.name = 'Enter your full name.';
   else if (name.length > 120) errors.name = 'Name must be at most 120 characters.';
+
+  if (!input.dob) {
+    errors.dob = 'Date of birth is required for sovereign identity verification.';
+  } else {
+    const birthDate = new Date(input.dob);
+    const today = new Date();
+    if (isNaN(birthDate.getTime()) || birthDate > today) {
+      errors.dob = 'Enter a valid date of birth in the past.';
+    } else {
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        errors.dob = 'You must be at least 18 years old for registered land governance eligibility.';
+      }
+    }
+  }
 
   if (!email) errors.email = 'Enter your email address.';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Enter a valid email address.';
