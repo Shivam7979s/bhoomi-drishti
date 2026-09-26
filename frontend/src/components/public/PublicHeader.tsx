@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Bookmark,
   Bot,
@@ -36,14 +36,6 @@ export function PublicHeader() {
   const langRef = useRef<HTMLDivElement>(null);
 
   const currentLangOption = options.find((o) => o.code === language) || options[0];
-
-  const authenticatedNavItems = [
-    { to: '/dashboard', label: t.header.dashboard, icon: Home },
-    { to: '/explore', label: t.sidebar.registrySearch, icon: Compass },
-    { to: '/governance', label: t.sidebar.revenueGovernance, icon: Landmark },
-    { to: '/gis', label: t.sidebar.gisCadastreMap, icon: Map },
-    { to: '/assistant', label: t.sidebar.statutoryAi, icon: Bot, isAi: true },
-  ];
 
   // Accessible font size adjustment
   const handleFontSizeChange = (size: 'sm' | 'md' | 'lg') => {
@@ -219,10 +211,10 @@ export function PublicHeader() {
             {/* Auth / Action Buttons */}
             {loading ? null : !isAuthenticated ? (
               /* ── WHEN NOT LOGGED IN ── */
-              <div className="hidden lg:flex items-center gap-2.5">
+              <div className="hidden lg:flex items-center gap-2.5 shrink-0">
                 <Link
                   to="/explore"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:border-emerald-600 hover:text-emerald-800 hover:bg-emerald-50/30 transition active:scale-95 focus:outline-hidden"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:border-emerald-600 hover:text-emerald-800 hover:bg-emerald-50/30 transition whitespace-nowrap active:scale-95 focus:outline-hidden"
                 >
                   <Compass className="h-4 w-4 text-emerald-700" aria-hidden="true" />
                   <span>{t.header.explorePlatform}</span>
@@ -230,69 +222,35 @@ export function PublicHeader() {
 
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-800 hover:to-teal-900 px-5 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:shadow-sm transition active:scale-95 focus:outline-hidden"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-800 hover:to-teal-900 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:shadow-sm transition whitespace-nowrap active:scale-95 focus:outline-hidden"
                 >
                   <LogIn className="h-4 w-4" aria-hidden="true" />
                   <span>{t.header.loginRegister}</span>
                 </Link>
               </div>
             ) : (
-              /* ── WHEN LOGGED IN ── */
-              <div className="hidden lg:flex items-center gap-2.5">
-                <nav
-                  className="flex items-center gap-1 xl:gap-1.5 mr-1"
-                  aria-label="Primary Platform Navigation"
-                >
-                  {authenticatedNavItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className={({ isActive }) =>
-                          `inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-semibold transition focus:outline-hidden ${
-                            isActive
-                              ? 'bg-emerald-50 text-emerald-900 shadow-2xs ring-1 ring-emerald-600/20'
-                              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                          }`
-                        }
-                      >
-                        {Icon && <Icon className="h-4 w-4 text-emerald-700" aria-hidden="true" />}
-                        <span>{item.label}</span>
-                        {item.isAi && (
-                          <span className="ml-0.5 rounded-full bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-800 tracking-wide">
-                            AI
-                          </span>
-                        )}
-                      </NavLink>
-                    );
-                  })}
-                </nav>
-
-                {/* Quick Workspace Navigation */}
+              /* ── WHEN LOGGED IN ── Clean, unwrapped, responsive header ── */
+              <div className="hidden lg:flex items-center gap-2.5 shrink-0">
                 <Link
-                  to="/workspaces"
-                  className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
-                  title="Collaborative Workspaces"
+                  to="/explore"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:border-emerald-600 hover:text-emerald-800 hover:bg-emerald-50/40 shadow-2xs transition whitespace-nowrap focus:outline-hidden"
                 >
-                  <FolderKanban className="h-4 w-4 text-indigo-600" aria-hidden="true" />
-                  <span className="hidden xl:inline">{t.header.workspaces}</span>
+                  <Compass className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+                  <span>{t.header.explorePlatform}</span>
                 </Link>
 
-                {/* Saved Bookmarks */}
                 <Link
-                  to="/saved-research"
-                  className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
-                  title="Saved Research"
+                  to="/dashboard"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-800 hover:to-teal-900 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:shadow-sm transition active:scale-95 whitespace-nowrap focus:outline-hidden"
                 >
-                  <Bookmark className="h-4 w-4 text-amber-600" aria-hidden="true" />
-                  <span className="hidden xl:inline">{t.header.savedResearch}</span>
+                  <Home className="h-4 w-4" aria-hidden="true" />
+                  <span>{t.header.dashboard}</span>
                 </Link>
 
-                <div className="h-4 w-px bg-slate-200 mx-1" aria-hidden="true" />
+                <div className="h-4 w-px bg-slate-200 mx-0.5" aria-hidden="true" />
 
                 {/* User Dropdown Menu */}
-                <div className="relative" ref={userMenuRef}>
+                <div className="relative shrink-0" ref={userMenuRef}>
                   <button
                     ref={userButtonRef}
                     type="button"
@@ -300,13 +258,15 @@ export function PublicHeader() {
                     aria-expanded={isUserMenuOpen}
                     aria-haspopup="menu"
                     aria-label="User account menu"
-                    className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-2 pr-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition focus:outline-hidden"
+                    className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-2 pr-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-emerald-300 transition focus:outline-hidden whitespace-nowrap cursor-pointer"
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white">
-                      {user?.name.charAt(0).toUpperCase()}
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white shrink-0">
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
                     </span>
-                    <span className="max-w-[120px] truncate text-slate-900 font-bold">{user?.name}</span>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                    <span className="max-w-[110px] truncate text-slate-900 font-bold hidden sm:inline">
+                      {user?.name || 'Citizen'}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
                   </button>
 
                   {/* Dropdown Card */}
@@ -314,56 +274,109 @@ export function PublicHeader() {
                     <div
                       role="menu"
                       aria-label="User options"
-                      className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg text-xs z-50 animate-in fade-in zoom-in-95 duration-100"
+                      className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl text-xs z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-100"
                     >
-                      <div className="border-b border-slate-100 px-3 py-2">
-                        <p className="font-bold text-slate-900 truncate max-w-[200px]">{user?.name}</p>
-                        <p className="text-[11px] text-slate-500 truncate max-w-[200px]">{user?.email}</p>
-                        <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800 uppercase">
-                          {user?.role.replace('_', ' ')}
+                      <div className="px-3 py-2.5">
+                        <p className="font-bold text-slate-900 truncate max-w-[220px]">{user?.name}</p>
+                        <p className="text-[11px] text-slate-500 truncate max-w-[220px]">{user?.email}</p>
+                        <span className="mt-1.5 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800 uppercase tracking-wide">
+                          {user?.role?.replace('_', ' ') || 'VERIFIED CITIZEN'}
                         </span>
                       </div>
 
-                      <div className="py-1">
+                      <div className="py-1.5 space-y-0.5">
                         <Link
                           to="/dashboard"
                           role="menuitem"
                           onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2.5 rounded-lg px-3 py-2 font-bold text-emerald-950 bg-emerald-50/70 hover:bg-emerald-100/70 transition"
                         >
-                          <Home className="h-4 w-4 text-emerald-700" />
-                          <span>{t.header.dashboard}</span>
-                        </Link>
-
-                        <Link
-                          to="/profile"
-                          role="menuitem"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 transition"
-                        >
-                          <UserRound className="h-4 w-4 text-slate-500" />
-                          <span>{t.header.profile}</span>
+                          <Home className="h-4 w-4 text-emerald-700 shrink-0" />
+                          <span className="truncate">{t.header.dashboard}</span>
                         </Link>
 
                         <Link
                           to="/land-records"
                           role="menuitem"
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 transition"
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition font-medium"
                         >
-                          <MapPinned className="h-4 w-4 text-emerald-600" />
-                          <span>{t.header.myLandRecords}</span>
+                          <MapPinned className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="truncate">{t.header.myLandRecords}</span>
+                        </Link>
+
+                        <Link
+                          to="/gis"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition font-medium"
+                        >
+                          <Map className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="truncate">{t.sidebar.gisCadastreMap}</span>
+                        </Link>
+
+                        <Link
+                          to="/governance"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition font-medium"
+                        >
+                          <Landmark className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="truncate">{t.sidebar.revenueGovernance}</span>
+                        </Link>
+
+                        <Link
+                          to="/assistant"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition font-medium"
+                        >
+                          <Bot className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="truncate">{t.sidebar.statutoryAi}</span>
+                          <span className="ml-auto rounded-full bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
+                            AI
+                          </span>
+                        </Link>
+
+                        <Link
+                          to="/workspaces"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition font-medium"
+                        >
+                          <FolderKanban className="h-4 w-4 text-indigo-600 shrink-0" />
+                          <span className="truncate">{t.header.workspaces}</span>
+                        </Link>
+
+                        <Link
+                          to="/saved-research"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition font-medium"
+                        >
+                          <Bookmark className="h-4 w-4 text-amber-600 shrink-0" />
+                          <span className="truncate">{t.header.savedResearch}</span>
+                        </Link>
+
+                        <Link
+                          to="/profile"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition font-medium"
+                        >
+                          <UserRound className="h-4 w-4 text-slate-500 shrink-0" />
+                          <span className="truncate">{t.header.profile}</span>
                         </Link>
                       </div>
 
-                      <div className="border-t border-slate-100 pt-1">
+                      <div className="pt-1.5">
                         <button
                           type="button"
                           role="menuitem"
                           onClick={handleLogout}
-                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-rose-700 hover:bg-rose-50 transition font-medium cursor-pointer"
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-rose-700 hover:bg-rose-50 hover:text-rose-900 transition font-semibold cursor-pointer"
                         >
-                          <LogOut className="h-4 w-4 text-rose-600" />
+                          <LogOut className="h-4 w-4 text-rose-600 shrink-0" />
                           <span>{t.header.logout}</span>
                         </button>
                       </div>
