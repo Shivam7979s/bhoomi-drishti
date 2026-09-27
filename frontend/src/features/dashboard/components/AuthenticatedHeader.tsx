@@ -218,20 +218,43 @@ export function AuthenticatedHeader({
                   {displayName}
                 </span>
 
-                <div className="h-9 w-9 rounded-full bg-linear-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-bold text-sm shadow-xs border-2 border-white ring-1 ring-slate-200/80">
-                  {initial}
-                </div>
+                {user?.profileImageUrl ? (
+                  <img
+                    src={user.profileImageUrl}
+                    alt={displayName}
+                    referrerPolicy="no-referrer"
+                    className="h-9 w-9 rounded-full object-cover shadow-xs border-2 border-white ring-1 ring-slate-200/80 shrink-0"
+                  />
+                ) : (
+                  <div className="h-9 w-9 rounded-full bg-linear-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-bold text-sm shadow-xs border-2 border-white ring-1 ring-slate-200/80 shrink-0">
+                    {initial}
+                  </div>
+                )}
               </button>
 
               {/* Profile Dropdown Menu */}
               {profileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-68 rounded-2xl bg-white border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
-                    <p className="text-sm font-bold text-slate-900">{displayName}</p>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">{user?.email}</p>
-                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-800 border border-emerald-200/80">
-                      <Shield className="h-3 w-3 text-emerald-600" />
-                      <span>{activeRoleCfg.label}</span>
+                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl flex items-center gap-3">
+                    {user?.profileImageUrl ? (
+                      <img
+                        src={user.profileImageUrl}
+                        alt={displayName}
+                        referrerPolicy="no-referrer"
+                        className="h-10 w-10 rounded-full object-cover border border-slate-200 shadow-2xs shrink-0"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-linear-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
+                        {initial}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate">{displayName}</p>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{user?.email}</p>
+                      <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-800 border border-emerald-200/80">
+                        <Shield className="h-3 w-3 text-emerald-600" />
+                        <span>{activeRoleCfg.label}</span>
+                      </div>
                     </div>
                   </div>
 

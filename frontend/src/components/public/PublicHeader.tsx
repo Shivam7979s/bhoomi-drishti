@@ -260,9 +260,18 @@ export function PublicHeader() {
                     aria-label="User account menu"
                     className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-2 pr-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-emerald-300 transition focus:outline-hidden whitespace-nowrap cursor-pointer"
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white shrink-0">
-                      {user?.name?.charAt(0).toUpperCase() || 'U'}
-                    </span>
+                    {user?.profileImageUrl ? (
+                      <img
+                        src={user.profileImageUrl}
+                        alt={user?.name || 'User'}
+                        referrerPolicy="no-referrer"
+                        className="h-7 w-7 rounded-full object-cover shrink-0 border border-slate-200 shadow-2xs"
+                      />
+                    ) : (
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white shrink-0">
+                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    )}
                     <span className="max-w-[110px] truncate text-slate-900 font-bold hidden sm:inline">
                       {user?.name || 'Citizen'}
                     </span>
@@ -276,12 +285,26 @@ export function PublicHeader() {
                       aria-label="User options"
                       className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl text-xs z-50 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-100"
                     >
-                      <div className="px-3 py-2.5">
-                        <p className="font-bold text-slate-900 truncate max-w-[220px]">{user?.name}</p>
-                        <p className="text-[11px] text-slate-500 truncate max-w-[220px]">{user?.email}</p>
-                        <span className="mt-1.5 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800 uppercase tracking-wide">
-                          {user?.role?.replace('_', ' ') || 'VERIFIED CITIZEN'}
-                        </span>
+                      <div className="px-3 py-2.5 flex items-center gap-2.5">
+                        {user?.profileImageUrl ? (
+                          <img
+                            src={user.profileImageUrl}
+                            alt={user?.name || 'User'}
+                            referrerPolicy="no-referrer"
+                            className="h-9 w-9 rounded-full object-cover shrink-0 border border-slate-200 shadow-2xs"
+                          />
+                        ) : (
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white shrink-0">
+                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                          </span>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 truncate">{user?.name}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
+                          <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800 uppercase tracking-wide">
+                            {user?.role?.replace('_', ' ') || 'VERIFIED CITIZEN'}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="py-1.5 space-y-0.5">
