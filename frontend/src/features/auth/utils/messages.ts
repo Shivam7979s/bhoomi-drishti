@@ -6,7 +6,9 @@ import { ApiError } from '../../../services/apiClient';
  */
 export function messageForError(cause: unknown): string {
   if (cause instanceof ApiError) {
-    if (cause.status === null) return 'Could not reach the server. Please try again.';
+    if (cause.status === null) {
+      return 'Cloud server is waking up or temporarily unreachable. Please wait a few seconds and try again.';
+    }
     if (cause.status === 401) {
       if (cause.message && !cause.message.includes('HTTP 401') && cause.message !== 'Unauthorized') {
         return cause.message;

@@ -89,7 +89,7 @@ export function LoginPage() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
-        <SubmitButton busy={submitting} busyLabel="Signing in...">
+        <SubmitButton busy={submitting} busyLabel="Authenticating (waking server if idle)...">
           Sign in
         </SubmitButton>
       </form>

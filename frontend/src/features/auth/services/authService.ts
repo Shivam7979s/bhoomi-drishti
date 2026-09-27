@@ -10,8 +10,8 @@ const AUTH_ROUTES = {
   logout: '/api/auth/logout',
 } as const;
 
-/** Registration/login do BCrypt work plus a database round trip - allow a little more time. */
-const AUTH_TIMEOUT_MS = 8000;
+/** Registration/login do BCrypt work plus cloud cold start round trips - allow 60 seconds. */
+const AUTH_TIMEOUT_MS = 60000;
 
 export function register(request: RegisterRequest): Promise<AuthResponse> {
   return postJson<AuthResponse>(AUTH_ROUTES.register, request, AUTH_TIMEOUT_MS);

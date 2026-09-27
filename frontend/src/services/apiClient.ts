@@ -1,6 +1,6 @@
 import { apiBaseUrl } from '../utils/env';
 
-const DEFAULT_TIMEOUT_MS = 5000;
+const DEFAULT_TIMEOUT_MS = 45000;
 
 /**
  * Shape of the error body produced by the backend's `GlobalExceptionHandler`.
