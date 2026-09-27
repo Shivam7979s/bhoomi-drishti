@@ -123,4 +123,6 @@ public interface LandRecordRepository
 
         @Query("SELECT DISTINCT lr.village FROM LandRecord lr WHERE (:tehsil IS NULL OR lr.tehsil = :tehsil) ORDER BY lr.village")
         java.util.List<String> findDistinctVillages(@Param("tehsil") String tehsil);
+
+        java.util.List<LandRecord> findByUserIdOrderByCreatedAtDesc(UUID userId);
 }

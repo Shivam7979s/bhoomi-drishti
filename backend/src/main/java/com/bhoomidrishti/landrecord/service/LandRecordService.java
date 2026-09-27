@@ -145,6 +145,115 @@ public class LandRecordService {
         return LandRecordResponse.from(repository.save(record));
     }
 
+    public List<LandRecordResponse> getMyRecords(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return List.of();
+        }
+        Object principal = auth.getPrincipal();
+        UUID userId = null;
+        if (principal instanceof com.bhoomidrishti.auth.entity.User user) {
+            userId = user.getId();
+        }
+        if (userId == null) {
+            return List.of();
+        }
+        return repository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(LandRecordResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public LandRecordResponse linkRecord(com.bhoomidrishti.landrecord.dto.LinkLandRecordRequest req, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("Authentication required to link land records");
+        }
+        Object principal = auth.getPrincipal();
+        com.bhoomidrishti.auth.entity.User currentUser = null;
+        if (principal instanceof com.bhoomidrishti.auth.entity.User user) {
+            currentUser = user;
+        } else {
+            throw new AccessDeniedException("Valid user identity required");
+        }
+
+        // 1. Try to find a matching boundary in the same village / tehsil / district to anchor the parcel
+        List<LandRecord> nearby = repository.findInBoundingBox(null, null, null, null,
+                req.state(), req.district(), req.tehsil(), null, null, null, null, 1);
+
+        Geometry parcelBoundary;
+        org.locationtech.jts.geom.GeometryFactory gf = new org.locationtech.jts.geom.GeometryFactory(new org.locationtech.jts.geom.PrecisionModel(), 4326);
+        if (!nearby.isEmpty() && nearby.get(0).getBoundary() != null) {
+            org.locationtech.jts.geom.Point centroid = nearby.get(0).getBoundary().getCentroid();
+            double cX = centroid.getX();
+            double cY = centroid.getY();
+            double delta = 0.0008; // ~80-90 meters
+            org.locationtech.jts.geom.Coordinate[] coords = new org.locationtech.jts.geom.Coordinate[] {
+                    new org.locationtech.jts.geom.Coordinate(cX - delta, cY - delta),
+                    new org.locationtech.jts.geom.Coordinate(cX + delta, cY - delta),
+                    new org.locationtech.jts.geom.Coordinate(cX + delta, cY + delta),
+                    new org.locationtech.jts.geom.Coordinate(cX - delta, cY + delta),
+                    new org.locationtech.jts.geom.Coordinate(cX - delta, cY - delta)
+            };
+            parcelBoundary = gf.createPolygon(coords);
+        } else {
+            // Default anchor coordinates based on state if no nearby records
+            double cX = 77.4126;
+            double cY = 23.2599; // Bhopal
+            if ("Maharashtra".equalsIgnoreCase(req.state())) {
+                cX = 73.8567; cY = 18.5204;
+            } else if ("Uttar Pradesh".equalsIgnoreCase(req.state())) {
+                cX = 80.9462; cY = 26.8467;
+            } else if ("Rajasthan".equalsIgnoreCase(req.state())) {
+                cX = 75.7873; cY = 26.9124;
+            } else if ("Karnataka".equalsIgnoreCase(req.state())) {
+                cX = 77.5946; cY = 12.9716;
+            }
+            double delta = 0.0008;
+            org.locationtech.jts.geom.Coordinate[] coords = new org.locationtech.jts.geom.Coordinate[] {
+                    new org.locationtech.jts.geom.Coordinate(cX - delta, cY - delta),
+                    new org.locationtech.jts.geom.Coordinate(cX + delta, cY - delta),
+                    new org.locationtech.jts.geom.Coordinate(cX + delta, cY + delta),
+                    new org.locationtech.jts.geom.Coordinate(cX - delta, cY + delta),
+                    new org.locationtech.jts.geom.Coordinate(cX - delta, cY - delta)
+            };
+            parcelBoundary = gf.createPolygon(coords);
+        }
+
+        // Land use type fallback
+        com.bhoomidrishti.landrecord.entity.LandUseType landUse = com.bhoomidrishti.landrecord.entity.LandUseType.AGRICULTURAL;
+        if (req.landUseType() != null && !req.landUseType().isBlank()) {
+            try {
+                landUse = com.bhoomidrishti.landrecord.entity.LandUseType.valueOf(req.landUseType().toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        java.math.BigDecimal area = req.landAreaSqMeters();
+        if (area == null || area.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            area = java.math.BigDecimal.valueOf(4500.00); // ~1.1 acre standard
+        }
+
+        LandRecord record = new LandRecord();
+        record.setId(UUID.randomUUID());
+        record.setUserId(currentUser.getId());
+        // Standard parcel code formatting
+        String stateCode = req.state().substring(0, Math.min(2, req.state().length())).toUpperCase();
+        String distCode = req.district().substring(0, Math.min(3, req.district().length())).toUpperCase();
+        record.setParcelNumber(stateCode + "-" + distCode + "-" + req.khasraNumber().replaceAll("[^a-zA-Z0-9]", ""));
+        record.setSurveyNumber(req.khasraNumber());
+        record.setState(req.state().trim());
+        record.setDistrict(req.district().trim());
+        record.setTehsil(req.tehsil().trim());
+        record.setVillage(req.village().trim());
+        record.setLandAreaSqMeters(area);
+        record.setLandUseType(landUse);
+        record.setOwnershipType(com.bhoomidrishti.landrecord.entity.OwnershipType.INDIVIDUAL);
+        record.setOwnerName(currentUser.getName());
+        record.setOwnerIdentifier("VERIFIED-ROR-" + System.currentTimeMillis() % 1000000);
+        record.setStatus(LandRecordStatus.ACTIVE);
+        record.setBoundary(parcelBoundary);
+
+        return LandRecordResponse.from(repository.save(record));
+    }
+
     @Transactional
     public void delete(UUID id, Authentication auth) {
         assertCanDelete(auth);

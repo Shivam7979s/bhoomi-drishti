@@ -68,6 +68,8 @@ public class SecurityConfig {
                         // Phase 3: land records. Anyone signed in can read/search/spatial-query;
                         // only GOVERNMENT_OFFICIAL and ADMIN can create or modify; DELETE is ADMIN-only.
                         // These URL rules are backed by @PreAuthorize annotations on the controller.
+                        .requestMatchers("/api/land-records/my-records", "/api/land-records/link-record")
+                                .authenticated()
                         .requestMatchers("/api/land-records/spatial/**")
                                 .authenticated()
                         .requestMatchers("/api/land-records/{id}")

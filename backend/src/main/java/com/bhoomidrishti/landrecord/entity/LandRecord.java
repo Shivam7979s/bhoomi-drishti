@@ -78,6 +78,9 @@ public class LandRecord {
     @Column(name = "boundary", nullable = false, columnDefinition = "geometry(Geometry,4326)")
     private Geometry boundary;
 
+    @Column(name = "user_id")
+    private UUID userId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -205,6 +208,14 @@ public class LandRecord {
 
     public void setBoundary(Geometry boundary) {
         this.boundary = boundary;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public Instant getCreatedAt() {

@@ -74,3 +74,22 @@ export async function searchSpatialContains(
     payload,
   );
 }
+
+export interface LinkLandRecordPayload {
+  state: string;
+  district: string;
+  tehsil: string;
+  village: string;
+  khasraNumber: string;
+  landUseType?: string;
+  landAreaSqMeters?: number;
+}
+
+export async function getMyLandRecords(): Promise<LandRecord[]> {
+  return getJson<LandRecord[]>(`${BASE_PATH}/my-records`);
+}
+
+export async function linkLandRecord(payload: LinkLandRecordPayload): Promise<LandRecord> {
+  return postJson<LandRecord>(`${BASE_PATH}/link-record`, payload);
+}
+

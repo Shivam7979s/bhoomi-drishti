@@ -58,7 +58,20 @@ public class LandRecordController {
                 page, size, auth);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/my-records")
+    public java.util.List<LandRecordResponse> getMyRecords(Authentication auth) {
+        return service.getMyRecords(auth);
+    }
+
+    @PostMapping("/link-record")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LandRecordResponse linkRecord(
+            @Valid @RequestBody com.bhoomidrishti.landrecord.dto.LinkLandRecordRequest request,
+            Authentication auth) {
+        return service.linkRecord(request, auth);
+    }
+
+    @GetMapping("/{id:[0-9a-fA-F-]{36}}")
     public LandRecordResponse getById(@PathVariable UUID id, Authentication auth) {
         return service.getById(id, auth);
     }
