@@ -94,6 +94,43 @@ export function LoginPage() {
         </SubmitButton>
       </form>
 
+      {/* ── Sovereign Demo Personas (Real Database Accounts) ── */}
+      <div className="pt-3 border-t border-slate-100">
+        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+          Demo Personas (1-Click Fill):
+        </p>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => {
+              setEmail('researcher1@example.com');
+              setPassword('Password123');
+            }}
+            className="flex items-center gap-2 p-2.5 rounded-xl border border-purple-200 bg-purple-50/70 hover:bg-purple-100/80 text-purple-950 font-bold transition text-left cursor-pointer"
+          >
+            <span className="text-base">🔬</span>
+            <div className="min-w-0">
+              <div className="font-bold text-purple-900">Researcher</div>
+              <div className="text-[10px] font-medium text-purple-600 truncate">researcher1@...</div>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail('gov_user@example.com');
+              setPassword('Password123');
+            }}
+            className="flex items-center gap-2 p-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-blue-950 font-bold transition text-left cursor-pointer"
+          >
+            <span className="text-base">🏛️</span>
+            <div className="min-w-0">
+              <div className="font-bold text-blue-900">Revenue Officer</div>
+              <div className="text-[10px] font-medium text-blue-600 truncate">gov_user@...</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <AuthDivider />
       <GoogleButton onClick={loginWithGoogle} />
     </AuthCard>
