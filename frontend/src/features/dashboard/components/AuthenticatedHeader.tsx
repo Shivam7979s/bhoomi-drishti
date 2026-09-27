@@ -3,19 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Menu,
   X,
+  ChevronDown,
+  Globe,
   User as UserIcon,
   LogOut,
-  ChevronDown,
-  Shield,
   FileText,
-  Globe,
-  Check,
-  Landmark,
+  Shield,
   Briefcase,
   GraduationCap,
+  Landmark,
   ShieldCheck,
-  RefreshCw,
-  Sparkles,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import type { Role } from '../../auth/types/auth';
@@ -28,15 +26,14 @@ interface AuthenticatedHeaderProps {
 
 const ROLE_CONFIG: Record<
   Role,
-  { label: string; shortLabel: string; badge: string; icon: typeof UserIcon; color: string; desc: string }
+  { label: string; shortLabel: string; badge: string; icon: typeof UserIcon; color: string }
 > = {
   PUBLIC: {
-    label: 'Citizen / Public',
+    label: 'Verified Citizen',
     shortLabel: 'Citizen',
     badge: 'bg-emerald-50 text-emerald-800 border-emerald-300',
     icon: UserIcon,
     color: 'text-emerald-700',
-    desc: 'Public spatial maps, masked PII, legal AI assistant',
   },
   RESEARCHER: {
     label: 'Policy Researcher',
@@ -44,7 +41,6 @@ const ROLE_CONFIG: Record<
     badge: 'bg-purple-50 text-purple-800 border-purple-300',
     icon: Briefcase,
     color: 'text-purple-700',
-    desc: 'Research workspaces, policy simulations, vector ingestion',
   },
   ACADEMIA: {
     label: 'Academic Scholar',
@@ -52,7 +48,6 @@ const ROLE_CONFIG: Record<
     badge: 'bg-indigo-50 text-indigo-800 border-indigo-300',
     icon: GraduationCap,
     color: 'text-indigo-700',
-    desc: 'Academic research dossiers, datasets & citations',
   },
   GOVERNMENT_OFFICIAL: {
     label: 'Revenue Officer',
@@ -60,7 +55,6 @@ const ROLE_CONFIG: Record<
     badge: 'bg-blue-50 text-blue-800 border-blue-300',
     icon: Landmark,
     color: 'text-blue-700',
-    desc: 'Unmasked cadastral deeds, dispute certification, radar KPIs',
   },
   ADMIN: {
     label: 'Platform Admin',
@@ -68,27 +62,22 @@ const ROLE_CONFIG: Record<
     badge: 'bg-amber-50 text-amber-800 border-amber-300',
     icon: ShieldCheck,
     color: 'text-amber-700',
-    desc: 'Full sovereign platform control, user promotion & audit',
   },
 };
-
-const SWITCHABLE_ROLES: Role[] = ['PUBLIC', 'RESEARCHER', 'GOVERNMENT_OFFICIAL', 'ADMIN'];
 
 export function AuthenticatedHeader({
   onToggleMobileSidebar,
   isMobileSidebarOpen,
 }: AuthenticatedHeaderProps) {
-  const { user, logout, activeRole, isSimulatedRole, switchRole } = useAuth();
+  const { user, logout, activeRole } = useAuth();
   const navigate = useNavigate();
   const { language, setLanguage, t, options } = useLanguage();
 
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
-  const roleRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -98,9 +87,6 @@ export function AuthenticatedHeader({
       }
       if (langRef.current && !langRef.current.contains(event.target as Node)) {
         setLangDropdownOpen(false);
-      }
-      if (roleRef.current && !roleRef.current.contains(event.target as Node)) {
-        setRoleDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -158,99 +144,16 @@ export function AuthenticatedHeader({
             </Link>
           </div>
 
-          {/* Right: Role Switcher, Language Switcher, and User Profile */}
+          {/* Right: Static Role Badge, Language Switcher, and User Profile */}
           <div className="flex items-center gap-2 sm:gap-3.5">
-            {/* ── Active Role Clearance Badge & Live Switcher ── */}
-            <div className="relative" ref={roleRef}>
-              <button
-                type="button"
-                onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold transition cursor-pointer shadow-2xs ${activeRoleCfg.badge} hover:shadow-xs`}
-                title="Click to switch authorization perspective for demonstration"
-              >
-                <ActiveRoleIcon className={`h-4 w-4 ${activeRoleCfg.color}`} />
-                <span className="hidden sm:inline font-bold">{activeRoleCfg.shortLabel}</span>
-                {isSimulatedRole && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-amber-200/80 text-amber-900 text-[9.5px] font-black uppercase tracking-wider">
-                    Demo
-                  </span>
-                )}
-                <ChevronDown
-                  className={`h-3 w-3 text-slate-400 transition-transform duration-150 ${
-                    roleDropdownOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {roleDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-slate-200 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 divide-y divide-slate-100">
-                  <div className="px-4 py-2.5 bg-slate-50/70 rounded-t-2xl">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                        <Sparkles className="h-3 w-3 text-emerald-600" />
-                        Role Clearance Perspective
-                      </span>
-                      {isSimulatedRole && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            switchRole(null);
-                            setRoleDropdownOpen(false);
-                          }}
-                          className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          <RefreshCw className="h-2.5 w-2.5" />
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1 leading-snug">
-                      Switch perspectives to test RBAC permissions, PII masking, and official tools.
-                    </p>
-                  </div>
-
-                  <div className="p-2 space-y-1">
-                    {SWITCHABLE_ROLES.map((r) => {
-                      const cfg = ROLE_CONFIG[r];
-                      const Icon = cfg.icon;
-                      const isSelected = activeRole === r;
-
-                      return (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => {
-                            switchRole(r);
-                            setRoleDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-start gap-3 p-2.5 rounded-xl transition cursor-pointer text-left ${
-                            isSelected
-                              ? 'bg-slate-100/90 border border-slate-200 shadow-2xs'
-                              : 'hover:bg-slate-50'
-                          }`}
-                        >
-                          <div
-                            className={`p-2 rounded-lg shrink-0 mt-0.5 ${
-                              isSelected ? 'bg-white shadow-xs' : 'bg-slate-100'
-                            }`}
-                          >
-                            <Icon className={`h-4 w-4 ${cfg.color}`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs sm:text-sm font-bold text-slate-900">
-                                {cfg.label}
-                              </span>
-                              {isSelected && <Check className="h-4 w-4 text-emerald-600 shrink-0" />}
-                            </div>
-                            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{cfg.desc}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+            {/* ── Static Read-Only Sovereign Role Clearance Badge ── */}
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-bold shadow-2xs ${activeRoleCfg.badge}`}
+              title={`Authenticated Sovereign Clearance: ${activeRoleCfg.label} (Verified at Login)`}
+            >
+              <ActiveRoleIcon className={`h-4 w-4 ${activeRoleCfg.color}`} />
+              <span className="hidden sm:inline">{activeRoleCfg.label}</span>
+              <span className="sm:hidden">{activeRoleCfg.shortLabel}</span>
             </div>
 
             {/* Language Selector Dropdown (English, हिन्दी, मराठी, తెలుగు) */}
@@ -271,62 +174,52 @@ export function AuthenticatedHeader({
               </button>
 
               {langDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150 divide-y divide-slate-100">
-                  <div className="px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     {t.header.selectLanguage}
                   </div>
-                  <div className="py-1">
-                    {options.map((opt) => {
-                      const isSelected = opt.code === language;
-                      return (
-                        <button
-                          key={opt.code}
-                          type="button"
-                          onClick={() => {
-                            setLanguage(opt.code as SupportedLanguage);
-                            setLangDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3.5 py-2 text-xs sm:text-sm transition cursor-pointer ${
-                            isSelected
-                              ? 'bg-emerald-50 text-emerald-900 font-bold'
-                              : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium'
-                          }`}
-                        >
-                          <div className="flex flex-col text-left">
-                            <span className="text-slate-900 font-semibold">{opt.nativeLabel}</span>
-                            <span className="text-[11px] text-slate-500">{opt.label}</span>
-                          </div>
-                          {isSelected && <Check className="h-4 w-4 text-emerald-700" />}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {options.map((opt) => {
+                    const isSelected = language === opt.code;
+                    return (
+                      <button
+                        key={opt.code}
+                        type="button"
+                        onClick={() => {
+                          setLanguage(opt.code as SupportedLanguage);
+                          setLangDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3.5 py-2 text-xs sm:text-sm transition text-left cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-50 text-emerald-900 font-bold'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex flex-col">
+                          <span>{opt.nativeLabel}</span>
+                          <span className="text-[10.5px] text-slate-400">{opt.label}</span>
+                        </div>
+                        {isSelected && <Check className="h-4 w-4 text-emerald-600 shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* User Profile Avatar with Dropdown */}
+            {/* User Profile Avatar and Menu */}
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-2.5 p-1 pl-2.5 rounded-full border border-slate-200 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-300 transition focus:outline-hidden cursor-pointer shadow-2xs"
-                aria-expanded={profileDropdownOpen}
-                aria-haspopup="true"
+                className="flex items-center gap-2 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer focus:outline-hidden"
+                aria-label="Open user menu"
               >
-                <span className="hidden sm:inline text-xs sm:text-sm font-bold text-slate-800 max-w-[130px] truncate">
+                <span className="text-sm font-semibold text-slate-800 hidden md:inline ml-1">
                   {displayName}
                 </span>
-                <div className="h-8.5 w-8.5 rounded-full bg-gradient-to-br from-blue-700 to-indigo-800 text-white flex items-center justify-center font-bold text-sm shadow-xs border border-white">
-                  {user?.profileImageUrl ? (
-                    <img
-                      src={user.profileImageUrl}
-                      alt={displayName}
-                      className="h-8.5 w-8.5 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span>{initial}</span>
-                  )}
+
+                <div className="h-9 w-9 rounded-full bg-linear-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-bold text-sm shadow-xs border-2 border-white ring-1 ring-slate-200/80">
+                  {initial}
                 </div>
               </button>
 

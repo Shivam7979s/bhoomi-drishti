@@ -30,6 +30,7 @@ export interface RegisterRequest {
   dob?: string;
   email: string;
   password: string;
+  role?: Role;
 }
 
 export interface LoginRequest {

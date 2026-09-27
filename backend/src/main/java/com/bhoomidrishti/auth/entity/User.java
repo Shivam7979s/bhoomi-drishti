@@ -82,7 +82,12 @@ public class User {
 
     /** Creates a local account. {@code passwordHash} must already be a BCrypt hash. */
     public static User registerLocal(String name, String email, String passwordHash) {
-        User user = new User(name, email, AuthProvider.LOCAL, Role.DEFAULT_REGISTRATION_ROLE);
+        return registerLocal(name, email, passwordHash, Role.DEFAULT_REGISTRATION_ROLE);
+    }
+
+    /** Creates a local account with a specified role. */
+    public static User registerLocal(String name, String email, String passwordHash, Role role) {
+        User user = new User(name, email, AuthProvider.LOCAL, role != null ? role : Role.DEFAULT_REGISTRATION_ROLE);
         user.passwordHash = passwordHash;
         return user;
     }

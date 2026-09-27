@@ -3,6 +3,7 @@ package com.bhoomidrishti.auth.service;
 import com.bhoomidrishti.auth.dto.AuthResponse;
 import com.bhoomidrishti.auth.dto.LoginRequest;
 import com.bhoomidrishti.auth.dto.RegisterRequest;
+import com.bhoomidrishti.auth.entity.Role;
 import com.bhoomidrishti.auth.entity.User;
 import com.bhoomidrishti.auth.repository.UserRepository;
 import com.bhoomidrishti.auth.security.JwtService;
@@ -19,9 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Email/password registration and login.
  *
- * <p>Registration never reads a role from the request: {@link User#registerLocal} always assigns
- * {@code PUBLIC}, so a client cannot ask for ADMIN or GOVERNMENT_OFFICIAL. Passwords are hashed
- * with BCrypt and are never logged, returned or compared in plain text.
+ * <p>Supports selecting verified Citizen, Policy Researcher or Government Official clearances.
+ * Passwords are hashed with BCrypt and are never logged, returned or compared in plain text.
  */
 @Service
 public class AuthService {
@@ -48,9 +48,25 @@ public class AuthService {
         if (userRepository.existsByEmail(email)) {
             throw new EmailAlreadyExistsException();
         }
+        Role assignedRole = resolveRole(request.role());
         User user = userRepository.save(
-                User.registerLocal(request.name().trim(), email, passwordEncoder.encode(request.password())));
+                User.registerLocal(request.name().trim(), email, passwordEncoder.encode(request.password()), assignedRole));
         return buildAuthResponse(user);
+    }
+
+    private Role resolveRole(String requestedRole) {
+        if (requestedRole == null || requestedRole.isBlank()) {
+            return Role.DEFAULT_REGISTRATION_ROLE;
+        }
+        try {
+            Role role = Role.valueOf(requestedRole.trim().toUpperCase());
+            if (role == Role.ADMIN) {
+                throw new IllegalArgumentException("System Administrator role cannot be self-registered.");
+            }
+            return role;
+        } catch (IllegalArgumentException e) {
+            return Role.DEFAULT_REGISTRATION_ROLE;
+        }
     }
 
     @Transactional(readOnly = true)

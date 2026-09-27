@@ -1,16 +1,12 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ApiError } from '../../../services/apiClient';
 import * as authService from '../services/authService';
 import type { AuthUser, LoginRequest, RegisterRequest, Role } from '../types/auth';
 
 export interface AuthContextValue {
   user: AuthUser | null;
-  /** Active verified role (defaults to account role, can be simulated for evaluation) */
+  /** Active role strictly derived from real authenticated database user session. */
   activeRole: Role;
-  /** True if the user is currently testing with a simulated demo role */
-  isSimulatedRole: boolean;
-  /** Switches the active role for evaluation or resets to real role when passed null */
-  switchRole(role: Role | null): void;
   isAuthenticated: boolean;
   /** True until the initial `GET /api/auth/me` session check has finished. */
   loading: boolean;
@@ -25,26 +21,14 @@ export interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-const DEMO_ROLE_KEY = 'bhoomi_demo_role';
-
 /**
- * Single source of truth for authentication state. The session lives in an HttpOnly cookie the
- * browser holds; this provider mirrors who is signed in and enforces role verification.
+ * Single source of truth for authentication state.
+ * The session lives in an HttpOnly cookie or token; this provider strictly reflects
+ * the user's authentic database role without client-side spoofing.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [demoRole, setDemoRole] = useState<Role | null>(() => {
-    try {
-      const stored = sessionStorage.getItem(DEMO_ROLE_KEY);
-      if (stored && ['ADMIN', 'GOVERNMENT_OFFICIAL', 'RESEARCHER', 'ACADEMIA', 'PUBLIC'].includes(stored)) {
-        return stored as Role;
-      }
-    } catch {
-      // Ignore storage access errors
-    }
-    return null;
-  });
 
   const refreshUser = useCallback(async (): Promise<AuthUser | null> => {
     try {
@@ -74,23 +58,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [refreshUser]);
 
-  const login = useCallback(async (request: LoginRequest) => {
-    const response = await authService.login(request);
-    setUser(response.user);
-  }, []);
+  const login = useCallback(
+    async (request: LoginRequest) => {
+      const response = await authService.login(request);
+      setUser(response.user);
+    },
+    [],
+  );
 
-  const register = useCallback(async (request: RegisterRequest) => {
-    const response = await authService.register(request);
-    setUser(response.user);
-  }, []);
+  const register = useCallback(
+    async (request: RegisterRequest) => {
+      const response = await authService.register(request);
+      setUser(response.user);
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     try {
       await authService.logout();
     } finally {
       setUser(null);
-      setDemoRole(null);
-      sessionStorage.removeItem(DEMO_ROLE_KEY);
     }
   }, []);
 
@@ -98,47 +86,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.assign(authService.GOOGLE_LOGIN_URL);
   }, []);
 
-  const switchRole = useCallback((role: Role | null) => {
-    setDemoRole(role);
-    try {
-      if (role) {
-        sessionStorage.setItem(DEMO_ROLE_KEY, role);
-      } else {
-        sessionStorage.removeItem(DEMO_ROLE_KEY);
-      }
-    } catch {
-      // Ignore storage access errors
-    }
-  }, []);
+  // Strict role from database, defaulting to PUBLIC if unauthenticated
+  const activeRole: Role = user?.role || 'PUBLIC';
 
-  const activeRole: Role = demoRole || user?.role || 'PUBLIC';
-  const isSimulatedRole = demoRole !== null && demoRole !== user?.role;
-
-  const effectiveUser: AuthUser | null = useMemo(() => {
-    if (!user) return null;
-    return {
-      ...user,
-      role: activeRole,
-    };
-  }, [user, activeRole]);
-
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      user: effectiveUser,
-      activeRole,
-      isSimulatedRole,
-      switchRole,
-      isAuthenticated: user !== null,
-      loading,
-      login,
-      register,
-      logout,
-      loginWithGoogle,
-      refreshUser,
-    }),
-    [effectiveUser, activeRole, isSimulatedRole, switchRole, user, loading, login, register, logout, loginWithGoogle, refreshUser],
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        activeRole,
+        isAuthenticated: user !== null,
+        loading,
+        login,
+        register,
+        logout,
+        loginWithGoogle,
+        refreshUser,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
