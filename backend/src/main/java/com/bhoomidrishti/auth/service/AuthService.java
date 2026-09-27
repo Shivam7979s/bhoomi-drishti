@@ -10,6 +10,7 @@ import com.bhoomidrishti.auth.security.JwtService;
 import com.bhoomidrishti.common.EmailNormalizer;
 import com.bhoomidrishti.exception.EmailAlreadyExistsException;
 import com.bhoomidrishti.exception.InvalidCredentialsException;
+import java.util.Optional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -72,6 +73,15 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         String email = EmailNormalizer.normalize(request.email());
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            User u = existingUser.get();
+            if (u.getProvider() == com.bhoomidrishti.auth.entity.AuthProvider.GOOGLE
+                    && (u.getPasswordHash() == null || u.getPasswordHash().isBlank())) {
+                throw new InvalidCredentialsException(
+                        "This account was registered with Google. Please click 'Continue with Google' below to sign in.");
+            }
+        }
         try {
             // The real password check happens inside DaoAuthenticationProvider (BCrypt compare).
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(

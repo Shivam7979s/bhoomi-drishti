@@ -62,14 +62,23 @@ public class GoogleLoginSuccessHandler implements AuthenticationSuccessHandler {
         response.addHeader(HttpHeaders.SET_COOKIE, cookieService.createAuthCookie(token).toString());
         // Keep the callback page out of the referrer chain of any subsequent navigation.
         response.setHeader("Referrer-Policy", "no-referrer");
-        response.sendRedirect(authProperties.frontendBaseUrl() + "/auth/callback");
+        // Pass token in URL query parameter so cross-origin production SPAs (e.g. Vercel) can store it reliably
+        String redirectTarget = authProperties.frontendBaseUrl() + "/auth/callback?token="
+                + java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8);
+        response.sendRedirect(redirectTarget);
     }
 
     private Optional<User> findUser(Authentication authentication) {
         if (authentication.getPrincipal() instanceof OAuth2User oauth2User) {
             GoogleIdentity identity = GoogleAccountService.identityFrom(oauth2User.getAttributes());
             if (identity.googleId() != null) {
-                return userRepository.findByGoogleId(identity.googleId());
+                Optional<User> byGoogleId = userRepository.findByGoogleId(identity.googleId());
+                if (byGoogleId.isPresent()) {
+                    return byGoogleId;
+                }
+            }
+            if (identity.email() != null && !identity.email().isBlank()) {
+                return userRepository.findByEmail(com.bhoomidrishti.common.EmailNormalizer.normalize(identity.email()));
             }
         }
         return Optional.empty();
@@ -77,6 +86,7 @@ public class GoogleLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private void redirectWithError(HttpServletResponse response, String code) throws IOException {
         response.sendRedirect(
-                authProperties.frontendBaseUrl() + "/auth/callback?error=" + code);
+                authProperties.frontendBaseUrl() + "/auth/callback?error="
+                        + java.net.URLEncoder.encode(code, java.nio.charset.StandardCharsets.UTF_8));
     }
 }

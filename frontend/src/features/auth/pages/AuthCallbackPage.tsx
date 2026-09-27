@@ -15,10 +15,22 @@ export function AuthCallbackPage() {
   const location = useLocation();
 
   useEffect(() => {
-    const errorCode = new URLSearchParams(location.search).get('error');
+    const params = new URLSearchParams(location.search);
+    const errorCode = params.get('error');
     if (errorCode) {
       navigate(`/login?error=${encodeURIComponent(errorCode)}`, { replace: true });
       return;
+    }
+
+    const token = params.get('token');
+    if (token && typeof window !== 'undefined') {
+      localStorage.setItem('bhoomi_token', token);
+      // Clean query string from browser address bar immediately
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch {
+        // ignore history state issues in restrictive environments
+      }
     }
 
     let active = true;

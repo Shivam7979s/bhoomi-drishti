@@ -60,12 +60,16 @@ async function apiRequest<T>(path: string, options: RequestOptions): Promise<T> 
   }
 
   try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('bhoomi_token') : null;
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
     const response = await fetch(`${apiBaseUrl}${path}`, {
       method,
-      headers: {
-        Accept: 'application/json',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      },
+      headers,
       credentials: 'include',
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,

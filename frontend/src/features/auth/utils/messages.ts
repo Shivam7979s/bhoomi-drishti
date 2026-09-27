@@ -7,7 +7,12 @@ import { ApiError } from '../../../services/apiClient';
 export function messageForError(cause: unknown): string {
   if (cause instanceof ApiError) {
     if (cause.status === null) return 'Could not reach the server. Please try again.';
-    if (cause.status === 401) return 'Invalid email or password.';
+    if (cause.status === 401) {
+      if (cause.message && !cause.message.includes('HTTP 401') && cause.message !== 'Unauthorized') {
+        return cause.message;
+      }
+      return 'Invalid email or password.';
+    }
     return cause.message || 'Something went wrong. Please try again.';
   }
   return 'Something went wrong. Please try again.';

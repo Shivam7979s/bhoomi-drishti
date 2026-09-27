@@ -31,7 +31,15 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(corsProperties.allowedOrigins());
+        if (corsProperties.allowedOrigins() != null && !corsProperties.allowedOrigins().isEmpty()) {
+            config.setAllowedOrigins(corsProperties.allowedOrigins());
+        }
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://*.vercel.app",
+                "https://*.onrender.com",
+                "https://*.pages.dev"));
         config.setAllowedMethods(List.of(
                 HttpMethod.GET.name(),
                 HttpMethod.POST.name(),
@@ -39,8 +47,14 @@ public class CorsConfig {
                 HttpMethod.PATCH.name(),
                 HttpMethod.DELETE.name(),
                 HttpMethod.OPTIONS.name()));
-        config.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT));
-        // Required for the HttpOnly session cookie; only safe together with explicit origins.
+        config.setAllowedHeaders(List.of(
+                HttpHeaders.AUTHORIZATION,
+                HttpHeaders.CONTENT_TYPE,
+                HttpHeaders.ACCEPT,
+                HttpHeaders.ORIGIN,
+                "X-Requested-With"));
+        config.setExposedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.SET_COOKIE));
+        // Required for the HttpOnly session cookie and cross-origin auth
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

@@ -37,6 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return me;
     } catch (cause) {
       if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('bhoomi_token');
+        }
         setUser(null);
         return null;
       }
@@ -61,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (request: LoginRequest) => {
       const response = await authService.login(request);
+      if (response?.accessToken && typeof window !== 'undefined') {
+        localStorage.setItem('bhoomi_token', response.accessToken);
+      }
       setUser(response.user);
     },
     [],
@@ -69,6 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (request: RegisterRequest) => {
       const response = await authService.register(request);
+      if (response?.accessToken && typeof window !== 'undefined') {
+        localStorage.setItem('bhoomi_token', response.accessToken);
+      }
       setUser(response.user);
     },
     [],
@@ -78,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authService.logout();
     } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('bhoomi_token');
+      }
       setUser(null);
     }
   }, []);
