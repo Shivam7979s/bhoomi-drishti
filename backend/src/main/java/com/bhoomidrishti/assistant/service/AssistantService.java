@@ -28,17 +28,33 @@ public class AssistantService {
 
     private final AiServiceClient aiServiceClient;
     private final AssistantContextResolverService contextResolverService;
+    private final EmbeddedStatutoryEngine embeddedStatutoryEngine;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AssistantService.class);
 
     public AssistantService(AiServiceClient aiServiceClient) {
-        this(aiServiceClient, null);
+        this(aiServiceClient, null, null);
+    }
+
+    public AssistantService(
+            AiServiceClient aiServiceClient,
+            AssistantContextResolverService contextResolverService) {
+        this(aiServiceClient, contextResolverService, null);
+    }
+
+    public AssistantService(
+            AiServiceClient aiServiceClient,
+            EmbeddedStatutoryEngine embeddedStatutoryEngine) {
+        this(aiServiceClient, null, embeddedStatutoryEngine);
     }
 
     @Autowired
     public AssistantService(
             AiServiceClient aiServiceClient,
-            AssistantContextResolverService contextResolverService) {
+            AssistantContextResolverService contextResolverService,
+            EmbeddedStatutoryEngine embeddedStatutoryEngine) {
         this.aiServiceClient = aiServiceClient;
         this.contextResolverService = contextResolverService;
+        this.embeddedStatutoryEngine = embeddedStatutoryEngine;
     }
 
     /**
@@ -81,9 +97,17 @@ public class AssistantService {
             allowedDocIds = authorizedContext.targetDocumentIds();
         }
 
-        if (authorizedContext != null) {
-            return aiServiceClient.queryAssistant(request, authorizedContext, onlyPublished, allowedDocIds);
+        try {
+            if (authorizedContext != null) {
+                return aiServiceClient.queryAssistant(request, authorizedContext, onlyPublished, allowedDocIds);
+            }
+            return aiServiceClient.queryAssistant(request, onlyPublished, allowedDocIds);
+        } catch (Exception ex) {
+            log.warn("External AI microservice unavailable ({}). Engaging embedded statutory engine.", ex.getMessage());
+            if (embeddedStatutoryEngine != null) {
+                return embeddedStatutoryEngine.synthesize(request, authorizedContext, onlyPublished, allowedDocIds);
+            }
+            throw ex;
         }
-        return aiServiceClient.queryAssistant(request, onlyPublished, allowedDocIds);
     }
 }
